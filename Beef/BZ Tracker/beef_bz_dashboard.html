@@ -407,6 +407,30 @@ function setTab(t) {
   renderComparisonCharts(); // comparison charts follow the Q/M/W tab
 }
 
+// ── Axis helper: returns {min, max, stepSize} where max-min is an exact
+//    multiple of stepSize, guaranteeing perfectly uniform tick spacing.
+function niceScale(vals, nTicks) {
+  nTicks = nTicks || 5;
+  if (!vals || !vals.length) return {};
+  const mn = Math.min(...vals);
+  const mx = Math.max(...vals);
+  const range = (mx - mn) || 1;
+  // pick a "nice" step for ~nTicks ticks
+  let rawStep = range / (nTicks - 1);
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  let step = norm <= 1.0 ? 1.0 * mag
+           : norm <= 2.0 ? 2.0 * mag
+           : norm <= 2.5 ? 2.5 * mag
+           : norm <= 5.0 ? 5.0 * mag
+           :               10.0 * mag;
+  // snap min/max to exact multiples of step (with small padding)
+  const axMin = Math.floor((mn - step * 0.15) / step) * step;
+  const axMax = axMin + step * Math.ceil((mx - axMin + step * 0.15) / step);
+  const fix = v => Math.round(v * 1e9) / 1e9; // float artefact guard
+  return { min: fix(axMin), max: fix(axMax), stepSize: step };
+}
+
 function renderComparisonCharts() {
   buildReferenceData();
   renderVolumeChart();
@@ -899,10 +923,10 @@ function renderVolumeChart() {
   const barBg  = ['rgba(160,160,160,0.45)', 'rgba(100,100,100,0.50)', 'rgba(255,85,0,0.80)'];
   const barBdr = ['rgba(130,130,130,0.70)', 'rgba(70,70,70,0.70)',    'rgba(255,85,0,1.00)'];
 
-  // Padded USD range
-  const usdVals = REF.usd.filter(v => v != null);
-  const usdMin  = usdVals.length ? Math.floor((Math.min(...usdVals) - 0.3) * 10) / 10 : undefined;
-  const usdMax  = usdVals.length ? Math.ceil ((Math.max(...usdVals) + 0.5) * 10) / 10 : undefined;
+  const usdVals  = REF.usd.filter(v => v != null);
+  const volVals  = REF.vol ? REF.vol.filter(v => v != null) : [];
+  const usdScale = niceScale(usdVals, 5);
+  const volScale = niceScale(volVals, 5);
 
   charts.volume = new Chart(document.getElementById('volumeChart').getContext('2d'), {
     data: {
@@ -973,24 +997,24 @@ function renderVolumeChart() {
         yVol: {
           type: 'linear', position: 'left',
           display: hasVol,
+          min: volScale.min, max: volScale.max,
           title: { display: hasVol, text: "'000 t", color: '#888', font: { size: 9 } },
           ticks: {
             color: '#888', font: { size: 9 },
+            stepSize: volScale.stepSize,
             callback: v => v.toFixed(0),
-            maxTicksLimit: 5,
           },
-          grace: '5%',
           grid: { color: 'rgba(0,0,0,0.05)' },
         },
         yUsd: {
           type: 'linear', position: 'right',
-          min: usdMin, max: usdMax,
+          min: usdScale.min, max: usdScale.max,
           title: { display: true, text: 'USD/kg',
             color: '#1A1A1A', font: { size: 9, weight: '600' } },
           ticks: {
             color: '#1A1A1A', font: { size: 9 },
+            stepSize: usdScale.stepSize,
             callback: v => v.toFixed(2),
-            maxTicksLimit: 5,
           },
           grid: { drawOnChartArea: false },
         },
@@ -1011,13 +1035,10 @@ function renderPriceRefChart() {
   const usdBg = ['rgba(40,40,40,0.35)', 'rgba(40,40,40,0.55)', 'rgba(40,40,40,0.90)'];
   const brlBg = ['rgba(255,85,0,0.30)', 'rgba(255,85,0,0.55)', 'rgba(255,85,0,0.85)'];
 
-  // Padded axis bounds
-  const usdVals = REF.usd.filter(v => v != null);
-  const brlVals = REF.brl.filter(v => v != null);
-  const usdMin  = usdVals.length ? Math.floor((Math.min(...usdVals) - 0.5)  * 4) / 4 : undefined;
-  const usdMax  = usdVals.length ? Math.ceil ((Math.max(...usdVals) + 0.5)  * 4) / 4 : undefined;
-  const brlMin  = brlVals.length ? Math.floor((Math.min(...brlVals) - 2)    * 2) / 2 : undefined;
-  const brlMax  = brlVals.length ? Math.ceil ((Math.max(...brlVals) + 2)    * 2) / 2 : undefined;
+  const usdVals  = REF.usd.filter(v => v != null);
+  const brlVals  = REF.brl.filter(v => v != null);
+  const usdScale = niceScale(usdVals, 5);
+  const brlScale = niceScale(brlVals, 5);
 
   charts.priceRef = new Chart(document.getElementById('priceRefChart').getContext('2d'), {
     type: 'bar',
@@ -1078,20 +1099,20 @@ function renderPriceRefChart() {
       scales: {
         yUsd: {
           type: 'linear', position: 'left',
-          min: usdMin, max: usdMax,
+          min: usdScale.min, max: usdScale.max,
           title: { display: true, text: 'USD/kg',
             color: '#1A1A1A', font: { size: 9, weight: '600' } },
-          ticks: { color: '#1A1A1A', font: { size: 9 }, maxTicksLimit: 5,
-            callback: v => v.toFixed(2) },
+          ticks: { color: '#1A1A1A', font: { size: 9 },
+            stepSize: usdScale.stepSize, callback: v => v.toFixed(2) },
           grid: { color: 'rgba(0,0,0,0.05)' },
         },
         yBrl: {
           type: 'linear', position: 'right',
-          min: brlMin, max: brlMax,
+          min: brlScale.min, max: brlScale.max,
           title: { display: true, text: 'BRL/kg',
             color: '#FF5500', font: { size: 9, weight: '600' } },
-          ticks: { color: '#FF5500', font: { size: 9 }, maxTicksLimit: 5,
-            callback: v => v.toFixed(1) },
+          ticks: { color: '#FF5500', font: { size: 9 },
+            stepSize: brlScale.stepSize, callback: v => v.toFixed(1) },
           grid: { drawOnChartArea: false },
         },
         x: {
