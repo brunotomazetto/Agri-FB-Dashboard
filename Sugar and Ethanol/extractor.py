@@ -400,8 +400,8 @@ FUEL_BR_URL  = "https://www.gov.br/anp/pt-br/assuntos/precos-e-defesa-da-concorr
 PRODUTOS     = {"ETANOL HIDRATADO", "GASOLINA COMUM"}
 
 def run_fuel(conn: sqlite3.Connection) -> dict:
-    if not is_thursday():
-        log.info("[Fuel] Not Thursday — skipping.")
+    if not is_weekday():
+        log.info("[Fuel] Not a weekday — skipping.")
         return {"skipped": True}
 
     log.info("=" * 60)
@@ -513,8 +513,8 @@ ESTADO_NORM = {
 }
 
 def run_supply_demand(conn: sqlite3.Connection) -> dict:
-    if not is_month_5th():
-        log.info("[Supply/Demand] Not the 5th of the month — skipping.")
+    if not is_weekday():
+        log.info("[Supply/Demand] Not a weekday — skipping.")
         return {"skipped": True}
 
     log.info("=" * 60)
