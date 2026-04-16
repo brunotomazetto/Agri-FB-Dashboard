@@ -12,7 +12,7 @@
 :root{
   --orange:#FF5500;--black:#1A1A1A;--gray-dark:#333;--gray-mid:#888;
   --gray-light:#F4F4F4;--border:#E5E5E5;--white:#fff;
-  --green:#27AE60;--red:#C0392B;--blue:#1A6FBB;
+  --green:#27AE60;--red:#C0392B;--grain:#555555;
   --font:'Segoe UI',Helvetica,Arial,sans-serif;
 }
 html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-dark);
@@ -52,23 +52,56 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 .view-btn:hover:not(.active),.tab-btn:hover:not(.active),.season-btn:hover:not(.active){border-color:#ccc;color:var(--gray-dark);}
 .season-btn{padding:3px 9px;font-size:11px;}
 
-/* ── SETTINGS BAR ── */
-.settings-bar{background:#FFFBF8;border-bottom:1px solid #FFD9C8;
-  display:flex;align-items:center;padding:0 20px;height:42px;gap:20px;flex-shrink:0;flex-wrap:wrap;}
-.settings-bar .view-label{color:var(--orange);}
-.setting-group{display:flex;align-items:center;gap:7px;}
-.setting-label{font-size:11px;font-weight:600;color:var(--gray-mid);}
-.setting-input{width:44px;padding:3px 5px;border:1px solid var(--border);border-radius:4px;
+/* ── PARAMS + TABLE ROW ── */
+.bottom-row{display:flex;align-items:stretch;border-top:1px solid var(--border);}
+.params-panel{width:270px;min-width:270px;background:var(--white);
+  border-right:1px solid var(--border);padding:16px 18px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:0;}
+.params-panel-title{font-size:13px;font-weight:700;color:var(--black);
+  margin-bottom:14px;}
+.params-section-label{font-size:10px;font-weight:700;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;margin-top:14px;}
+.params-section-label:first-of-type{margin-top:0;}
+.param-row{display:flex;align-items:center;gap:0;margin-bottom:7px;}
+.param-name{font-size:12px;color:var(--gray-dark);width:90px;flex-shrink:0;}
+.param-name small{font-size:10.5px;color:var(--gray-mid);display:block;}
+.param-slider{-webkit-appearance:none;appearance:none;flex:1;height:4px;border-radius:2px;
+  background:var(--border);cursor:pointer;outline:none;min-width:0;}
+.param-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--orange);cursor:pointer;border:2px solid white;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.param-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+  background:var(--orange);cursor:pointer;border:2px solid white;}
+.param-slider.disabled{opacity:.4;pointer-events:none;}
+.param-val{font-size:12px;font-weight:700;color:var(--black);
+  width:36px;text-align:right;flex-shrink:0;}
+.param-val.auto{color:var(--gray-mid);font-weight:400;}
+.param-input{width:40px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;
   font-size:12px;font-family:var(--font);text-align:center;color:var(--black);}
-.setting-input:focus{outline:none;border-color:var(--orange);}
-.setting-slider{-webkit-appearance:none;appearance:none;width:100px;height:4px;border-radius:2px;
-  background:var(--border);cursor:pointer;outline:none;}
-.setting-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;
-  border-radius:50%;background:var(--orange);cursor:pointer;}
-.setting-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
-  background:var(--orange);cursor:pointer;border:none;}
-.setting-pct{font-size:12px;font-weight:700;color:var(--black);min-width:30px;}
-.setting-divider{width:1px;height:20px;background:var(--border);}
+.param-input:focus{outline:none;border-color:var(--orange);}
+.param-unit{font-size:11px;color:var(--gray-mid);margin-left:4px;}
+.params-reset{margin-top:14px;padding:7px 0;width:100%;
+  border:1px solid var(--orange);border-radius:4px;background:none;
+  color:var(--orange);font-size:12px;font-weight:600;font-family:var(--font);
+  cursor:pointer;transition:all .15s;}
+.params-reset:hover{background:var(--orange);color:white;}
+.params-divider{height:1px;background:var(--border);margin:14px 0 10px;}
+.param-info-label{font-size:10px;font-weight:700;color:var(--gray-mid);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.param-info-row{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:5px;}
+.param-info-name{font-size:11.5px;color:var(--gray-dark);}
+.param-info-val{font-size:11.5px;font-weight:600;color:var(--black);}
+.param-info-bar-wrap{width:100%;height:4px;background:var(--border);border-radius:2px;margin-bottom:2px;}
+.param-info-bar{height:4px;border-radius:2px;background:var(--orange);transition:width .3s;}
+
+/* table-section lives inside bottom-row */
+.table-section{flex:1;min-width:0;background:var(--white);
+  display:flex;flex-direction:column;}
+.table-section-header{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px 8px;border-bottom:1px solid var(--border);}
+.table-section-title{font-size:13px;font-weight:700;color:var(--black);}
+.table-section-accent{width:4px;height:20px;background:var(--orange);border-radius:2px;}
 
 /* ── GRANULARITY BAR ── */
 .granularity-bar{background:var(--white);border-bottom:1px solid var(--border);
@@ -168,36 +201,6 @@ tr:hover td{background:#FFF8F5;}
   </div>
 </div>
 
-<!-- GRAIN SETTINGS BAR -->
-<div class="settings-bar">
-  <span class="view-label">⚙ GRAIN PARAMETERS:</span>
-
-  <div class="setting-group">
-    <span class="setting-label">Lag:</span>
-    <input type="number" id="lagInput" min="0" max="6" value="2" class="setting-input"
-           oninput="onLagChange(this.value)">
-    <span class="setting-label" style="margin-left:-4px">months</span>
-  </div>
-
-  <div class="setting-divider"></div>
-
-  <div class="setting-group">
-    <span class="setting-label" style="color:#1A6FBB;font-weight:700;">Corn:</span>
-    <input type="range" id="cornSlider" min="0" max="100" value="66" class="setting-slider"
-           oninput="onCornChange(this.value)">
-    <span class="setting-pct" id="cornPct" style="color:#1A6FBB;">66%</span>
-  </div>
-
-  <div class="setting-group">
-    <span class="setting-label" style="color:#E8A000;font-weight:700;">Soy:</span>
-    <span class="setting-pct" id="soyPct" style="color:#E8A000;">34%</span>
-  </div>
-
-  <div class="setting-divider"></div>
-  <span id="settings-note" style="font-size:10.5px;color:var(--gray-mid);">
-    Grain basket: <span id="basket-desc">66% corn + 34% soy PNA · 2-month lag</span>
-  </span>
-</div>
 
 <!-- MAIN CONTENT -->
 <div class="main-wrap">
@@ -219,7 +222,7 @@ tr:hover td{background:#FFF8F5;}
         <div class="chart-title">Export Price vs. Grain Cost — Dual Axis</div>
         <div class="chart-stat" style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
           <span><span style="color:var(--orange);font-weight:700;">■</span> Export Price (BRL/kg, right)</span>
-          <span><span style="color:#1A6FBB;font-weight:700;">■</span> Grain Cost (BRL/bag 60kg, left)</span>
+          <span><span style="color:#555555;font-weight:700;">■</span> Grain Cost (BRL/bag 60kg, left)</span>
         </div>
       </div>
       <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
@@ -292,15 +295,77 @@ tr:hover td{background:#FFF8F5;}
     </div>
   </div>
 
-  <!-- TABLE SECTION -->
-  <div class="table-section">
-    <div class="table-wrap">
-      <table>
-        <thead id="table-head"></thead>
-        <tbody id="table-body"></tbody>
-      </table>
+  <!-- BOTTOM ROW: params panel + spread analysis table -->
+  <div class="bottom-row">
+
+    <!-- LEFT: Grain Parameters panel (styled like Beef "Weight Parameters") -->
+    <div class="params-panel">
+      <div class="params-panel-title">Grain Parameters</div>
+
+      <div class="params-section-label">Basket Weights</div>
+
+      <div class="param-row">
+        <span class="param-name">Corn</span>
+        <input type="range" id="cornSlider" min="0" max="100" value="66"
+               class="param-slider" oninput="onCornChange(this.value)">
+        <span class="param-val" id="cornPct">66%</span>
+      </div>
+
+      <div class="param-row">
+        <span class="param-name">Soy PNA<small>(auto)</small></span>
+        <input type="range" id="soySlider" min="0" max="100" value="34"
+               class="param-slider disabled" disabled>
+        <span class="param-val auto" id="soyPct">34%</span>
+      </div>
+
+      <div class="params-section-label">Price Lag</div>
+
+      <div class="param-row">
+        <span class="param-name">Lag</span>
+        <input type="number" id="lagInput" min="0" max="6" value="2"
+               class="param-input" oninput="onLagChange(this.value)">
+        <span class="param-unit">months</span>
+      </div>
+
+      <button class="params-reset" onclick="resetParams()">↺ &nbsp;Reset to default</button>
+
+      <div class="params-divider"></div>
+
+      <div class="param-info-label">Current Grain Prices</div>
+      <div class="param-info-row">
+        <span class="param-info-name">Corn (ESALQ/BM&amp;F)</span>
+        <span class="param-info-val" id="info-corn">—</span>
+      </div>
+      <div class="param-info-bar-wrap"><div class="param-info-bar" id="bar-corn" style="width:0%"></div></div>
+      <div class="param-info-row">
+        <span class="param-info-name">Soy PNA (Paranaguá)</span>
+        <span class="param-info-val" id="info-soy">—</span>
+      </div>
+      <div class="param-info-bar-wrap"><div class="param-info-bar" id="bar-soy" style="width:0%;background:#888888"></div></div>
+      <div class="param-info-row" style="margin-top:8px;">
+        <span class="param-info-name" style="font-weight:600;">Basket</span>
+        <span class="param-info-val" style="color:var(--orange);" id="info-basket">—</span>
+      </div>
+      <div style="font-size:10px;color:var(--gray-mid);margin-top:6px;line-height:1.4;">
+        * Sliders adjust basket weights.<br>Grain prices = latest available month.
+      </div>
     </div>
-  </div>
+
+    <!-- RIGHT: Spread Analysis table -->
+    <div class="table-section">
+      <div class="table-section-header">
+        <span class="table-section-title">Spread Analysis</span>
+        <div class="table-section-accent"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /bottom-row -->
 
   <div class="note-bar">
     Sources: <em>SECEX/MDIC</em> — NCM 0207 (all poultry sub-codes) ·
@@ -349,23 +414,54 @@ function goBack() {
 function onLagChange(v) {
   grainLag = Math.max(0, Math.min(6, parseInt(v) || 0));
   document.getElementById('lagInput').value = grainLag;
-  updateBasketDesc();
   recomputeAll();
 }
 
 function onCornChange(v) {
   cornWeight = parseInt(v) / 100;
+  const soyPct = 100 - parseInt(v);
   document.getElementById('cornPct').textContent = v + '%';
-  document.getElementById('soyPct').textContent  = (100 - parseInt(v)) + '%';
-  updateBasketDesc();
+  document.getElementById('soyPct').textContent  = soyPct + '%';
+  document.getElementById('soySlider').value = soyPct;
+  updateCurrentPrices();
   recomputeAll();
 }
 
 function updateBasketDesc() {
-  const c = Math.round(cornWeight * 100);
-  const s = 100 - c;
-  document.getElementById('basket-desc').textContent =
-    `${c}% corn + ${s}% soy PNA · ${grainLag}-month lag`;
+  // keep for any legacy refs; primary UI now lives in panel
+}
+
+function resetParams() {
+  grainLag   = 2;
+  cornWeight = 0.66;
+  document.getElementById('lagInput').value  = 2;
+  document.getElementById('cornSlider').value = 66;
+  document.getElementById('soySlider').value  = 34;
+  document.getElementById('cornPct').textContent = '66%';
+  document.getElementById('soyPct').textContent  = '34%';
+  updateCurrentPrices();
+  recomputeAll();
+}
+
+function updateCurrentPrices() {
+  // Show the most recent available CEPEA monthly prices
+  const keys = Object.keys(CEPEA_MONTHLY).sort();
+  if (!keys.length) return;
+  const latest = CEPEA_MONTHLY[keys[keys.length - 1]];
+  const corn = latest?.corn;
+  const soy  = latest?.soy;
+  if (corn == null || soy == null) return;
+
+  const basket = (cornWeight * corn + (1 - cornWeight) * soy);
+
+  document.getElementById('info-corn').textContent   = `R$${corn.toFixed(1)}/bag`;
+  document.getElementById('info-soy').textContent    = `R$${soy.toFixed(1)}/bag`;
+  document.getElementById('info-basket').textContent = `R$${basket.toFixed(1)}/bag`;
+
+  // Bar widths relative to each other
+  const mx = Math.max(corn, soy);
+  document.getElementById('bar-corn').style.width = `${(corn/mx*100).toFixed(1)}%`;
+  document.getElementById('bar-soy').style.width  = `${(soy /mx*100).toFixed(1)}%`;
 }
 
 // ─── GRAIN COST COMPUTATION (client-side, uses CEPEA_MONTHLY) ────────────────
@@ -391,11 +487,9 @@ function computeGrainCost(year, month) {
 function recomputeMonthly() {
   return MONTHLY_RAW.map(r => {
     const grain   = computeGrainCost(r.year, r.month);
-    const spread  = (grain != null && r.secex_brl_kg != null && r.secex_brl_kg > 0)
+    const spreadX = (grain != null && r.secex_brl_kg != null && r.secex_brl_kg > 0)
       ? (r.secex_brl_kg - grain) / r.secex_brl_kg : null;
-    const spreadX = (grain != null && grain > 0 && r.secex_brl_kg != null)
-      ? r.secex_brl_kg / grain : null;
-    return { ...r, cepea_r_kg: grain, spread, spreadX };
+    return { ...r, cepea_r_kg: grain, spread: spreadX, spreadX };
   });
 }
 
@@ -404,11 +498,9 @@ function recomputeWeekly() {
     const yr = parseInt(r.start_date.slice(0, 4));
     const mo = parseInt(r.start_date.slice(5, 7));
     const grain   = computeGrainCost(yr, mo);
-    const spread  = (grain != null && r.secex_brl_kg != null && r.secex_brl_kg > 0)
+    const spreadX = (grain != null && r.secex_brl_kg != null && r.secex_brl_kg > 0)
       ? (r.secex_brl_kg - grain) / r.secex_brl_kg : null;
-    const spreadX = (grain != null && grain > 0 && r.secex_brl_kg != null)
-      ? r.secex_brl_kg / grain : null;
-    return { ...r, cepea_r_kg: grain, spread, spreadX };
+    return { ...r, cepea_r_kg: grain, spread: spreadX, spreadX };
   });
 }
 
@@ -541,6 +633,7 @@ async function loadDB() {
       document.getElementById('latest-spread').textContent = latestM.spreadX.toFixed(2) + '×';
     }
 
+    updateCurrentPrices();
     render();
   } catch(e) {
     loadEl.innerHTML = `<div style="text-align:center;padding:40px">
@@ -679,7 +772,7 @@ function renderCharts() {
     }),
   });
 
-  // ── Chart 2: Export Price (BRL/kg, right, orange) vs Grain (BRL/bag, left, blue) ──
+  // ── Chart 2: Export Price (BRL/kg, right, orange) vs Grain (BRL/bag, left, gray) ──
   const brlVals = exports_.filter(v => v != null);
   const bagVals = grainBag.filter(v => v != null);
   const brlScale = niceScale(brlVals, 5);
@@ -692,7 +785,7 @@ function renderCharts() {
       labels,
       datasets: [
         { label: 'Grain Cost (BRL/bag 60kg)', data: grainBag,
-          borderColor: '#1A6FBB', backgroundColor: 'transparent',
+          borderColor: '#555555', backgroundColor: 'transparent',
           borderWidth: 2, pointRadius: ptRadius, pointHoverRadius: 4,
           tension: 0.3, yAxisID: 'yBag', order: 2 },
         { label: 'Export Price (BRL/kg)', data: exports_,
@@ -726,9 +819,9 @@ function renderCharts() {
         yBag: {
           type: 'linear', position: 'left',
           min: bagScale.min, max: bagScale.max,
-          title: { display: true, text: 'BRL/bag 60kg', color: '#1A6FBB',
+          title: { display: true, text: 'BRL/bag 60kg', color: '#555555',
             font: { size: 9, weight: '600' } },
-          ticks: { color: '#1A6FBB', font: { size: 9 },
+          ticks: { color: '#555555', font: { size: 9 },
             stepSize: bagScale.stepSize, callback: v => v.toFixed(0) },
           grid: { color: 'rgba(26,111,187,0.06)' },
         },
