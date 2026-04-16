@@ -965,16 +965,20 @@ def get_pests(conn, c, ym, anual=False):
 
 
 def get_other(conn, c, ym, anual=False):
+    """
+    Other Costs = F. OUTROS CUSTOS da planilha IMEA
+    (Assistência Técnica + Combustível Utilitários + Despesas Gerais)
+
+    Manutenção, Impostos, Financeiras, Pós-Produção e Operações Mecanizadas
+    NÃO entram aqui — estão embutidos no COE e nunca foram parte do
+    "Other" do dashboard na série histórica da API.
+    """
     q = qa if anual else qm
-    man = q(conn, c, "Manutenção", ym) or 0
-    tax = (q(conn, c, "Impostos e Taxas", ym) or q(conn, c, "Impostos e Taxas ", ym) or
-           sum(q(conn, c, n, ym) or 0 for n in OTHER_C)) or 0
-    fin = q(conn, c, "Financeiras", ym) or sum(q(conn, c, n, ym) or 0 for n in OTHER_D) or 0
-    pos = q(conn, c, "Pós-Produção", ym) or sum(q(conn, c, n, ym) or 0 for n in OTHER_E) or 0
-    oth = q(conn, c, "Outros Custos", ym) or sum(q(conn, c, n, ym) or 0 for n in OTHER_F) or 0
-    mec = (q(conn, c, "OPERAÇÕES MECANIZADAS", ym) or
-           q(conn, c, "Operações Mecanizadas", ym)) or 0
-    return (man + tax + fin + pos + oth + mec) or None
+    v = q(conn, c, "Outros Custos", ym)
+    if v:
+        return v
+    # Fallback: soma dos componentes de F se o agregado não existir
+    return sum(q(conn, c, n, ym) or 0 for n in OTHER_F) or None
 
 
 # ════════════════════════════════════════════════════════════════════════════════
