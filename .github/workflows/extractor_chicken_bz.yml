@@ -32,7 +32,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       # ── 2. Set up Python ─────────────────────────────────────────────────
       - name: Set up Python 3.11
@@ -61,5 +61,6 @@ jobs:
             echo "No changes to chicken_bz.db — nothing to commit."
           else
             git commit -m "auto: refresh chicken_bz.db + CEPEA daily — $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git pull --rebase origin main
             git push
           fi
