@@ -505,148 +505,166 @@ def _normaliza_lev(val):
 # ════════════════════════════════════════════════════════════════════════════════
 # FETCH — CONAB PREÇOS via Pentaho CDA (portaldeinformacoes.conab.gov.br)
 # ════════════════════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════════════
+# FETCH — CONAB PREÇOS via PrecosSemanalUF.txt
+# ════════════════════════════════════════════════════════════════════════════════
 def fetch_conab_preco(conn, now_str):
     """
-    Baixa preços recebidos pelo produtor MT via Pentaho CDA do portal CONAB.
-    Sem reCAPTCHA — dois requests simples (POST doQuery → GET unwrapQuery).
+    Baixa PrecosSemanalUF.txt e atualiza preco_conab para as 3 culturas.
+    Mesmo método do extractor_crushing_spread.py que já funciona no GitHub Actions.
 
-    Fluxo:
-      1. POST doQuery com parâmetros → retorna UUID
-      2. GET unwrapQuery?uuid=... → baixa XLS com série histórica
-      3. Parseia XLS (formato wide: meses nas linhas, UFs nas colunas)
-      4. Extrai coluna MT e insere em preco_conab
+    Arquivo: portaldeinformacoes.conab.gov.br/downloads/arquivos/PrecosSemanalUF.txt
+    Produto filtro: 'SOJA', 'MILHO', 'ALGODAO EM PLUMA' (match exato após strip)
+    Nível filtro: contém 'RECEBIDO' (= preço recebido pelo produtor)
+    UF: MT
+    Frequência: semanal — agrega por mês (média mensal) para preco_conab
 
-    Produtos buscados: SOJA, MILHO (GRÃOS), ALGODÃO (PLUMA)
+    Armazena valor_kg = preco_kg na tabela preco_conab (R$/kg).
+    Conversão no dashboard: valor_kg × bag_kg = R$/bag
     """
-    PENTAHO = "https://pentahoportaldeinformacoes.conab.gov.br/pentaho/plugin/cda/api"
-    HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Origin":  "https://portaldeinformacoes.conab.gov.br",
-        "Referer": "https://portaldeinformacoes.conab.gov.br/",
-        "Content-Type": "application/x-www-form-urlencoded",
+    CONAB_SEMANAL_URL = (
+        "https://portaldeinformacoes.conab.gov.br/downloads/arquivos/PrecosSemanalUF.txt"
+    )
+
+    # Mapeamento produto no arquivo → (cultura, bag_kg, prod_label, nivel_label, min_kg, max_kg)
+    # prod_label e nivel_label devem ser IDÊNTICOS à série histórica no banco.
+    # min_kg/max_kg: sanity check para rejeitar valores claramente errados.
+    # O PrecosSemanalUF.txt mistura níveis — alguns registros de MILHO chegam
+    # com R$1.63/kg (atacado) em vez de R$0.80/kg (produtor). O filtro descarta.
+    PROD_MAP = {
+        "SOJA": (
+            "SOJA", 60,
+            "SOJA EM GRÃOS   (60 kg)", "PRODUTOR",
+            1.00, 4.00,   # R$/kg razoável: R$60-240/sc
+        ),
+        "MILHO": (
+            "MILHO", 60,
+            "MILHO EM GRÃOS   (60 kg)", "PRODUTOR",
+            0.40, 1.20,   # R$/kg razoável: R$24-72/sc (exclui atacado ~R$1.63/kg)
+        ),
+        "ALGODAO EM PLUMA": (
+            "ALGODAO", 15,
+            "ALGODÃO EM PLUMA TIPO BÁSICO - SLM 41-4 BRANCO  (15 kg)", "PRODUTOR",
+            5.00, 15.00,  # R$/kg razoável: R$75-225/@
+        ),
     }
 
-    # (produto_pentaho, classificacao, cultura_interna, bag_kg, produto_conab_label, nivel_label)
-    PRODUTOS = [
-        ("SOJA",    "EM GRÃOS",  "SOJA",    60,
-         "SOJA EM GRÃOS   (60 kg)",
-         "PRODUTOR"),
-        ("MILHO",   "EM GRÃOS",  "MILHO",   60,
-         "MILHO EM GRÃOS   (60 kg)",
-         "PRODUTOR"),
-        ("ALGODÃO", "EM PLUMA",  "ALGODAO", 15,
-         "ALGODÃO EM PLUMA TIPO BÁSICO - SLM 41-4 BRANCO  (15 kg)",
-         "PRODUTOR"),
-    ]
+    log.info("  [CONAB] Buscando preços via PrecosSemanalUF.txt")
+    try:
+        content = _baixa_conab_txt(CONAB_SEMANAL_URL)
+        # _baixa_conab_txt retorna DataFrame — mas aqui o arquivo pode ter
+        # separador diferente, então fazemos raw download
+    except Exception:
+        pass
 
+    # Download raw para detectar separador (igual ao crushing spread)
     import io as _io
-    MESES_PT = {
-        "JAN":1,"FEV":2,"MAR":3,"ABR":4,"MAI":5,"JUN":6,
-        "JUL":7,"AGO":8,"SET":9,"OUT":10,"NOV":11,"DEZ":12,
-    }
+    try:
+        r = requests.get(CONAB_SEMANAL_URL, timeout=180, verify=False,
+            headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+        content_bytes = r.content
+    except Exception as e:
+        log.warning(f"  [CONAB] Preço falhou: {e}")
+        return 0
 
-    total_inserted = 0
-
-    for prod_p, classif, cultura, bag_kg, prod_label, nivel in PRODUTOS:
-        log.info(f"  [{cultura}] Buscando preço CONAB via Pentaho CDA")
+    # Detectar encoding e separador
+    for enc in ("latin-1", "utf-8-sig", "utf-8"):
         try:
-            # ── Step 1: doQuery ──────────────────────────────────────────────
-            payload = {
-                "paramproduto": prod_p,
-                "paramregiaoUf": "MT",
-                "paramnivelComercializacao": "PREÇO RECEBIDO P/ PRODUTOR",
-                "parammesAnoUF": "[Ano Mes].[Mes-Ano].Members",  # série histórica completa
-                "paramclassificacao": classif,
-                "paramlinhaRegiao": "[Ano Mes].[Mes-Ano].Members",
-                "paramtipoVisao": "MENSAL",
-                "path": "/home/SIAGRO/PrecoMedio.cda",
-                "dataAccessId": "MediaPrecoUF",
-                "outputIndexId": "1",
-                "pageSize": "0",
-                "pageStart": "0",
-                "sortBy": "",
-                "paramsearchBox": "",
-                "outputType": "xls",
-                "settingattachmentName": "PrecoMedioUF.xls",
-                "wrapItUp": "true",
-            }
-            r1 = requests.post(
-                f"{PENTAHO}/doQuery",
-                data=payload, headers=HEADERS, timeout=60, verify=False,
-            )
-            r1.raise_for_status()
-            uuid = r1.text.strip()
-            if not uuid:
-                log.warning(f"  [{cultura}] doQuery retornou UUID vazio")
+            text = content_bytes.decode(enc)
+            break
+        except UnicodeDecodeError:
+            continue
+
+    first_line = text.splitlines()[0] if text.splitlines() else ""
+    sep = "\t" if "\t" in first_line else ";"
+    df = pd.read_csv(_io.StringIO(text), sep=sep, on_bad_lines="skip", dtype=str)
+    df.columns = [c.strip().upper() for c in df.columns]
+    log.info(f"  [CONAB] Preço — {len(df)} linhas | colunas: {list(df.columns)}")
+
+    # Detectar colunas flexivelmente
+    uf_col    = next((c for c in df.columns if c in ("UF", "SIGLA_UF")), None)
+    prod_col  = next((c for c in df.columns if "PRODUTO" in c), None)
+    nivel_col = next((c for c in df.columns if "NIVEL" in c or "COMERCI" in c), None)
+    date_col  = next((c for c in df.columns if "DATA" in c), None)
+    preco_col = next((c for c in df.columns if "VALOR" in c or "PRECO" in c), None)
+
+    if not all([uf_col, prod_col, date_col, preco_col]):
+        log.warning(f"  [CONAB] Colunas não encontradas: {list(df.columns)}")
+        return 0
+
+    # Filtrar MT + produtos de interesse + nível RECEBIDO
+    df = df[df[uf_col].str.strip().str.upper() == "MT"].copy()
+    df = df[df[prod_col].str.strip().str.upper().isin(PROD_MAP.keys())].copy()
+    if nivel_col:
+        df = df[df[nivel_col].str.strip().str.upper().str.contains("RECEBIDO", na=False)].copy()
+
+    log.info(f"  [CONAB] Preço MT filtrado: {len(df)} linhas")
+
+    # Agregar semanal → mensal (média por mês/produto)
+    # DATA_INICIAL_FINAL_SEMANA: "DD-MM-YYYY - DD-MM-YYYY" — pega a data inicial
+    records = {}  # (cultura, ym) → [preco_kg]
+    n_fail = 0
+    for _, row in df.iterrows():
+        prod_key = str(row[prod_col]).strip().upper()
+        if prod_key not in PROD_MAP:
+            continue
+
+        # Parsear data
+        raw_field = str(row.get(date_col, "")).strip()
+        raw_date  = raw_field.split(" - ")[0].strip().replace("-", "/")
+        dr = None
+        for fmt in ("%d/%m/%Y", "%d/%m/%y", "%Y-%m-%d"):
+            try:
+                dr = datetime.strptime(raw_date, fmt)
+                break
+            except Exception:
                 continue
+        if not dr:
+            n_fail += 1
+            continue
 
-            # ── Step 2: unwrapQuery ──────────────────────────────────────────
-            r2 = requests.get(
-                f"{PENTAHO}/unwrapQuery",
-                params={"path": "/home/SIAGRO/PrecoMedio.cda", "uuid": uuid},
-                headers=HEADERS, timeout=60, verify=False,
+        preco_kg = _parse_float_br(row.get(preco_col))
+        if not preco_kg or preco_kg <= 0:
+            continue
+
+        cultura, bag_kg, prod_label, nivel, min_kg, max_kg = PROD_MAP[prod_key]
+
+        # Sanity check: rejeita valores fora do range esperado ao produtor
+        if not (min_kg <= preco_kg <= max_kg):
+            continue
+
+        ym = dr.strftime("%Y-%m")
+        key = (cultura, ym)
+        records.setdefault(key, []).append(preco_kg)
+
+    if n_fail:
+        log.warning(f"  [CONAB] {n_fail} linhas com data inválida ignoradas")
+
+    # Inserir média mensal em preco_conab
+    inserted = 0
+    for (cultura, ym), precos in records.items():
+        _, bag_kg, prod_label, nivel, _, _ = PROD_MAP[
+            next(k for k, v in PROD_MAP.items() if v[0] == cultura)
+        ]
+        avg_kg   = round(sum(precos) / len(precos), 6)
+        data_ref = f"{ym}-15"
+        try:
+            conn.execute(
+                """INSERT OR IGNORE INTO preco_conab
+                   (cultura,produto_conab,nivel_comercializacao,
+                    data_referencia,valor_kg,updated_at)
+                   VALUES(?,?,?,?,?,?)""",
+                (cultura, prod_label, nivel, data_ref, avg_kg, now_str),
             )
-            r2.raise_for_status()
-            if len(r2.content) < 100:
-                log.warning(f"  [{cultura}] Arquivo XLS vazio ({len(r2.content)} bytes)")
-                continue
+            if conn.execute("SELECT changes()").fetchone()[0]:
+                inserted += 1
+        except Exception:
+            pass
 
-            # ── Step 3: parsear XLS ──────────────────────────────────────────
-            # Formato: row 0 = header (["Ano Mes.Ano Mes", "CENTRO-OESTE/...", ..., "MT/Preco Medio KG"])
-            # Linhas: ["ABR-2025", 1.91, ..., 1.86]
-            df = pd.read_excel(_io.BytesIO(r2.content), header=None)
-
-            # Encontrar coluna MT
-            header = [str(v) for v in df.iloc[0]]
-            mt_col = next(
-                (i for i, h in enumerate(header) if "MT" in h.upper() and i > 0),
-                None
-            )
-            if mt_col is None:
-                log.warning(f"  [{cultura}] Coluna MT não encontrada. Header: {header}")
-                continue
-
-            inserted = 0
-            for _, row in df.iloc[1:].iterrows():
-                mes_ano = str(row.iloc[0]).strip()   # ex: "ABR-2025"
-                valor_bag = row.iloc[mt_col]
-                if pd.isna(valor_bag) or not mes_ano or mes_ano == "nan":
-                    continue
-
-                # Parsear "ABR-2025" → ano=2025, mes=4
-                try:
-                    parts = mes_ano.split("-")
-                    mes_str = parts[0].upper()[:3]
-                    ano = int(parts[1])
-                    mes = MESES_PT.get(mes_str)
-                    if not mes:
-                        continue
-                    data_ref = f"{ano:04d}-{mes:02d}-15"
-                    valor_kg = round(float(valor_bag) / bag_kg, 6)
-                except Exception:
-                    continue
-
-                try:
-                    conn.execute(
-                        """INSERT OR IGNORE INTO preco_conab
-                           (cultura,produto_conab,nivel_comercializacao,
-                            data_referencia,valor_kg,updated_at)
-                           VALUES(?,?,?,?,?,?)""",
-                        (cultura, prod_label, nivel, data_ref, valor_kg, now_str),
-                    )
-                    if conn.execute("SELECT changes()").fetchone()[0]:
-                        inserted += 1
-                except Exception:
-                    pass
-
-            conn.commit()
-            log.info(f"  [{cultura}] Preço CONAB: {inserted} novos registros")
-            total_inserted += inserted
-
-        except Exception as e:
-            log.warning(f"  [{cultura}] Preço CONAB falhou: {e}")
-
-    return total_inserted
+    conn.commit()
+    log.info(f"  [CONAB] Preço: {inserted} novos registros mensais inseridos")
+    return inserted
 
 
 # ════════════════════════════════════════════════════════════════════════════════
