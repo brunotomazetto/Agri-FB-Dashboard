@@ -493,12 +493,10 @@ def fetch_fx(conn):
 # SECEX MONTHLY
 # ══════════════════════════════════════════════════════════════════════════════
 def fetch_secex(conn, years=None):
-    """Download MDIC annual CSVs and upsert into _secex_raw (NCM 0207 poultry)."""
-    from io import StringIO
-    try:
-        import pandas as pd
-    except ImportError:
-        sys.exit("Missing: pip install pandas")
+    """Download MDIC annual CSVs and upsert into _secex_raw (NCM 0207 poultry).
+    Uses only stdlib csv — no pandas required."""
+    import csv
+    from collections import defaultdict
 
     if years is None:
         years = range(ANO_INI, datetime.now().year + 1)
@@ -510,26 +508,36 @@ def fetch_secex(conn, years=None):
         if not r:
             continue
         try:
-            df = pd.read_csv(StringIO(r.text), sep=";", dtype=str, low_memory=False)
-            df["CO_NCM"] = df["CO_NCM"].str.strip().str.zfill(8)
-            # Match all NCMs starting with 0207
-            df = df[df["CO_NCM"].str[:4] == NCM_CODE].copy()
-            if df.empty:
+            # MDIC CSVs are semicolon-delimited, latin-1 encoded
+            text = r.content.decode("latin-1", errors="replace")
+            reader = csv.DictReader(text.splitlines(), delimiter=";")
+
+            # Aggregate vol_kg and rev_usd by month for NCM 0207*
+            by_month: dict = defaultdict(lambda: [0.0, 0.0])  # month → [vol_kg, rev_usd]
+            for row in reader:
+                ncm = row.get("CO_NCM", "").strip().zfill(8)
+                if ncm[:4] != NCM_CODE:
+                    continue
+                try:
+                    mo      = int(row["CO_MES"])
+                    vol_kg  = float(row["KG_LIQUIDO"])
+                    rev_usd = float(row["VL_FOB"])
+                except (KeyError, ValueError):
+                    continue
+                by_month[mo][0] += vol_kg
+                by_month[mo][1] += rev_usd
+
+            if not by_month:
                 print(f"  [SECEX] {yr}: no poultry rows (NCM {NCM_CODE})")
                 continue
-            df["CO_MES"]     = df["CO_MES"].astype(int)
-            df["KG_LIQUIDO"] = df["KG_LIQUIDO"].astype(float)
-            df["VL_FOB"]     = df["VL_FOB"].astype(float)
-            grp = df.groupby("CO_MES").agg(
-                vol_kg=("KG_LIQUIDO", "sum"), rev_usd=("VL_FOB", "sum")
-            ).reset_index()
+
             rows = []
-            for _, row in grp.iterrows():
-                m   = int(row["CO_MES"])
-                vol = float(row["vol_kg"]) / 1000      # tons
-                rev = float(row["rev_usd"]) / 1000     # 000 USD
-                p   = (rev * 1000 / (vol * 1000)) if vol > 0 else None
-                rows.append((yr, m, rev, vol, p))
+            for mo, (vol_kg, rev_usd) in sorted(by_month.items()):
+                vol = vol_kg  / 1000.0   # kg → tons
+                rev = rev_usd / 1000.0   # USD → 000 USD
+                p   = (rev_usd / vol_kg) if vol_kg > 0 else None  # USD/kg
+                rows.append((yr, mo, rev, vol, p))
+
             conn.executemany(
                 "INSERT OR REPLACE INTO _secex_raw(year,month,rev_000usd,vol_tons,price_usd_kg)"
                 " VALUES(?,?,?,?,?)", rows
