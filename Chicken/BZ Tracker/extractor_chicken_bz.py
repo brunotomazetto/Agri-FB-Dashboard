@@ -993,327 +993,306 @@ def fetch_weekly_bulletin(conn):
 
         if price_col is not None:
             price_per_ton = ws.cell(row=poultry_row, column=price_col).value
-            price_usd_kg  = (float(price_per_ton) / 1000.0) if price_per_ton else None
-        elif usd_col is not None and vol_tons:
-            usd_mil_val  = ws.cell(row=poultry_row, column=usd_col).value
-            price_usd_kg = (float(usd_mil_val) / float(vol_tons)) if usd_mil_val else None
+        elif usd_col is not None:
+            rev_mil = ws.cell(row=poultry_row, column=usd_col).value
+            try:
+                price_per_ton = (float(rev_mil) * 1000.0 / float(vol_tons)) if vol_tons else None
+            except Exception:
+                price_per_ton = None
         else:
-            price_usd_kg = None
+            price_per_ton = None
 
-        print(f"  [BULLETIN] Extracted: vol={vol_tons!r}  price_per_ton="
-              f"{ws.cell(row=poultry_row, column=price_col).value if price_col else 'n/a'!r}")
-        print(f"  [BULLETIN] Period from header: {bull_month}/{bull_year}")
+        try:
+            vol_tons = float(str(vol_tons).replace(",", ".")) if vol_tons else None
+            price_per_ton = float(str(price_per_ton).replace(",", ".")) if price_per_ton else None
+        except Exception:
+            vol_tons = price_per_ton = None
 
-        return (float(vol_tons) if vol_tons is not None else None), price_usd_kg, bull_year, bull_month
+        # price_usd_kg: the bulletin uses USD/TON; divide by 1000
+        price_usd_kg = price_per_ton / 1000.0 if price_per_ton else None
 
-    vol_mtd = price_usd = bull_yr = bull_mo = None
+        return bull_year, bull_month, price_usd_kg, vol_tons
+
+    # Try each sheet
+    result = (None, None, None, None)
     for ws in sheets_to_try:
-        v, p, by, bm = _parse_sheet(ws)
-        if v is not None:
-            vol_mtd = v; price_usd = p; bull_yr = by; bull_mo = bm
-            print(f"  [BULLETIN] Sheet '{ws.title}': vol_MTD={vol_mtd:,.0f} t"
-                  + (f", price={price_usd:.4f} USD/kg" if price_usd else " (no price)"))
+        result = _parse_sheet(ws)
+        if result[0] is not None:
             break
 
-    if vol_mtd is None:
-        print("  [BULLETIN] Could not parse Excel.")
+    bull_year, bull_month, price_usd_kg, vol_tons = result
+    if bull_year is None:
+        print("  [BULLETIN] Could not parse any sheet for poultry data.")
         return 0
 
-    # Sanity check for chicken price (0.5–5.0 USD/kg)
-    PRICE_MIN, PRICE_MAX = 0.5, 5.0
-    if price_usd is not None and not (PRICE_MIN <= price_usd <= PRICE_MAX):
-        print(f"  [BULLETIN] Price {price_usd:.4f} out of range — discarding.")
-        price_usd = None
-
-    # ── Step 5: find existing _weekly_raw row to update ──────────────────────
-    target_yr = bull_yr if bull_yr else yr
-    target_mo = bull_mo if bull_mo else mo
-    yr_s = f"{target_yr:04d}"
-    mo_s = f"{target_mo:02d}"
-    print(f"  [BULLETIN] Bulletin period resolved to: {yr_s}-{mo_s}")
-
-    existing = conn.execute(
-        "SELECT start_date, end_date, price_usd_kg FROM _weekly_raw"
-        " WHERE start_date LIKE ? ORDER BY start_date DESC LIMIT 1",
-        (f"{yr_s}-{mo_s}-%",)
-    ).fetchone()
-
-    if existing is None:
-        if target_yr == today.year and target_mo == today.month:
-            wk_start = today - _td(days=today.weekday())
-            s_date   = str(wk_start)
-            e_date   = str(today)
-            existing_price = None
-            print(f"  [BULLETIN] No existing row — creating new row {s_date} → {e_date}")
-        else:
-            print(f"  [BULLETIN] No row for {yr_s}-{mo_s} and it is a past month — skipping.")
-            return 0
-    else:
-        s_date, e_date, existing_price = existing
-        print(f"  [BULLETIN] Updating existing row: {s_date} → {e_date}")
-
-    if existing_price is not None and not (PRICE_MIN <= existing_price <= PRICE_MAX):
-        existing_price = None
-
-    final_price = price_usd if price_usd is not None else existing_price
+    # Determine the week start/end dates based on the bulletin's period
+    from datetime import date as _date, timedelta as _td
+    bull_date = _date(bull_year, bull_month, today.day)
+    dow = bull_date.weekday()
+    week_start = (bull_date - _td(days=dow)).isoformat()
+    week_end   = (bull_date + _td(days=6 - dow)).isoformat()
 
     conn.execute(
-        "INSERT OR REPLACE INTO _weekly_raw(start_date,end_date,price_usd_kg,vol_tons)"
-        " VALUES(?,?,?,?)",
-        (s_date, e_date,
-         round(final_price, 6) if final_price is not None else None,
-         vol_mtd)
+        """
+        INSERT INTO _weekly_raw(start_date, end_date, price_usd_kg, vol_tons)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(start_date) DO UPDATE SET
+            price_usd_kg = COALESCE(excluded.price_usd_kg, _weekly_raw.price_usd_kg),
+            vol_tons     = COALESCE(excluded.vol_tons,     _weekly_raw.vol_tons)
+        """,
+        (week_start, week_end, price_usd_kg, vol_tons),
     )
     conn.commit()
-    print(f"  [BULLETIN] _weekly_raw updated: {s_date} → {e_date} | "
-          f"vol_MTD={vol_mtd:,.0f} t"
-          + (f" | price={final_price:.4f} USD/kg" if final_price else ""))
+    print(f"  [BULLETIN] Upserted week {week_start}: "
+          f"price={price_usd_kg}, vol_tons={vol_tons}")
     return 1
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# FILL MISSING SECEX MONTHS FROM WEEKLY AVERAGES
+# FILL SECEX FROM WEEKLY
 # ══════════════════════════════════════════════════════════════════════════════
 def fill_secex_from_weekly(conn):
-    """Fill months beyond latest SECEX entry with weekly price averages."""
-    last = conn.execute(
-        "SELECT year, month FROM _secex_raw ORDER BY year DESC, month DESC LIMIT 1"
+    """
+    For the current (incomplete) month, estimate monthly SECEX from weekly data
+    if SECEX monthly hasn't published yet.
+    Only inserts if that month is not already in _secex_raw.
+    """
+    from datetime import date as _date
+    today = _date.today()
+    yr, mo = today.year, today.month
+    exists = conn.execute(
+        "SELECT 1 FROM _secex_raw WHERE year=? AND month=?", (yr, mo)
     ).fetchone()
-    if not last:
-        return 0
+    if exists:
+        return
 
-    ly, lm = last
-    last_date = f"{ly}-{lm:02d}-{monthrange(ly, lm)[1]:02d}"
-
-    weekly = conn.execute(
+    rows = conn.execute(
         """
-        SELECT CAST(strftime('%Y', start_date) AS INTEGER),
-               CAST(strftime('%m', start_date) AS INTEGER),
-               AVG(price_usd_kg)
+        SELECT price_usd_kg, vol_tons
         FROM   _weekly_raw
-        WHERE  start_date > ? AND price_usd_kg IS NOT NULL
-        GROUP  BY 1, 2
-        ORDER  BY 1, 2
+        WHERE  strftime('%Y', start_date) = ?
+          AND  strftime('%m', start_date) = ?
+          AND  price_usd_kg IS NOT NULL
+          AND  vol_tons      IS NOT NULL
         """,
-        (last_date,),
+        (str(yr), f"{mo:02d}")
     ).fetchall()
 
-    filled = 0
-    for yr, mo, avg_p in weekly:
-        if avg_p is None:
-            continue
-        conn.execute(
-            "INSERT OR IGNORE INTO _secex_raw(year,month,rev_000usd,vol_tons,price_usd_kg)"
-            " VALUES(?,?,NULL,NULL,?)",
-            (yr, mo, round(avg_p, 6)),
-        )
-        if conn.execute("SELECT changes()").fetchone()[0]:
-            print(f"  [SECEX-est] {yr}-{mo:02d}: {avg_p:.4f} USD/kg  ← weekly avg")
-            filled += 1
+    if not rows:
+        return
 
-    conn.commit()
-    return filled
+    total_vol = sum(r[1] for r in rows)
+    if total_vol == 0:
+        return
+    avg_price  = sum(r[0] * r[1] for r in rows) / total_vol
+    rev_000usd = avg_price * total_vol
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# COMPUTE & MATERIALISE SPREAD TABLES
-# ══════════════════════════════════════════════════════════════════════════════
-def _avg(conn, table, col, s, e):
-    r = conn.execute(
-        f"SELECT AVG({col}) FROM {table} WHERE dt >= ? AND dt <= ?", (s, e)
-    ).fetchone()
-    return r[0] if r and r[0] is not None else None
-
-
-def _grain_cost_brl_kg(conn, yr, mo):
-    """
-    Return grain basket BRL/kg for the lagged month (yr, mo - GRAIN_LAG).
-    Basket: CORN_WEIGHT * avg_corn_brl_sc + SOY_WEIGHT * avg_soy_brl_sc, / 60
-    """
-    lag_mo = mo - GRAIN_LAG
-    lag_yr = yr
-    while lag_mo <= 0:
-        lag_mo += 12
-        lag_yr -= 1
-
-    ld  = monthrange(lag_yr, lag_mo)[1]
-    s   = f"{lag_yr}-{lag_mo:02d}-01"
-    e   = f"{lag_yr}-{lag_mo:02d}-{ld:02d}"
-
-    r = conn.execute(
+    conn.execute(
         """
-        SELECT AVG(corn_brl_sc), AVG(soy_brl_sc)
-        FROM _cepea_grain_raw
-        WHERE dt >= ? AND dt <= ?
+        INSERT OR IGNORE INTO _secex_raw(year, month, rev_000usd, vol_tons, price_usd_kg)
+        VALUES (?,?,?,?,?)
         """,
-        (s, e)
+        (yr, mo, rev_000usd, total_vol, avg_price),
+    )
+    conn.commit()
+    print(f"  [WEEKLY→SECEX] Estimated {yr}-{mo:02d} from weekly: "
+          f"price={avg_price:.4f} USD/kg, vol={total_vol:.0f} t")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# GRAIN COST HELPER
+# ══════════════════════════════════════════════════════════════════════════════
+def _grain_cost_brl_kg(conn, year, month):
+    """
+    Return grain basket BRL/kg for (year, month) using a 2-month lag.
+    Averages _cepea_grain_raw over the lagged month. Falls back to nearest prior.
+    """
+    lag_year  = year  if month > GRAIN_LAG else year - 1
+    lag_month = month - GRAIN_LAG if month > GRAIN_LAG else month - GRAIN_LAG + 12
+    prefix    = f"{lag_year}-{lag_month:02d}"
+
+    row = conn.execute(
+        "SELECT AVG(corn_brl_sc), AVG(soy_brl_sc) FROM _cepea_grain_raw WHERE dt LIKE ?",
+        (prefix + "%",)
     ).fetchone()
 
-    if not r or (r[0] is None and r[1] is None):
-        return None
-
-    corn_avg = r[0]
-    soy_avg  = r[1]
-
-    # If one is missing, use what we have (rescale weights)
-    if corn_avg is None and soy_avg is not None:
-        basket_sc = soy_avg
-    elif soy_avg is None and corn_avg is not None:
-        basket_sc = corn_avg
+    if row and row[0] is not None and row[1] is not None:
+        corn_avg, soy_avg = row
     else:
-        basket_sc = CORN_WEIGHT * corn_avg + SOY_WEIGHT * soy_avg
+        fb = conn.execute(
+            """
+            SELECT corn_brl_sc, soy_brl_sc FROM _cepea_grain_raw
+            WHERE  dt < ? AND corn_brl_sc IS NOT NULL AND soy_brl_sc IS NOT NULL
+            ORDER BY dt DESC LIMIT 1
+            """,
+            (prefix + "-99",)
+        ).fetchone()
+        if fb:
+            corn_avg, soy_avg = fb
+        else:
+            return None
 
-    return basket_sc / 60.0  # BRL per kg
+    basket_brl_sc = CORN_WEIGHT * corn_avg + SOY_WEIGHT * soy_avg
+    return basket_brl_sc / 60.0
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# MATERIALISE
+# ══════════════════════════════════════════════════════════════════════════════
 def materialise(conn):
-    """Compute monthly and weekly spread tables from raw data."""
-    now_iso = datetime.now().isoformat(timespec="seconds")
+    """Rebuild monthly and weekly output tables from raw data."""
+    now = datetime.utcnow().isoformat()
 
-    # ── Monthly ───────────────────────────────────────────────────────────────
-    raw_m = conn.execute(
+    # ── MONTHLY ──────────────────────────────────────────────────────────────
+    secex_rows = conn.execute(
         "SELECT year, month, price_usd_kg FROM _secex_raw ORDER BY year, month"
     ).fetchall()
-    monthly_rows = []
-    for yr, mo, p_usd in raw_m:
-        s  = f"{yr}-{mo:02d}-01"
-        ld = monthrange(yr, mo)[1]
-        e  = f"{yr}-{mo:02d}-{ld:02d}"
-        fx       = _avg(conn, "_fx_raw", "fx", s, e)
-        grain_kg = _grain_cost_brl_kg(conn, yr, mo)
-        brl      = (p_usd * fx) if p_usd and fx else None
-        sp       = ((brl - grain_kg) / brl) if brl and grain_kg and brl > 0 else None
-        monthly_rows.append((
-            f"{yr}-{mo:02d}", yr, mo,
-            round(p_usd,    6) if p_usd    else None,
-            round(fx,       6) if fx       else None,
-            round(brl,      6) if brl      else None,
-            round(grain_kg, 6) if grain_kg else None,
-            round(sp,       6) if sp       else None,
-            now_iso,
-        ))
-    conn.executemany(
-        "INSERT OR REPLACE INTO monthly"
-        "(period,year,month,secex_usd_kg,fx,secex_brl_kg,cepea_r_kg,spread,updated_at)"
-        " VALUES(?,?,?,?,?,?,?,?,?)",
-        monthly_rows
-    )
 
-    # ── Weekly ────────────────────────────────────────────────────────────────
-    raw_w = conn.execute(
-        "SELECT start_date, end_date, price_usd_kg, vol_tons"
-        " FROM _weekly_raw ORDER BY start_date"
-    ).fetchall()
+    monthly_out = []
+    for yr, mo, price_usd_kg in secex_rows:
+        if price_usd_kg is None:
+            continue
+        period = f"{yr}-{mo:02d}"
 
-    # De-accumulate MTD vol_tons → weekly incremental
-    prev_mtd: dict = {}  # key = (year, month)
+        fx_row = conn.execute(
+            "SELECT AVG(fx) FROM _fx_raw WHERE dt LIKE ?",
+            (f"{yr}-{mo:02d}%",)
+        ).fetchone()
+        fx = fx_row[0] if fx_row and fx_row[0] else None
+        if fx is None:
+            continue
 
-    weekly_rows = []
-    for s, e, p_usd, vol_mtd in raw_w:
-        yr_w = int(s[:4])
-        mo_w = int(s[5:7])
-        fx       = _avg(conn, "_fx_raw", "fx", s, e)
-        grain_kg = _grain_cost_brl_kg(conn, yr_w, mo_w)
-        brl      = (p_usd * fx) if p_usd and fx else None
-        sp       = ((brl - grain_kg) / brl) if brl and grain_kg and brl > 0 else None
+        secex_brl_kg = price_usd_kg * fx
+        cepea_r_kg   = _grain_cost_brl_kg(conn, yr, mo)
+        spread = None
+        if cepea_r_kg is not None and secex_brl_kg:
+            spread = (secex_brl_kg - cepea_r_kg) / secex_brl_kg
 
-        # De-accumulate volume
-        yr_mo = (yr_w, mo_w)
-        if vol_mtd is not None:
-            prev = prev_mtd.get(yr_mo)
-            vol_week = vol_mtd - prev if prev is not None else vol_mtd
-            prev_mtd[yr_mo] = vol_mtd
-        else:
-            vol_week = None
-
-        weekly_rows.append((
-            s, e,
-            round(p_usd,    6) if p_usd    else None,
-            round(fx,       6) if fx       else None,
-            round(brl,      6) if brl      else None,
-            round(grain_kg, 6) if grain_kg else None,
-            round(sp,       6) if sp       else None,
-            round(vol_week, 3) if vol_week is not None else None,
-            now_iso,
-        ))
+        monthly_out.append((period, yr, mo, price_usd_kg, fx, secex_brl_kg,
+                            cepea_r_kg, spread, now))
 
     conn.executemany(
-        "INSERT OR REPLACE INTO weekly"
-        "(start_date,end_date,secex_usd_kg,fx,secex_brl_kg,cepea_r_kg,spread,vol_tons,updated_at)"
-        " VALUES(?,?,?,?,?,?,?,?,?)",
-        weekly_rows
+        """
+        INSERT OR REPLACE INTO monthly
+          (period, year, month, secex_usd_kg, fx, secex_brl_kg,
+           cepea_r_kg, spread, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        """,
+        monthly_out,
     )
     conn.commit()
+    print(f"  [MAT] monthly: {len(monthly_out)} rows")
 
-    nm = conn.execute("SELECT COUNT(*) FROM monthly WHERE spread IS NOT NULL").fetchone()[0]
-    nw = conn.execute("SELECT COUNT(*) FROM weekly  WHERE spread IS NOT NULL").fetchone()[0]
-    nv = sum(1 for r in weekly_rows if r[7] is not None)
-    print(f"  [DB] monthly: {len(monthly_rows)} rows ({nm} with spread)")
-    print(f"  [DB] weekly:  {len(weekly_rows)} rows ({nw} with spread, {nv} with volume)")
+    # ── WEEKLY ───────────────────────────────────────────────────────────────
+    weekly_rows = conn.execute(
+        "SELECT start_date, end_date, price_usd_kg, vol_tons FROM _weekly_raw ORDER BY start_date"
+    ).fetchall()
+
+    # De-accumulate MTD volumes within each calendar month
+    prev_month = None
+    prev_vol   = 0.0
+    deacc = []
+    for start_date, end_date, price_usd_kg, vol_mtd in weekly_rows:
+        yr_mo = start_date[:7]
+        if yr_mo != prev_month:
+            prev_month = yr_mo
+            prev_vol   = 0.0
+        inc_vol = None
+        if vol_mtd is not None:
+            inc_vol  = max(0.0, vol_mtd - prev_vol)
+            prev_vol = vol_mtd
+        deacc.append((start_date, end_date, price_usd_kg, inc_vol))
+
+    weekly_out = []
+    for start_date, end_date, price_usd_kg, inc_vol in deacc:
+        if price_usd_kg is None:
+            continue
+        yr = int(start_date[:4])
+        mo = int(start_date[5:7])
+        ed = end_date or start_date
+
+        fx_row = conn.execute(
+            "SELECT AVG(fx) FROM _fx_raw WHERE dt >= ? AND dt <= ?",
+            (start_date, ed)
+        ).fetchone()
+        fx = fx_row[0] if fx_row and fx_row[0] else None
+        if fx is None:
+            fx_row2 = conn.execute(
+                "SELECT AVG(fx) FROM _fx_raw WHERE dt LIKE ?",
+                (f"{yr}-{mo:02d}%",)
+            ).fetchone()
+            fx = fx_row2[0] if fx_row2 and fx_row2[0] else None
+        if fx is None:
+            continue
+
+        secex_brl_kg = price_usd_kg * fx
+        cepea_r_kg   = _grain_cost_brl_kg(conn, yr, mo)
+        spread = None
+        if cepea_r_kg is not None and secex_brl_kg:
+            spread = (secex_brl_kg - cepea_r_kg) / secex_brl_kg
+
+        weekly_out.append((start_date, end_date, price_usd_kg, fx, secex_brl_kg,
+                           cepea_r_kg, spread, inc_vol, now))
+
+    conn.executemany(
+        """
+        INSERT OR REPLACE INTO weekly
+          (start_date, end_date, secex_usd_kg, fx, secex_brl_kg,
+           cepea_r_kg, spread, vol_tons, updated_at)
+        VALUES (?,?,?,?,?,?,?,?,?)
+        """,
+        weekly_out,
+    )
+    conn.commit()
+    print(f"  [MAT] weekly: {len(weekly_out)} rows")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
-    args       = sys.argv[1:]
-    do_init    = "--init" in args
-    cepea_idx  = next((i for i, a in enumerate(args) if a == "--cepea"), None)
-    cepea_path = args[cepea_idx + 1] if cepea_idx is not None and cepea_idx + 1 < len(args) else None
+    import argparse
+    parser = argparse.ArgumentParser(description="Refresh chicken_bz.db")
+    parser.add_argument("--init",  action="store_true",
+                        help="Full reseed (all years) — use for first-time setup")
+    parser.add_argument("--cepea", metavar="PATH",
+                        help="Optional: seed CEPEA grain from xlsx file")
+    args = parser.parse_args()
 
-    print("=" * 60)
-    print(f"  Brazil Chicken Spread Extractor — {date.today().isoformat()}")
-    print(f"  Mode: {'INIT (full seed)' if do_init else 'INCREMENTAL UPDATE'}")
-    print("=" * 60)
-
+    print(f"[DB] Opening {DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     init_db(conn)
 
-    # ── [1] Weekly raw seed (always) ─────────────────────────────────────────
-    print("\n[1] Seeding weekly raw data …")
+    # ── 1. Weekly historical seed ─────────────────────────────────────────────
     seed_weekly_raw(conn)
 
-    # ── [2] CEPEA grain — seed from embedded monthly averages + live scrape ──
-    # seed_cepea_grain inserts CEPEA_MONTHLY_SEED as synthetic "YYYY-MM-01"
-    # rows using INSERT OR IGNORE — never overwrites real daily data.
-    # fetch_cepea_daily scrapes cepea.org.br for the latest ~15 trading days.
-    print("\n[2] CEPEA grain prices …")
-    seed_cepea_grain(conn)    # ensures full historical coverage (INSERT OR IGNORE)
-    fetch_cepea_daily(conn)   # upserts freshest daily rows from cepea.org.br
+    # ── 2. CEPEA grain ────────────────────────────────────────────────────────
+    seed_cepea_grain(conn)
+    fetch_cepea_daily(conn)
+    if args.cepea:
+        load_cepea_grain(conn, args.cepea)
 
-    # Optional: also import from xlsx if --cepea PATH is supplied
-    if cepea_path:
-        print(f"\n  [CEPEA] Importing from xlsx: {cepea_path}")
-        load_cepea_grain(conn, cepea_path)
-
-    # ── [3] SECEX monthly ─────────────────────────────────────────────────────
-    if do_init:
-        print("\n[3] Fetching SECEX monthly (all years, NCM 0207) …")
+    # ── 3. SECEX monthly ──────────────────────────────────────────────────────
+    if args.init:
+        print("[SECEX] Full reseed — all years …")
         fetch_secex(conn)
     else:
-        print("\n[3] Fetching SECEX monthly (recent years) …")
-        yr = datetime.now().year
-        fetch_secex(conn, years=[yr - 1, yr])
+        cur_year = datetime.now().year
+        fetch_secex(conn, years=[cur_year - 1, cur_year])
 
-    # ── [4] BCB PTAX FX ───────────────────────────────────────────────────────
-    print("\n[4] Fetching BCB PTAX FX …")
+    # ── 4. BCB PTAX FX ───────────────────────────────────────────────────────
     fetch_fx(conn)
 
-    # ── [5] Weekly bulletin ───────────────────────────────────────────────────
-    print("\n[5] Fetching SECEX weekly bulletin …")
+    # ── 5. Weekly bulletin + fill ─────────────────────────────────────────────
     fetch_weekly_bulletin(conn)
-
-    print("\n[→] Filling estimated SECEX months from weekly …")
     fill_secex_from_weekly(conn)
 
-    # ── [6] Materialise spread tables ─────────────────────────────────────────
-    print("\n[6] Computing spread tables …")
+    # ── 6. Materialise ────────────────────────────────────────────────────────
     materialise(conn)
 
     conn.close()
-    print("\n" + "=" * 60)
-    print("  Done. chicken_bz.db updated.")
-    print("=" * 60)
+    db_size = DB_PATH.stat().st_size // 1024
+    print(f"\n✓ Done. {DB_PATH.name} = {db_size} KB")
 
 
 if __name__ == "__main__":
