@@ -63,6 +63,7 @@ from datetime import datetime, date
 from pathlib import Path
 
 import requests
+import pandas as pd
 
 # ── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -82,9 +83,10 @@ IMEA_API  = "https://api1.imea.com.br"
 IMEA_USER = os.getenv("IMEA_USER", "ryu.matsuyama@itaubba.com")
 IMEA_PASS = os.getenv("IMEA_PASS", "falabrod")
 
-# ── APIs CONAB ────────────────────────────────────────────────────────────────
-CONAB_PRECO_API = "https://portaldeinformacoes.conab.gov.br/index.php/api"
-CONAB_SAFRA_API = "https://portaldeinformacoes.conab.gov.br/index.php/api"
+# ── CONAB — arquivos bulk TXT (mesmo método do extractor_conab.py) ─────────────
+CONAB_BASE       = "https://portaldeinformacoes.conab.gov.br/downloads/arquivos"
+CONAB_GRAOS_URL  = f"{CONAB_BASE}/LevantamentoGraos.txt"   # produtividade
+CONAB_PRECO_URL  = f"{CONAB_BASE}/PrecosMensalUF.txt"       # preços ao produtor por UF
 
 # ── IDs portal IMEA ───────────────────────────────────────────────────────────
 GRUPO_CUSTO = "1121328740175912960"
@@ -231,9 +233,25 @@ def ensure_schema(conn):
 # FETCH — PORTAL IMEA (custos)
 # ════════════════════════════════════════════════════════════════════════════════
 def imea_token():
+    """
+    Autentica no portal IMEA Digital.
+    Campos obrigatórios descobertos via DevTools:
+      username, password, grant_type, client_id=2
+    Sem client_id → 400 Bad Request.
+    """
     r = requests.post(
         f"{IMEA_API}/token",
-        data={"username": IMEA_USER, "password": IMEA_PASS, "grant_type": "password"},
+        data={
+            "username":   IMEA_USER,
+            "password":   IMEA_PASS,
+            "grant_type": "password",
+            "client_id":  "2",
+        },
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        },
         timeout=30,
     )
     r.raise_for_status()
@@ -291,100 +309,277 @@ def fetch_imea_custo(conn, token, cultura, cadeia_id, now_str):
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-# FETCH — CONAB PREÇOS
+# HELPERS CONAB TXT — mesmo padrão do extractor_conab.py
 # ════════════════════════════════════════════════════════════════════════════════
-def fetch_conab_preco(conn, cultura, produto_conab, nivel, now_str):
-    """Extrai série histórica de preços ao produtor MT da API CONAB (R$/kg)."""
-    log.info(f"  [{cultura}] Buscando preço CONAB")
-    try:
-        r = requests.get(
-            f"{CONAB_PRECO_API}/produto/serie-historica",
-            params={"produto": produto_conab, "nivel": nivel, "uf": "MT"},
-            timeout=60,
-        )
-        r.raise_for_status()
-        data = r.json()
-    except Exception as e:
-        log.warning(f"  [{cultura}] Preço CONAB falhou: {e}")
-        return 0
+def _baixa_conab_txt(url):
+    """Baixa e parseia arquivo .txt bulk da CONAB (latin1, sep=';')."""
+    import io as _io
+    r = requests.get(url, timeout=180, verify=False,
+        headers={"User-Agent": "Mozilla/5.0"})
+    r.raise_for_status()
+    df = pd.read_csv(_io.StringIO(r.content.decode("latin1")), sep=";", dtype=str)
+    df.columns = [c.strip() for c in df.columns]
+    for c in df.columns:
+        df[c] = df[c].str.strip()
+    return df
 
-    inserted = 0
-    for pt in data.get("data", []):
-        data_ref = (pt.get("data") or "")[:10]
-        valor_kg = pt.get("valor")
-        if not data_ref or valor_kg is None:
-            continue
+
+def _parse_float_br(val):
+    """Converte número BR '1.868,7' ou decimal '263.7' para float."""
+    try:
+        s = str(val).strip()
+        if "," in s and "." in s:
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            s = s.replace(",", ".")
+        return float(s)
+    except (ValueError, AttributeError):
+        return None
+
+
+def _normaliza_lev(val):
+    """1-12 levantamentos mensais + 99 Série Histórica. Outros descartados."""
+    try:
+        v = int(str(val).strip())
+        if 1 <= v <= 12 or v == 99:
+            return v
+        return None
+    except (ValueError, TypeError):
+        return None
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# FETCH — CONAB PREÇOS via PrecosMensalUF.txt
+# ════════════════════════════════════════════════════════════════════════════════
+# ════════════════════════════════════════════════════════════════════════════════
+# FETCH — CONAB PREÇOS via Pentaho CDA (portaldeinformacoes.conab.gov.br)
+# ════════════════════════════════════════════════════════════════════════════════
+def fetch_conab_preco(conn, now_str):
+    """
+    Baixa preços recebidos pelo produtor MT via Pentaho CDA do portal CONAB.
+    Sem reCAPTCHA — dois requests simples (POST doQuery → GET unwrapQuery).
+
+    Fluxo:
+      1. POST doQuery com parâmetros → retorna UUID
+      2. GET unwrapQuery?uuid=... → baixa XLS com série histórica
+      3. Parseia XLS (formato wide: meses nas linhas, UFs nas colunas)
+      4. Extrai coluna MT e insere em preco_conab
+
+    Produtos buscados: SOJA, MILHO (GRÃOS), ALGODÃO (PLUMA)
+    """
+    PENTAHO = "https://pentahoportaldeinformacoes.conab.gov.br/pentaho/plugin/cda/api"
+    HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Origin":  "https://portaldeinformacoes.conab.gov.br",
+        "Referer": "https://portaldeinformacoes.conab.gov.br/",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+    # (produto_pentaho, classificacao, cultura_interna, bag_kg, produto_conab_label, nivel_label)
+    PRODUTOS = [
+        ("SOJA",    "EM GRÃOS",  "SOJA",    60,
+         "SOJA EM GRÃOS   (60 kg)",
+         "PRODUTOR"),
+        ("MILHO",   "EM GRÃOS",  "MILHO",   60,
+         "MILHO EM GRÃOS   (60 kg)",
+         "PRODUTOR"),
+        ("ALGODÃO", "EM PLUMA",  "ALGODAO", 15,
+         "ALGODÃO EM PLUMA TIPO BÁSICO - SLM 41-4 BRANCO  (15 kg)",
+         "PRODUTOR"),
+    ]
+
+    import io as _io
+    MESES_PT = {
+        "JAN":1,"FEV":2,"MAR":3,"ABR":4,"MAI":5,"JUN":6,
+        "JUL":7,"AGO":8,"SET":9,"OUT":10,"NOV":11,"DEZ":12,
+    }
+
+    total_inserted = 0
+
+    for prod_p, classif, cultura, bag_kg, prod_label, nivel in PRODUTOS:
+        log.info(f"  [{cultura}] Buscando preço CONAB via Pentaho CDA")
         try:
-            conn.execute(
-                """INSERT OR IGNORE INTO preco_conab
-                   (cultura,produto_conab,nivel_comercializacao,data_referencia,valor_kg,updated_at)
-                   VALUES(?,?,?,?,?,?)""",
-                (cultura, produto_conab, nivel, data_ref, valor_kg, now_str),
+            # ── Step 1: doQuery ──────────────────────────────────────────────
+            payload = {
+                "paramproduto": prod_p,
+                "paramregiaoUf": "MT",
+                "paramnivelComercializacao": "PREÇO RECEBIDO P/ PRODUTOR",
+                "parammesAnoUF": "[Ano Mes].[Mes-Ano].Members",  # série histórica completa
+                "paramclassificacao": classif,
+                "paramlinhaRegiao": "[Ano Mes].[Mes-Ano].Members",
+                "paramtipoVisao": "MENSAL",
+                "path": "/home/SIAGRO/PrecoMedio.cda",
+                "dataAccessId": "MediaPrecoUF",
+                "outputIndexId": "1",
+                "pageSize": "0",
+                "pageStart": "0",
+                "sortBy": "",
+                "paramsearchBox": "",
+                "outputType": "xls",
+                "settingattachmentName": "PrecoMedioUF.xls",
+                "wrapItUp": "true",
+            }
+            r1 = requests.post(
+                f"{PENTAHO}/doQuery",
+                data=payload, headers=HEADERS, timeout=60, verify=False,
             )
-            if conn.execute("SELECT changes()").fetchone()[0]:
-                inserted += 1
-        except Exception:
-            pass
-    conn.commit()
-    log.info(f"  [{cultura}] Preço CONAB: {inserted} novas linhas")
-    return inserted
+            r1.raise_for_status()
+            uuid = r1.text.strip()
+            if not uuid:
+                log.warning(f"  [{cultura}] doQuery retornou UUID vazio")
+                continue
+
+            # ── Step 2: unwrapQuery ──────────────────────────────────────────
+            r2 = requests.get(
+                f"{PENTAHO}/unwrapQuery",
+                params={"path": "/home/SIAGRO/PrecoMedio.cda", "uuid": uuid},
+                headers=HEADERS, timeout=60, verify=False,
+            )
+            r2.raise_for_status()
+            if len(r2.content) < 100:
+                log.warning(f"  [{cultura}] Arquivo XLS vazio ({len(r2.content)} bytes)")
+                continue
+
+            # ── Step 3: parsear XLS ──────────────────────────────────────────
+            # Formato: row 0 = header (["Ano Mes.Ano Mes", "CENTRO-OESTE/...", ..., "MT/Preco Medio KG"])
+            # Linhas: ["ABR-2025", 1.91, ..., 1.86]
+            df = pd.read_excel(_io.BytesIO(r2.content), header=None)
+
+            # Encontrar coluna MT
+            header = [str(v) for v in df.iloc[0]]
+            mt_col = next(
+                (i for i, h in enumerate(header) if "MT" in h.upper() and i > 0),
+                None
+            )
+            if mt_col is None:
+                log.warning(f"  [{cultura}] Coluna MT não encontrada. Header: {header}")
+                continue
+
+            inserted = 0
+            for _, row in df.iloc[1:].iterrows():
+                mes_ano = str(row.iloc[0]).strip()   # ex: "ABR-2025"
+                valor_bag = row.iloc[mt_col]
+                if pd.isna(valor_bag) or not mes_ano or mes_ano == "nan":
+                    continue
+
+                # Parsear "ABR-2025" → ano=2025, mes=4
+                try:
+                    parts = mes_ano.split("-")
+                    mes_str = parts[0].upper()[:3]
+                    ano = int(parts[1])
+                    mes = MESES_PT.get(mes_str)
+                    if not mes:
+                        continue
+                    data_ref = f"{ano:04d}-{mes:02d}-15"
+                    valor_kg = round(float(valor_bag) / bag_kg, 6)
+                except Exception:
+                    continue
+
+                try:
+                    conn.execute(
+                        """INSERT OR IGNORE INTO preco_conab
+                           (cultura,produto_conab,nivel_comercializacao,
+                            data_referencia,valor_kg,updated_at)
+                           VALUES(?,?,?,?,?,?)""",
+                        (cultura, prod_label, nivel, data_ref, valor_kg, now_str),
+                    )
+                    if conn.execute("SELECT changes()").fetchone()[0]:
+                        inserted += 1
+                except Exception:
+                    pass
+
+            conn.commit()
+            log.info(f"  [{cultura}] Preço CONAB: {inserted} novos registros")
+            total_inserted += inserted
+
+        except Exception as e:
+            log.warning(f"  [{cultura}] Preço CONAB falhou: {e}")
+
+    return total_inserted
 
 
 # ════════════════════════════════════════════════════════════════════════════════
-# FETCH — CONAB PRODUTIVIDADE (levantamentos safra)
+# FETCH — CONAB PRODUTIVIDADE via LevantamentoGraos.txt
 # ════════════════════════════════════════════════════════════════════════════════
-def fetch_conab_safra(conn, cultura, produto_conab, safra_filter, bag_kg, now_str):
+def fetch_conab_safra(conn, now_str):
     """
-    Extrai levantamentos de produtividade da API CONAB para MT.
-    Armazena em conab_safra com prod_bag_ha já convertido.
-    SOJA/MILHO: bag_kg=60 (sc/ha) | ALGODÃO: bag_kg=15 (@/ha lint)
-    MILHO: filtra safra='2ª SAFRA' (safrinha MT)
+    Baixa LevantamentoGraos.txt e atualiza conab_safra para as 3 culturas MT.
+    Mesmo método do extractor_conab.py — verify=False, latin1, sep=';'.
+
+    Produtos filtrados (nomes exatos no arquivo):
+      SOJA, MILHO (2ª SAFRA), ALGODAO EM PLUMA
+
+    Conversão: t/ha × 1000 ÷ bag_kg = bag/ha
+      SOJA/MILHO: ÷60 → sc/ha | ALGODÃO: ÷15 → @/ha lint
     """
-    log.info(f"  [{cultura}] Buscando produtividade CONAB safra")
+    log.info("  [CONAB] Buscando produtividade via LevantamentoGraos.txt")
     try:
-        r = requests.get(
-            f"{CONAB_SAFRA_API}/serie-historica-volume-producao-safra",
-            params={"produto": produto_conab, "uf": "MT"},
-            timeout=60,
-        )
-        r.raise_for_status()
-        data = r.json()
+        df = _baixa_conab_txt(CONAB_GRAOS_URL)
+        log.info(f"  [CONAB] Safra — {len(df)} linhas | colunas: {list(df.columns)}")
     except Exception as e:
-        log.warning(f"  [{cultura}] Produtividade CONAB falhou: {e}")
+        log.warning(f"  [CONAB] Produtividade falhou: {e}")
+        return 0
+
+    # Mapeamento produto no arquivo → (cultura, bag_kg, safra_filter)
+    PROD_MAP = {
+        "SOJA":             ("SOJA",    60, None),
+        "MILHO":            ("MILHO",   60, "2ª SAFRA"),
+        "ALGODAO EM PLUMA": ("ALGODAO", 15, None),
+    }
+
+    df_filt = df[
+        (df["produto"].isin(PROD_MAP.keys())) &
+        (df["uf"] == "MT")
+    ].copy()
+
+    # Coluna de produtividade tem nome diferente no arquivo de grãos
+    col_prod = next(
+        (c for c in df.columns if "produtividade" in c.lower() or "rendimento" in c.lower()),
+        None
+    )
+    if not col_prod:
+        log.warning(f"  [CONAB] Coluna produtividade não encontrada: {list(df.columns)}")
         return 0
 
     inserted = 0
-    for pt in (data.get("data") or data if isinstance(data, list) else []):
-        ano_ag   = pt.get("ano_agricola") or pt.get("anoAgricola") or ""
-        safra    = pt.get("safra") or ""
-        id_lev   = pt.get("id_levantamento") or pt.get("idLevantamento") or 0
-        dsc_lev  = pt.get("dsc_levantamento") or pt.get("dscLevantamento") or ""
-        prod_t   = pt.get("produtividade_t_ha") or pt.get("produtividadeHa") or 0
-        uf       = pt.get("uf") or "MT"
+    for _, row in df_filt.iterrows():
+        prod_key = row["produto"]
+        if prod_key not in PROD_MAP:
+            continue
+        cultura, bag_kg, safra_filter = PROD_MAP[prod_key]
 
-        if not ano_ag or not prod_t or float(prod_t) <= 0:
-            continue
-        if safra_filter and safra != safra_filter:
-            continue
-        if uf != "MT":
+        safra_tipo = row.get("safra", "")
+        if safra_filter and safra_tipo != safra_filter:
             continue
 
-        prod_bag = round(float(prod_t) * 1000 / bag_kg, 4)
+        id_lev = _normaliza_lev(row.get("id_levantamento", ""))
+        if id_lev is None:
+            continue
+
+        prod_t = _parse_float_br(row.get(col_prod, ""))
+        if not prod_t or prod_t <= 0:
+            continue
+
+        prod_bag = round(prod_t * 1000 / bag_kg, 4)
+        ano_ag   = row.get("ano_agricola", "")
+
         try:
             conn.execute(
-                """INSERT OR IGNORE INTO conab_safra
+                """INSERT OR REPLACE INTO conab_safra
                    (produto,cultura,uf,ano_agricola,safra,id_levantamento,dsc_levantamento,
                     produtividade_t_ha,prod_bag_ha,bag_kg,updated_at)
                    VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
-                (produto_conab, cultura, uf, ano_ag, safra, int(id_lev), dsc_lev,
-                 float(prod_t), prod_bag, bag_kg, now_str),
+                (prod_key, cultura, "MT", ano_ag, safra_tipo, id_lev,
+                 row.get("dsc_levantamento", ""),
+                 prod_t, prod_bag, bag_kg, now_str),
             )
             if conn.execute("SELECT changes()").fetchone()[0]:
                 inserted += 1
         except Exception:
             pass
+
     conn.commit()
-    log.info(f"  [{cultura}] Produtividade CONAB: {inserted} novas linhas")
+    log.info(f"  [CONAB] Produtividade: {inserted} novos/atualizados registros")
     return inserted
 
 
@@ -705,21 +900,13 @@ def main():
             log.info(f"--- CUSTO {cultura} ---")
             fetch_imea_custo(conn, token, cultura, cfg["cadeia_id"], now_str)
 
-    # ── 3. Preços CONAB ───────────────────────────────────────────────────────
+    # ── 3. Preços CONAB (arquivo bulk PrecosMensalUF.txt) ────────────────────
     log.info("--- Preços CONAB ---")
-    for cultura, cfg in CULTURAS.items():
-        fetch_conab_preco(conn, cultura, cfg["conab_preco"], cfg["conab_nivel"], now_str)
-        time.sleep(0.5)
+    fetch_conab_preco(conn, now_str)
 
-    # ── 4. Produtividade CONAB ────────────────────────────────────────────────
+    # ── 4. Produtividade CONAB (arquivo bulk LevantamentoGraos.txt) ──────────
     log.info("--- Produtividade CONAB ---")
-    for cultura, cfg in CULTURAS.items():
-        fetch_conab_safra(
-            conn, cultura,
-            cfg["conab_produto"], cfg["conab_safra"], cfg["bag_kg"],
-            now_str
-        )
-        time.sleep(0.5)
+    fetch_conab_safra(conn, now_str)
 
     # ── 5. Build dataset + dashboard ─────────────────────────────────────────
     log.info("Construindo dataset P&L...")
