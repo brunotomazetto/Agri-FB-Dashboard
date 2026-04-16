@@ -431,6 +431,20 @@ const STATIC_DASHBOARDS = [
     note: null,
     footer: null,
   },
+  {
+    id: 10,
+    sector: 'fnb',
+    subsector: 'chicken',
+    title: 'BZ Chicken Spread Tracker',
+    description: 'Weekly and monthly SECEX chicken export price vs. grain basket spread (margin %). Corn 66% + Soy PNA 34% (BRL/sc60kg), 2-month lag. NCM 0207 with BCB PTAX FX.',
+    source: 'MDIC · CEPEA/ESALQ · BCB',
+    tags: ['Brazil', 'Chicken', 'Spread', 'SECEX', 'CEPEA'],
+    visible_to_all: true,
+    coming_soon: false,
+    display_order: 10,
+    note: null,
+    footer: null,
+  },
 ];
 
 async function loadAllData(){
@@ -576,6 +590,7 @@ const DASH_MODULES = {
   7: 'Chicken/U.S. Tracker/chicken_margin_dashboard.html',
   8: 'Supermarket%20Prices/supermarket_prices.html',
   9: 'Agri Monitor/crushing_spread/crushing_spread.html',
+  10: 'Chicken/BZ Tracker/chicken_bz_dashboard.html',
 };
 
 function renderContent(){
