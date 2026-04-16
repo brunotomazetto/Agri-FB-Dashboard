@@ -429,29 +429,29 @@ def fetch_imea_custo(conn, token, cultura, cadeia_id, now_str):
     )
 
     # Mapeamento nome planilha → nome banco (compatível com API histórica)
+    # Seções agregadas da planilha → nomes que o dashboard consome
     NOME_MAP = {
-        # Seções com letra → nome limpo
-        "A. CUSTEIO (1+2...+6)":                              "Custeio",
-        "B. MANUTENÇÃO":                                       "Manutenção",
-        "C. IMPOSTOS E TAXAS":                                 "Impostos e Taxas",
-        "D. FINANCEIRAS":                                      "Financeiras",
-        "E. PÓS-PRODUÇÃO":                                    "Pós-Produção",
-        "F. OUTROS CUSTOS":                                    "Outros Custos",
-        "G. ARRENDAMENTO":                                     "Arrendamento",
-        "H. DEPRECIAÇÕES":                                    "Depreciações",
-        "I. MÃO-DE-OBRA FAMILIAR":                            "Mão-de-obra Familiar",
-        "J. CUSTO DE OPORTUNIDADE":                           "Custo de Oportunidade",
-        "6. MÃO DE OBRA":                                      "Mão de Obra",
-        "1. SEMENTES":                                         "Sementes",
-        "2. FERTILIZANTES E CORRETIVOS":                       "Fertilizantes e Corretivos",
-        "3. DEFENSIVOS":                                       "Defensivos",
-        "4. OPERAÇÕES MECANIZADAS (óleo diesel e lubrificantes)": "OPERAÇÕES MECANIZADAS",
-        "4. OPERAÇÕES MECANIZADAS":                            "OPERAÇÕES MECANIZADAS",
-        "5. SERVIÇOS TERCEIRIZADOS":                           "Serviços Terceirizados",
-        # Totais — nomes exatos que o dashboard busca
-        "COE (A + B + ... + F + G)":                          "Custo Operacional Efetivo",
-        "COT (COE + H + I)":                                  "Custo Operacional Total",
-        "CT (COT + J)":                                       "Custo Total",
+        "A. CUSTEIO (1+2...+6)":                                  "Custeio",
+        "B. MANUTENÇÃO":                                           "Manutenção",
+        "C. IMPOSTOS E TAXAS":                                     "Impostos e Taxas",
+        "D. FINANCEIRAS":                                          "Financeiras",
+        "E. PÓS-PRODUÇÃO":                                        "Pós-Produção",
+        "F. OUTROS CUSTOS":                                        "Outros Custos",
+        "G. ARRENDAMENTO":                                         "Arrendamento",
+        "H. DEPRECIAÇÕES":                                        "Depreciações",
+        "I. MÃO-DE-OBRA FAMILIAR":                                "Mão-de-obra Familiar",
+        "J. CUSTO DE OPORTUNIDADE":                               "Custo de Oportunidade",
+        "6. MÃO DE OBRA":                                          "Mão de Obra",
+        "1. SEMENTES":                                             "Sementes",
+        "2. FERTILIZANTES E CORRETIVOS":                           "Fertilizantes e Corretivos",
+        "3. DEFENSIVOS":                                           "Defensivos",
+        "4. OPERAÇÕES MECANIZADAS (óleo diesel e lubrificantes)":  "OPERAÇÕES MECANIZADAS",
+        "4. OPERAÇÕES MECANIZADAS":                                "OPERAÇÕES MECANIZADAS",
+        "5. SERVIÇOS TERCEIRIZADOS":                               "Serviços Terceirizados",
+        # Totais — mapeados para os nomes exatos do banco histórico
+        "COE (A + B + ... + F + G)":  "Custo Operacional Efetivo",
+        "COT (COE + H + I)":          "Custo Operacional Total",
+        "CT (COT + J)":               "Custo Total",
     }
 
     inserted = 0
