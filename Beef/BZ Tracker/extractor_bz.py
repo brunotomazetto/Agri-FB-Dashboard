@@ -694,59 +694,93 @@ def fetch_cepea_web(conn):
     Fetch recent CEPEA Boi Gordo R$/arroba indicator data from the web and
     insert any dates newer than what is already in _cepea_raw.
 
-    Strategy:
-      1. GET indicator page → look for downloadable XLS link
-      2. Download XLS and parse (openpyxl)
-      3. Fallback: parse HTML table directly from the page
+    Strategy (in order):
+      1. CEPEA widget endpoint (/widgetpec/cotacao.aspx) — returns static HTML
+         with a table; try multiple known indicator IDs for boi gordo
+      2. Main indicator page → follow the "SÉRIE DE PREÇOS" XLS download link
+      3. Try direct XLS URL patterns as last resort
+
+    NOTE: The main CEPEA indicator page (boi-gordo.aspx) is a React SPA — its
+    table is JS-rendered and NOT in the static HTML. The widget endpoint is
+    static and machine-readable.
+
+    CEPEA boi gordo indicator IDs (try all; the correct one may vary):
+      indicador=2  (boi gordo carcaça — most common)
+      indicador=1  (alternate)
+      indicador=3  (alternate)
     """
-    import io, re as _re
-    PAGE_URL = "https://www.cepea.org.br/br/indicador/boi-gordo.aspx"
+    import io, re as _re, json as _json
+    BASE = "https://www.cepea.org.br"
+    PAGE_URL = f"{BASE}/br/indicador/boi-gordo.aspx"
 
     last_dt = conn.execute("SELECT MAX(dt) FROM _cepea_raw").fetchone()[0]
     print(f"  [CEPEA-WEB] Last date in DB: {last_dt}")
 
-    # ── Step 1: fetch indicator page ─────────────────────────────────────────
     try:
         import requests as _req
-        r = _req.get(PAGE_URL,
-                     headers={"User-Agent": "Mozilla/5.0",
-                               "Accept": "text/html,application/xhtml+xml"},
-                     timeout=30, verify=False)
-        html = r.text
-    except Exception as exc:
-        print(f"  [CEPEA-WEB] Page fetch error: {exc}")
+    except ImportError:
+        print("  [CEPEA-WEB] Missing: pip install requests")
         return 0
 
-    # ── Step 2: try to find & download XLS export link ───────────────────────
-    xls_candidates = _re.findall(
-        r'href=["\']([^"\']*(?:exportlayout|download|indicador)[^"\']*\.xls[x]?)["\']',
-        html, _re.IGNORECASE)
-    # Also look for generic xls links in page
-    xls_candidates += _re.findall(r'href=["\']([^"\']*\.xls[x]?)["\']', html, _re.IGNORECASE)
+    HDRS = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8"}
 
-    BASE = "https://www.cepea.org.br"
     parsed_rows = []
 
-    for lnk in xls_candidates[:5]:
-        url = lnk if lnk.startswith("http") else BASE + lnk
+    # ─────────────────────────────────────────────────────────────────────────
+    # Helper: extract (iso_date, r_arroba) pairs from an HTML string
+    # Works on CEPEA widget HTML which has tables like:
+    #   <td>17/04/2026</td><td>365,10</td>...
+    # ─────────────────────────────────────────────────────────────────────────
+    def _rows_from_html(html):
+        rows = []
+        # Strip tags inside <td> to get clean text values
+        tds = _re.findall(r'<td[^>]*>\s*(.*?)\s*</td>', html, _re.IGNORECASE | _re.DOTALL)
+        # Walk pairs: find a date cell, then grab the next numeric cell
+        i = 0
+        while i < len(tds):
+            raw = _re.sub(r'<[^>]+>', '', tds[i]).strip()
+            dt = None
+            for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                try:
+                    dt = datetime.strptime(raw, fmt).date(); break
+                except Exception:
+                    pass
+            if dt and dt.year >= 2005:
+                # Look ahead up to 3 cells for a numeric value
+                for j in range(i + 1, min(i + 4, len(tds))):
+                    num_raw = _re.sub(r'<[^>]+>', '', tds[j]).strip()
+                    num_raw = num_raw.replace(".", "").replace(",", ".").replace("R$", "").strip()
+                    try:
+                        val = float(num_raw)
+                        if 150 < val < 3000:   # R$/arroba sanity range
+                            rows.append((str(dt), val, round(val / 15.0, 6)))
+                            break
+                    except Exception:
+                        pass
+            i += 1
+        return rows
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Helper: parse XLS/XLSX bytes
+    # ─────────────────────────────────────────────────────────────────────────
+    def _rows_from_xls(content):
+        import io as _io
+        rows = []
         try:
-            rx = _req.get(url,
-                          headers={"User-Agent": "Mozilla/5.0"},
-                          timeout=40, verify=False)
-            if rx.status_code != 200:
-                continue
-            import openpyxl
-            wb = openpyxl.load_workbook(io.BytesIO(rx.content), data_only=True)
+            import openpyxl as _xl
+            wb = _xl.load_workbook(_io.BytesIO(content), data_only=True)
             ws = wb.active
             for row in ws.iter_rows(values_only=True):
-                # Expect a date-like value followed by a numeric price
+                if not row:
+                    continue
                 for ci in range(len(row) - 1):
                     cell = row[ci]
-                    # Accept datetime objects or string dates
                     dt = None
                     if isinstance(cell, datetime):
                         dt = cell.date()
-                    elif isinstance(cell, date):
+                    elif isinstance(cell, date) and not isinstance(cell, datetime):
                         dt = cell
                     elif isinstance(cell, str):
                         for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
@@ -758,44 +792,143 @@ def fetch_cepea_web(conn):
                         continue
                     try:
                         val = float(str(row[ci + 1]).replace(",", ".").replace("R$", "").strip())
-                        if 150 < val < 3000:   # R$/arroba sanity
-                            parsed_rows.append((str(dt), val, round(val / 15.0, 6)))
+                        if 150 < val < 3000:
+                            rows.append((str(dt), val, round(val / 15.0, 6)))
                     except Exception:
                         pass
-            if parsed_rows:
-                print(f"  [CEPEA-WEB] Parsed {len(parsed_rows)} rows from XLS: {url}")
-                break
         except Exception as exc:
-            print(f"  [CEPEA-WEB] XLS attempt failed ({lnk[:60]}): {exc}")
+            print(f"  [CEPEA-WEB] XLS parse error: {exc}")
+        return rows
 
-    # ── Step 3: fallback — parse HTML table ───────────────────────────────────
+    # ── Step 1: CEPEA widget endpoint (static HTML, not React) ───────────────
+    # The widget page serves a simple HTML table without JavaScript rendering.
+    # Boi gordo carcaça = indicador 2 (try multiple IDs for robustness).
+    widget_ids = [2, 1, 3, 28, 17]
+    for ind_id in widget_ids:
+        widget_url = f"{BASE}/br/widgetpec/cotacao.aspx?indicador={ind_id}"
+        try:
+            wr = _req.get(widget_url, headers=HDRS, timeout=30, verify=False)
+            if wr.status_code != 200:
+                print(f"  [CEPEA-WEB] Widget id={ind_id}: HTTP {wr.status_code}")
+                continue
+            html = wr.text
+            # Confirm this is the boi gordo widget (page title or header should say "boi")
+            if "boi" not in html.lower() and "bovino" not in html.lower():
+                print(f"  [CEPEA-WEB] Widget id={ind_id}: not boi gordo page — skipping")
+                continue
+            rows = _rows_from_html(html)
+            if rows:
+                parsed_rows = rows
+                print(f"  [CEPEA-WEB] Widget id={ind_id}: {len(rows)} rows parsed")
+                break
+            print(f"  [CEPEA-WEB] Widget id={ind_id}: fetched but no rows in table")
+        except Exception as exc:
+            print(f"  [CEPEA-WEB] Widget id={ind_id}: {exc}")
+
+    # ── Step 2: main indicator page → find XLS download link ─────────────────
     if not parsed_rows:
-        date_val_re = _re.compile(
-            r'<td[^>]*>\s*(\d{2}/\d{2}/\d{4})\s*</td>'
-            r'(?:\s*<td[^>]*>[^<]*</td>)*?'   # optional intermediate cols
-            r'\s*<td[^>]*>\s*([\d\.,]+)\s*</td>',
-            _re.DOTALL)
-        for m in date_val_re.finditer(html):
+        page_html = ""
+        try:
+            pr = _req.get(PAGE_URL, headers=HDRS, timeout=30, verify=False)
+            page_html = pr.text
+            print(f"  [CEPEA-WEB] Indicator page: {len(page_html):,} chars")
+        except Exception as exc:
+            print(f"  [CEPEA-WEB] Indicator page error: {exc}")
+
+        if page_html:
+            # 2a: Any XLS/XLSX link in the page (href or JS string)
+            xls_links = list(dict.fromkeys(
+                _re.findall(r'["\']([^"\']*\.xls[x]?)["\']', page_html, _re.IGNORECASE)
+            ))
+            for lnk in xls_links[:10]:
+                url = lnk if lnk.startswith("http") else BASE + ("" if lnk.startswith("/") else "/") + lnk
+                try:
+                    rx = _req.get(url, headers=HDRS, timeout=40, verify=False)
+                    if rx.status_code == 200 and len(rx.content) > 1000:
+                        rows = _rows_from_xls(rx.content)
+                        if rows:
+                            parsed_rows = rows
+                            print(f"  [CEPEA-WEB] XLS from page link ({lnk[-40:]}): {len(rows)} rows")
+                            break
+                except Exception as exc:
+                    print(f"  [CEPEA-WEB] XLS link error ({lnk[-30:]}): {exc}")
+
+            # 2b: Try JSON blobs in <script> tags (React initial state)
+            if not parsed_rows:
+                for sc in _re.findall(r'<script[^>]*>(.*?)</script>', page_html, _re.DOTALL):
+                    # Look for arrays containing date-like strings and prices
+                    for arr_str in _re.findall(r'\[[^\[\]]{50,}\]', sc):
+                        try:
+                            import json as _js
+                            arr = _js.loads(arr_str)
+                            for item in arr:
+                                if not isinstance(item, dict):
+                                    continue
+                                for dk in ("data", "date", "Data", "dt", "DATA"):
+                                    for vk in ("preco", "valor", "price", "Preco", "cotacao", "r_arroba"):
+                                        dv = item.get(dk); vv = item.get(vk)
+                                        if dv and vv:
+                                            try:
+                                                for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                                                    try:
+                                                        dt = datetime.strptime(str(dv).strip(), fmt).date(); break
+                                                    except Exception:
+                                                        dt = None
+                                                val = float(str(vv).replace(",", "."))
+                                                if dt and dt.year >= 2005 and 150 < val < 3000:
+                                                    parsed_rows.append((str(dt), val, round(val/15.0, 6)))
+                                            except Exception:
+                                                pass
+                        except Exception:
+                            pass
+                if parsed_rows:
+                    print(f"  [CEPEA-WEB] {len(parsed_rows)} rows from JSON in page scripts")
+
+    # ── Step 3: direct XLS URL patterns (last resort) ─────────────────────────
+    if not parsed_rows:
+        direct_urls = [
+            f"{BASE}/br/uploads/indicador/boi.xls",
+            f"{BASE}/br/uploads/indicador/boi-gordo.xls",
+            f"{BASE}/br/uploads/indicador/boi.xlsx",
+            f"{BASE}/br/uploads/boi.xls",
+            f"{BASE}/uploads/indicador/boi.xls",
+        ]
+        for url in direct_urls:
             try:
-                dt  = datetime.strptime(m.group(1), "%d/%m/%Y").date()
-                raw = m.group(2).replace(".", "").replace(",", ".")
-                val = float(raw)
-                if 150 < val < 3000:
-                    parsed_rows.append((str(dt), val, round(val / 15.0, 6)))
-            except Exception:
-                pass
-        if parsed_rows:
-            print(f"  [CEPEA-WEB] Parsed {len(parsed_rows)} rows from HTML table")
+                rx = _req.get(url, headers=HDRS, timeout=40, verify=False)
+                if rx.status_code == 200 and len(rx.content) > 1000:
+                    rows = _rows_from_xls(rx.content)
+                    if rows:
+                        parsed_rows = rows
+                        print(f"  [CEPEA-WEB] Direct XLS {url.split('/')[-1]}: {len(rows)} rows")
+                        break
+                    print(f"  [CEPEA-WEB] {url.split('/')[-1]}: HTTP 200 but no rows")
+                else:
+                    print(f"  [CEPEA-WEB] {url.split('/')[-1]}: HTTP {rx.status_code}")
+            except Exception as exc:
+                print(f"  [CEPEA-WEB] {url.split('/')[-1]}: {exc}")
 
     if not parsed_rows:
-        print("  [CEPEA-WEB] No data could be parsed from CEPEA page")
+        print("  [CEPEA-WEB] All strategies failed — CEPEA not updated.")
+        print("  [CEPEA-WEB] Download the XLS manually from:")
+        print("  [CEPEA-WEB]   https://www.cepea.org.br/br/indicador/boi-gordo.aspx")
+        print("  [CEPEA-WEB]   (click 'SÉRIE DE PREÇOS' → download XLS)")
+        print("  [CEPEA-WEB] Then seed: python extractor_bz.py --init --cepea /path/to/file.xls")
         return 0
 
-    # ── Insert only new dates ─────────────────────────────────────────────────
-    new_rows = [(dt, ra, rk) for dt, ra, rk in parsed_rows
+    # ── De-duplicate and persist only new rows ────────────────────────────────
+    seen = set()
+    unique_rows = []
+    for row in parsed_rows:
+        if row[0] not in seen:
+            seen.add(row[0])
+            unique_rows.append(row)
+    unique_rows.sort(key=lambda r: r[0])
+
+    new_rows = [(dt, ra, rk) for dt, ra, rk in unique_rows
                 if last_dt is None or dt > last_dt]
     if not new_rows:
-        print(f"  [CEPEA-WEB] Already up-to-date (latest: {last_dt})")
+        print(f"  [CEPEA-WEB] Already up-to-date (latest in DB: {last_dt})")
         return 0
 
     conn.executemany(
@@ -1027,7 +1160,10 @@ def fetch_weekly_bulletin(conn):
                 if v.startswith("ton") and "media" not in v and "med" not in v \
                         and ton_col is None:
                     ton_col        = col
-                    ton_media_col  = col + 1   # Ton/MédDiária is the very next column
+                    # Excel has curr/prev pairs per metric:
+                    # Ton_curr | Ton_prev | Ton/MédDiária_curr | ...
+                    # So Ton/MédDiária is 2 columns after Ton (not 1)
+                    ton_media_col  = col + 2
                     cat_header_row = cell.row
                 if ("preço" in v or "preco" in v or "us$/ton" in v) and price_col is None:
                     price_col = col
@@ -1166,9 +1302,19 @@ def fetch_weekly_bulletin(conn):
             return 0
     else:
         s_date, e_date, existing_price = existing
-        # If biz_days is known, recompute end_date accurately
-        if biz_days and s_date.endswith("-01"):
-            # Row starts at 1st of month — end_date = nth biz day of that month
+        # Fix phantom rows: if start_date is not the 1st of the month
+        # (e.g. "2026-04-13"), delete it and reset to "YYYY-MM-01"
+        if not s_date.endswith("-01"):
+            phantom = s_date
+            s_date = f"{yr_s}-{mo_s}-01"
+            conn.execute("DELETE FROM _weekly_raw WHERE start_date = ?", (phantom,))
+            conn.commit()
+            print(f"  [BULLETIN] Deleted phantom row {phantom} — will insert {s_date}")
+            existing_price = None
+            e_date = str(today)   # will be overwritten by biz_days below
+
+        # If biz_days is known and row starts on 1st, recompute end_date accurately
+        if biz_days is not None and biz_days > 0 and s_date.endswith("-01"):
             end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
             if end_dt:
                 new_e = str(end_dt)
