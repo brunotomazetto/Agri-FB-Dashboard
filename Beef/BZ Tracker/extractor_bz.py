@@ -282,7 +282,9 @@ def init_db(conn):
         start_date   TEXT PRIMARY KEY,
         end_date     TEXT,
         price_usd_kg REAL,
-        vol_tons     REAL    -- MTD cumulative tons from SECEX weekly bulletin
+        vol_tons     REAL,   -- MTD cumulative tons from SECEX weekly bulletin
+        rev_000usd   REAL,   -- MTD cumulative revenue (thousands USD)
+        biz_days     INTEGER -- business days reported in this bulletin period
     );
     CREATE TABLE IF NOT EXISTS monthly (
         period       TEXT PRIMARY KEY,
@@ -296,26 +298,103 @@ def init_db(conn):
         updated_at   TEXT
     );
     CREATE TABLE IF NOT EXISTS weekly (
-        start_date   TEXT PRIMARY KEY,
+        start_date   TEXT    PRIMARY KEY,
         end_date     TEXT,
         secex_usd_kg REAL,
         fx           REAL,
         secex_brl_kg REAL,
         cepea_r_kg   REAL,
         spread       REAL,
-        vol_tons     REAL,   -- incremental weekly tons (de-accumulated from MTD)
+        vol_tons     REAL,        -- incremental weekly tons (de-accumulated from MTD)
+        biz_days     INTEGER,     -- business days in this week's period
+        vol_tons_daily REAL,      -- daily average = vol_tons / biz_days
         updated_at   TEXT
     );
     """)
     conn.commit()
     # ── Migrate existing DBs that pre-date these columns ─────────────────────
-    for tbl, col in [("_weekly_raw", "vol_tons"), ("weekly", "vol_tons")]:
+    migrations = [
+        ("_weekly_raw", "vol_tons",   "REAL"),
+        ("_weekly_raw", "rev_000usd", "REAL"),
+        ("_weekly_raw", "biz_days",   "INTEGER"),
+        ("weekly",      "vol_tons",   "REAL"),
+        ("weekly",      "biz_days",   "INTEGER"),
+        ("weekly",      "vol_tons_daily", "REAL"),
+    ]
+    for tbl, col, dtype in migrations:
         try:
-            conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} REAL")
+            conn.execute(f"ALTER TABLE {tbl} ADD COLUMN {col} {dtype}")
             conn.commit()
             print(f"  [DB] Migrated: added {tbl}.{col}")
         except Exception:
             pass  # column already exists
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# BRAZIL BUSINESS-DAY HELPERS
+# ══════════════════════════════════════════════════════════════════════════════
+def _easter(year):
+    """Easter Sunday via Anonymous Gregorian algorithm."""
+    a = year % 19; b = year // 100; c = year % 100
+    d = b // 4;    e = b % 4;       f = (b + 8) // 25
+    g = (b - f + 1) // 3;  h = (19*a + b - d - g + 15) % 30
+    i = c // 4;    k = c % 4;       l = (32 + 2*e + 2*i - h - k) % 7
+    m = (a + 11*h + 22*l) // 451
+    mo  = (h + l - 7*m + 114) // 31
+    day = ((h + l - 7*m + 114) % 31) + 1
+    return date(year, mo, day)
+
+
+def _br_holidays(year):
+    """Set of ISO date strings for Brazilian national holidays in a given year."""
+    from datetime import timedelta
+    e = _easter(year)
+    h = {
+        str(date(year, 1,  1)),          # New Year
+        str(e - timedelta(days=48)),     # Carnival Monday
+        str(e - timedelta(days=47)),     # Carnival Tuesday
+        str(e - timedelta(days=2)),      # Good Friday
+        str(date(year, 4,  21)),         # Tiradentes
+        str(date(year, 5,  1)),          # Labour Day
+        str(date(year, 9,  7)),          # Independence Day
+        str(date(year, 10, 12)),         # Nossa Senhora Aparecida
+        str(date(year, 11, 2)),          # Finados
+        str(date(year, 11, 15)),         # Proclamação da República
+        str(date(year, 12, 25)),         # Christmas
+    }
+    if year >= 2024:                     # Consciência Negra became national in 2024
+        h.add(str(date(year, 11, 20)))
+    return h
+
+
+def _biz_days_between(start_dt, end_dt):
+    """Count Mon–Fri days (excl. BR national holidays) between dates, inclusive."""
+    from datetime import timedelta
+    hols = _br_holidays(start_dt.year)
+    if end_dt.year != start_dt.year:
+        hols |= _br_holidays(end_dt.year)
+    count = 0
+    d = start_dt
+    while d <= end_dt:
+        if d.weekday() < 5 and str(d) not in hols:
+            count += 1
+        d += timedelta(days=1)
+    return count
+
+
+def _nth_biz_day(year, month, n):
+    """Return the date of the nth business day in month (1-indexed)."""
+    from datetime import timedelta
+    hols = _br_holidays(year)
+    d = date(year, month, 1)
+    count = 0
+    for _ in range(60):   # safety bound
+        if d.weekday() < 5 and str(d) not in hols:
+            count += 1
+            if count == n:
+                return d
+        d += timedelta(days=1)
+    return None
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -528,43 +607,205 @@ def load_cepea_xls(conn, path):
 # ══════════════════════════════════════════════════════════════════════════════
 # WEEKLY RAW SEED
 # ══════════════════════════════════════════════════════════════════════════════
-def seed_weekly_raw(conn):
-    """Seed _weekly_raw from WEEKLY_SEED with smart conflict resolution:
-      - INSERT new rows normally.
-      - On conflict (row already exists):
-          * Restore price_usd_kg from seed IF current value is NULL or clearly
-            wrong (outside 2–20 USD/kg), without touching vol_tons live data.
-          * Clear vol_tons if it looks like a bad value (< 100 t, which is
-            impossible for a full week of Brazil beef exports).
+def _enrich_seed():
     """
+    Compute MTD-cumulative revenue (rev_000usd) and business-day count for
+    each row in WEEKLY_SEED, without modifying the tuple list directly.
+
+    For each row: rev_week_000usd = price_seed_usd_kg * vol_week_incremental
+    where vol_week_incremental = vol_tons_mtd − vol_tons_mtd_prev_in_same_month.
+    rev_mtd accumulates within each calendar month.
+    Returns list of (start, end, price, vol_mtd, rev_mtd, biz_days).
+    """
+    prev_vol = {}   # (yr, mo) -> last vol_mtd seen
+    prev_rev = {}   # (yr, mo) -> accumulated rev_mtd
+    result   = []
+    for row in WEEKLY_SEED:
+        s, e, price, vol_mtd = row[:4]
+        yr = int(s[:4]); mo = int(s[5:7]); key = (yr, mo)
+        if price is not None and vol_mtd is not None:
+            prev_v   = prev_vol.get(key, 0.0)
+            vol_week = vol_mtd - prev_v
+            rev_week = price * vol_week         # price USD/kg × vol tons = 000 USD
+            prev_r   = prev_rev.get(key, 0.0)
+            rev_mtd  = prev_r + rev_week
+            prev_vol[key] = vol_mtd
+            prev_rev[key] = rev_mtd
+        else:
+            rev_mtd = None
+        bd = _biz_days_between(
+            date.fromisoformat(s), date.fromisoformat(e)
+        )
+        result.append((s, e, price, vol_mtd, rev_mtd, bd))
+    return result
+
+
+def seed_weekly_raw(conn):
+    """Seed _weekly_raw from WEEKLY_SEED with smart conflict resolution.
+
+    Computes and stores MTD-cumulative revenue (rev_000usd) and biz_days for
+    each row, enabling incremental price de-accumulation in materialise().
+    """
+    enriched = _enrich_seed()
     conn.executemany(
         """
-        INSERT INTO _weekly_raw(start_date, end_date, price_usd_kg, vol_tons)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO _weekly_raw(start_date, end_date, price_usd_kg,
+                                vol_tons, rev_000usd, biz_days)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON CONFLICT(start_date) DO UPDATE SET
-            -- Restore seed price only when existing price is NULL or out of range
+            -- Restore seed price only when existing is NULL or clearly wrong
             price_usd_kg = CASE
-                WHEN _weekly_raw.price_usd_kg IS NULL THEN excluded.price_usd_kg
-                WHEN _weekly_raw.price_usd_kg < 2.0   THEN excluded.price_usd_kg
-                WHEN _weekly_raw.price_usd_kg > 20.0  THEN excluded.price_usd_kg
+                WHEN _weekly_raw.price_usd_kg IS NULL  THEN excluded.price_usd_kg
+                WHEN _weekly_raw.price_usd_kg < 2.0    THEN excluded.price_usd_kg
+                WHEN _weekly_raw.price_usd_kg > 20.0   THEN excluded.price_usd_kg
                 ELSE _weekly_raw.price_usd_kg
             END,
-            -- Update vol_tons from seed when:
-            --   (a) existing is NULL → use seed value
-            --   (b) existing is a bad artefact (< 100 t) → use seed value
-            -- Otherwise keep the existing live bulletin value.
+            -- Update vol_tons from seed only when existing is NULL or bogus
             vol_tons = CASE
                 WHEN excluded.vol_tons IS NOT NULL AND (
-                    _weekly_raw.vol_tons IS NULL OR
-                    _weekly_raw.vol_tons < 100.0
+                    _weekly_raw.vol_tons IS NULL OR _weekly_raw.vol_tons < 100.0
                 ) THEN excluded.vol_tons
                 ELSE _weekly_raw.vol_tons
+            END,
+            -- Always write computed rev_000usd & biz_days when seed has them
+            rev_000usd = CASE
+                WHEN excluded.rev_000usd IS NOT NULL AND (
+                    _weekly_raw.rev_000usd IS NULL
+                ) THEN excluded.rev_000usd
+                ELSE _weekly_raw.rev_000usd
+            END,
+            biz_days = CASE
+                WHEN excluded.biz_days IS NOT NULL AND _weekly_raw.biz_days IS NULL
+                    THEN excluded.biz_days
+                ELSE _weekly_raw.biz_days
             END
         """,
-        WEEKLY_SEED
+        enriched
     )
     conn.commit()
     print(f"  [WEEKLY] {len(WEEKLY_SEED)} rows seeded/validated in _weekly_raw.")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CEPEA WEB SCRAPER (incremental daily updates)
+# ══════════════════════════════════════════════════════════════════════════════
+def fetch_cepea_web(conn):
+    """
+    Fetch recent CEPEA Boi Gordo R$/arroba indicator data from the web and
+    insert any dates newer than what is already in _cepea_raw.
+
+    Strategy:
+      1. GET indicator page → look for downloadable XLS link
+      2. Download XLS and parse (openpyxl)
+      3. Fallback: parse HTML table directly from the page
+    """
+    import io, re as _re
+    PAGE_URL = "https://www.cepea.org.br/br/indicador/boi-gordo.aspx"
+
+    last_dt = conn.execute("SELECT MAX(dt) FROM _cepea_raw").fetchone()[0]
+    print(f"  [CEPEA-WEB] Last date in DB: {last_dt}")
+
+    # ── Step 1: fetch indicator page ─────────────────────────────────────────
+    try:
+        import requests as _req
+        r = _req.get(PAGE_URL,
+                     headers={"User-Agent": "Mozilla/5.0",
+                               "Accept": "text/html,application/xhtml+xml"},
+                     timeout=30, verify=False)
+        html = r.text
+    except Exception as exc:
+        print(f"  [CEPEA-WEB] Page fetch error: {exc}")
+        return 0
+
+    # ── Step 2: try to find & download XLS export link ───────────────────────
+    xls_candidates = _re.findall(
+        r'href=["\']([^"\']*(?:exportlayout|download|indicador)[^"\']*\.xls[x]?)["\']',
+        html, _re.IGNORECASE)
+    # Also look for generic xls links in page
+    xls_candidates += _re.findall(r'href=["\']([^"\']*\.xls[x]?)["\']', html, _re.IGNORECASE)
+
+    BASE = "https://www.cepea.org.br"
+    parsed_rows = []
+
+    for lnk in xls_candidates[:5]:
+        url = lnk if lnk.startswith("http") else BASE + lnk
+        try:
+            rx = _req.get(url,
+                          headers={"User-Agent": "Mozilla/5.0"},
+                          timeout=40, verify=False)
+            if rx.status_code != 200:
+                continue
+            import openpyxl
+            wb = openpyxl.load_workbook(io.BytesIO(rx.content), data_only=True)
+            ws = wb.active
+            for row in ws.iter_rows(values_only=True):
+                # Expect a date-like value followed by a numeric price
+                for ci in range(len(row) - 1):
+                    cell = row[ci]
+                    # Accept datetime objects or string dates
+                    dt = None
+                    if isinstance(cell, datetime):
+                        dt = cell.date()
+                    elif isinstance(cell, date):
+                        dt = cell
+                    elif isinstance(cell, str):
+                        for fmt in ("%d/%m/%Y", "%Y-%m-%d"):
+                            try:
+                                dt = datetime.strptime(cell.strip(), fmt).date(); break
+                            except Exception:
+                                pass
+                    if dt is None or dt.year < 2005:
+                        continue
+                    try:
+                        val = float(str(row[ci + 1]).replace(",", ".").replace("R$", "").strip())
+                        if 150 < val < 3000:   # R$/arroba sanity
+                            parsed_rows.append((str(dt), val, round(val / 15.0, 6)))
+                    except Exception:
+                        pass
+            if parsed_rows:
+                print(f"  [CEPEA-WEB] Parsed {len(parsed_rows)} rows from XLS: {url}")
+                break
+        except Exception as exc:
+            print(f"  [CEPEA-WEB] XLS attempt failed ({lnk[:60]}): {exc}")
+
+    # ── Step 3: fallback — parse HTML table ───────────────────────────────────
+    if not parsed_rows:
+        date_val_re = _re.compile(
+            r'<td[^>]*>\s*(\d{2}/\d{2}/\d{4})\s*</td>'
+            r'(?:\s*<td[^>]*>[^<]*</td>)*?'   # optional intermediate cols
+            r'\s*<td[^>]*>\s*([\d\.,]+)\s*</td>',
+            _re.DOTALL)
+        for m in date_val_re.finditer(html):
+            try:
+                dt  = datetime.strptime(m.group(1), "%d/%m/%Y").date()
+                raw = m.group(2).replace(".", "").replace(",", ".")
+                val = float(raw)
+                if 150 < val < 3000:
+                    parsed_rows.append((str(dt), val, round(val / 15.0, 6)))
+            except Exception:
+                pass
+        if parsed_rows:
+            print(f"  [CEPEA-WEB] Parsed {len(parsed_rows)} rows from HTML table")
+
+    if not parsed_rows:
+        print("  [CEPEA-WEB] No data could be parsed from CEPEA page")
+        return 0
+
+    # ── Insert only new dates ─────────────────────────────────────────────────
+    new_rows = [(dt, ra, rk) for dt, ra, rk in parsed_rows
+                if last_dt is None or dt > last_dt]
+    if not new_rows:
+        print(f"  [CEPEA-WEB] Already up-to-date (latest: {last_dt})")
+        return 0
+
+    conn.executemany(
+        "INSERT OR REPLACE INTO _cepea_raw(dt, r_arroba, r_kg) VALUES(?,?,?)",
+        new_rows
+    )
+    conn.commit()
+    latest = max(dt for dt, _, _ in new_rows)
+    print(f"  [CEPEA-WEB] Inserted {len(new_rows)} new rows (up to {latest})")
+    return len(new_rows)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -741,16 +982,22 @@ def fetch_weekly_bulletin(conn):
 
     def _parse_sheet(ws):
         """
-        Return (vol_tons_mtd, price_usd_kg, bull_year, bull_month).
+        Return (vol_tons_mtd, price_usd_kg, rev_000usd_mtd, biz_days,
+                bull_year, bull_month).
 
-        bull_year / bull_month are the period reported in the bulletin (e.g.
-        March 2026 when the file title says "Até 5ª Semana de Março/2026").
-        They are extracted from any cell in the first 10 rows that contains a
-        Portuguese month abbreviation followed by a 4-digit year.
+        Excel layout (Setores_Produtos.xlsx):
+          Descrição | US$ Mil | US$ Mil/MédDiária | Toneladas |
+          Ton/MédDiária | Preço (US$/Tonelada) | Variação (%)
 
-        Strategy: locate the category header row by scanning for "Toneladas"
-        and "Preço" headers. The current-period data is in the same column as
-        the category header (first column of each metric pair).
+        We extract for "Carne bovina fresca, refrigerada ou congelada":
+          • Toneladas          → vol_tons_mtd  (MTD cumulative)
+          • US$ Mil            → rev_000usd_mtd (MTD cumulative revenue)
+          • Ton/MédDiária      → ton_media_diaria → biz_days = round(vol/media)
+          • Preço (US$/Ton)    → stored as reference only; we prefer
+                                  de-accumulated price in materialise()
+
+        Period (month/year) is extracted from a header cell matching
+        Portuguese month abbreviation + 4-digit year.
         """
         # ── Extract bulletin period from header rows ──────────────────────────
         bull_year = bull_month = None
@@ -766,32 +1013,35 @@ def fetch_weekly_bulletin(conn):
                     break
             if bull_year:
                 break
-        ton_col   = None   # Excel column (1-based) for "Toneladas" header
-        price_col = None   # Excel column (1-based) for "Preço (US$/Ton)" header
-        usd_col   = None   # Excel column (1-based) for "US$ Mil" header (fallback)
+
+        ton_col        = None   # 1-based col: "Toneladas"
+        ton_media_col  = None   # 1-based col: "Ton/MédDiária"  (next col after ton_col)
+        price_col      = None   # 1-based col: "Preço (US$/Ton)"
+        usd_col        = None   # 1-based col: "US$ Mil"
         cat_header_row = None
 
         for row in ws.iter_rows(max_row=30):
             for cell in row:
-                v = str(cell.value or "").strip().lower()
+                v   = str(cell.value or "").strip().lower()
                 col = cell.column
-                if v.startswith("ton") and "media" not in v and ton_col is None:
-                    ton_col = col
+                if v.startswith("ton") and "media" not in v and "med" not in v \
+                        and ton_col is None:
+                    ton_col        = col
+                    ton_media_col  = col + 1   # Ton/MédDiária is the very next column
                     cat_header_row = cell.row
                 if ("preço" in v or "preco" in v or "us$/ton" in v) and price_col is None:
                     price_col = col
-                if "us$ mil" in v and "media" not in v and usd_col is None:
+                if "us$ mil" in v and "media" not in v and "med" not in v \
+                        and usd_col is None:
                     usd_col = col
-            # Stop once we found at least Toneladas
             if ton_col is not None and cat_header_row is not None:
-                # Look for Preço on the same row or within 2 rows
                 if price_col is not None or usd_col is not None:
                     break
 
         if ton_col is None or cat_header_row is None:
-            return None, None
+            return None, None, None, None, None, None
 
-        # ── Find "Carne bovina fresca" row ──────────────────────────────────────
+        # ── Find "Carne bovina fresca" row ────────────────────────────────────
         carne_row = None
         for row in ws.iter_rows(min_row=cat_header_row + 1):
             for cell in row[:3]:
@@ -803,45 +1053,66 @@ def fetch_weekly_bulletin(conn):
                 break
 
         if carne_row is None:
-            return None, None
+            return None, None, None, None, None, None
 
-        # ── Extract values ───────────────────────────────────────────────────────
-        vol_tons = ws.cell(row=carne_row, column=ton_col).value
+        # ── Extract values ────────────────────────────────────────────────────
+        vol_raw      = ws.cell(row=carne_row, column=ton_col).value
+        vol_tons     = float(vol_raw) if vol_raw is not None else None
 
+        # Revenue (MTD, thousands USD)
+        rev_raw      = ws.cell(row=carne_row, column=usd_col).value if usd_col else None
+        rev_000usd   = float(rev_raw) if rev_raw is not None else None
+
+        # Business days from Ton/MédDiária: biz_days = round(vol_MTD / daily_avg)
+        biz_days = None
+        if ton_media_col and vol_tons:
+            media_raw = ws.cell(row=carne_row, column=ton_media_col).value
+            if media_raw:
+                try:
+                    media_val = float(media_raw)
+                    if media_val > 0:
+                        biz_days = round(vol_tons / media_val)
+                except Exception:
+                    pass
+
+        # Price from "Preço" column — stored for reference / sanity check only
         if price_col is not None:
-            # Preferred: read price directly from "Preço (US$/Tonelada)" column
             price_per_ton = ws.cell(row=carne_row, column=price_col).value
             price_usd_kg  = (float(price_per_ton) / 1000.0) if price_per_ton else None
-        elif usd_col is not None and vol_tons:
-            # Fallback: compute from US$ Mil / Toneladas
-            usd_mil_val   = ws.cell(row=carne_row, column=usd_col).value
-            price_usd_kg  = (float(usd_mil_val) / float(vol_tons)) if usd_mil_val else None
+        elif rev_000usd is not None and vol_tons:
+            price_usd_kg  = rev_000usd / vol_tons   # MTD cumulative price fallback
         else:
-            price_usd_kg = None
+            price_usd_kg  = None
 
-        print(f"  [BULLETIN] Cols → ton={ton_col}, price={price_col}, usd={usd_col}  "
-              f"| beef row={carne_row}")
-        price_cell_val = ws.cell(row=carne_row, column=price_col).value if price_col else None
-        print(f"  [BULLETIN] Extracted: vol={vol_tons!r}  price_per_ton={price_cell_val!r}")
+        print(f"  [BULLETIN] Cols → usd={usd_col}, ton={ton_col}, "
+              f"ton_media={ton_media_col}, price={price_col} | beef row={carne_row}")
+        print(f"  [BULLETIN] Extracted: vol_MTD={vol_tons!r}  "
+              f"rev_MTD={rev_000usd!r}  biz_days={biz_days!r}")
         print(f"  [BULLETIN] Period from header: {bull_month}/{bull_year}")
 
-        return (float(vol_tons) if vol_tons is not None else None), price_usd_kg, bull_year, bull_month
+        return vol_tons, price_usd_kg, rev_000usd, biz_days, bull_year, bull_month
 
     vol_mtd    = None
     price_usd  = None
+    rev_mtd    = None
+    biz_days   = None
     used_sheet = None
     bull_yr    = None
     bull_mo    = None
     for ws in sheets_to_try:
-        v, p, by, bm = _parse_sheet(ws)
+        v, p, rev, bd, by, bm = _parse_sheet(ws)
         if v is not None:
             vol_mtd    = v
             price_usd  = p
+            rev_mtd    = rev
+            biz_days   = bd
             bull_yr    = by
             bull_mo    = bm
             used_sheet = ws.title
             print(f"  [BULLETIN] Sheet '{used_sheet}': vol_MTD={vol_mtd:,.0f} t"
-                  + (f", price={price_usd:.4f} USD/kg" if price_usd else " (no price)"))
+                  + (f", rev={rev_mtd:,.1f} 000 USD" if rev_mtd else "")
+                  + (f", price={price_usd:.4f} USD/kg" if price_usd else "")
+                  + (f", biz_days={biz_days}" if biz_days else ""))
             break
 
     if vol_mtd is None:
@@ -860,15 +1131,15 @@ def fetch_weekly_bulletin(conn):
         print(f"  [BULLETIN] Price {price_usd:.4f} out of range [{PRICE_MIN},{PRICE_MAX}] — discarding.")
         price_usd = None
 
-    # ── Step 5: find the right _weekly_raw row to update ─────────────────────
-    # Use the bulletin's own reported period (extracted from Excel header), NOT
-    # today's date.  This prevents creating phantom rows like "Apr 6" when the
-    # bulletin is still reporting March data.
+    # ── Step 5: resolve bulletin period and locate/create the target row ──────
+    # Use the bulletin's own reported period (from Excel header), NOT today.
+    # This prevents phantom rows when the bulletin still reports the previous month.
     target_yr = bull_yr if bull_yr else yr
     target_mo = bull_mo if bull_mo else mo
     yr_s = f"{target_yr:04d}"
     mo_s = f"{target_mo:02d}"
-    print(f"  [BULLETIN] Bulletin period resolved to: {yr_s}-{mo_s}")
+    print(f"  [BULLETIN] Bulletin period resolved to: {yr_s}-{mo_s}"
+          + (f"  ({biz_days} biz days)" if biz_days else ""))
 
     existing = conn.execute(
         "SELECT start_date, end_date, price_usd_kg FROM _weekly_raw"
@@ -877,12 +1148,17 @@ def fetch_weekly_bulletin(conn):
     ).fetchone()
 
     if existing is None:
-        # Bulletin month has no seed row yet — only create a new row if the
-        # bulletin is for the CURRENT calendar month (not a past month).
+        # Only create a new row when the bulletin IS for the current calendar month
         if target_yr == today.year and target_mo == today.month:
-            wk_start = today - _td(days=today.weekday())   # Monday
-            s_date   = str(wk_start)
-            e_date   = str(today)
+            # Start: always the 1st of the month (MTD starts from day 1)
+            s_date = f"{yr_s}-{mo_s}-01"
+            # End: compute from biz_days if available, else use today
+            if biz_days:
+                end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
+                e_date = str(end_dt) if end_dt else str(today)
+            else:
+                # Fallback: last business day before today (or today if business day)
+                e_date = str(today - _td(days=max(0, today.weekday() - 4)) if today.weekday() > 4 else today)
             existing_price = None
             print(f"  [BULLETIN] No existing row — creating new row {s_date} → {e_date}")
         else:
@@ -890,27 +1166,42 @@ def fetch_weekly_bulletin(conn):
             return 0
     else:
         s_date, e_date, existing_price = existing
+        # If biz_days is known, recompute end_date accurately
+        if biz_days and s_date.endswith("-01"):
+            # Row starts at 1st of month — end_date = nth biz day of that month
+            end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
+            if end_dt:
+                new_e = str(end_dt)
+                if new_e != e_date:
+                    print(f"  [BULLETIN] Correcting end_date: {e_date} → {new_e} "
+                          f"(biz_days={biz_days})")
+                    e_date = new_e
         print(f"  [BULLETIN] Updating existing row: {s_date} → {e_date}")
 
-    # Validate existing_price too — don't preserve a previously bad value
+    # Validate existing_price; don't carry forward a previously bad value
     if existing_price is not None and not (PRICE_MIN <= existing_price <= PRICE_MAX):
         print(f"  [BULLETIN] Existing price {existing_price:.4f} also out of range — clearing.")
         existing_price = None
 
-    # Keep the existing (good) price if our computed price failed the sanity check
+    # Store the MTD cumulative price as reference (real price computed in materialise)
     final_price = price_usd if price_usd is not None else existing_price
 
     conn.execute(
-        "INSERT OR REPLACE INTO _weekly_raw(start_date,end_date,price_usd_kg,vol_tons)"
-        " VALUES(?,?,?,?)",
+        "INSERT OR REPLACE INTO _weekly_raw"
+        "(start_date, end_date, price_usd_kg, vol_tons, rev_000usd, biz_days)"
+        " VALUES(?,?,?,?,?,?)",
         (s_date, e_date,
          round(final_price, 6) if final_price is not None else None,
-         vol_mtd)
+         vol_mtd,
+         round(rev_mtd, 3) if rev_mtd is not None else None,
+         biz_days)
     )
     conn.commit()
     print(f"  [BULLETIN] _weekly_raw updated: {s_date} → {e_date} | "
           f"vol_MTD={vol_mtd:,.0f} t"
-          + (f" | price={final_price:.4f} USD/kg" if final_price else ""))
+          + (f" | rev={rev_mtd:,.1f} 000 USD" if rev_mtd else "")
+          + (f" | price_MTD={final_price:.4f} USD/kg" if final_price else "")
+          + (f" | biz_days={biz_days}" if biz_days else ""))
     return 1
 
 
@@ -1012,48 +1303,78 @@ def materialise(conn):
 
     # ── Weekly ────────────────────────────────────────────────────────────────
     raw_w = conn.execute(
-        "SELECT start_date, end_date, price_usd_kg, vol_tons"
+        "SELECT start_date, end_date, price_usd_kg, vol_tons, rev_000usd, biz_days"
         " FROM _weekly_raw ORDER BY start_date"
     ).fetchall()
 
-    # De-accumulate MTD vol_tons → incremental weekly vol_tons
-    # SECEX bulletin reports cumulative tonnage since start of month (MTD).
-    # For each week: vol_week = vol_MTD − vol_MTD_of_previous_week_in_same_month.
-    # First week of each month: vol_week = vol_MTD (nothing to subtract).
-    prev_mtd: dict[tuple, float | None] = {}  # key = (year, month)
+    # De-accumulate MTD vol_tons AND MTD rev_000usd → incremental weekly values.
+    # For price: use de-accumulated revenue/volume when available (most accurate).
+    # Fallback: use stored price_usd_kg (seed data already holds incremental price).
+    prev_vol_mtd = {}   # (yr, mo) -> last vol_mtd
+    prev_rev_mtd = {}   # (yr, mo) -> last rev_mtd (000 USD)
 
     weekly_rows = []
-    for s, e, p_usd, vol_mtd in raw_w:
-        fx  = _avg(conn, "_fx_raw",   "fx",  s, e)
-        ca  = _avg(conn, "_cepea_raw", "r_kg", s, e)
-        brl = (p_usd * fx) if p_usd and fx else None
-        sp  = (brl / ca)  if brl and ca   else None
-
-        # De-accumulate volume
+    for s, e, p_usd, vol_mtd, rev_mtd, biz_d in raw_w:
         yr_mo = (int(s[:4]), int(s[5:7]))
+
+        # ── De-accumulate volume ──────────────────────────────────────────────
         if vol_mtd is not None:
-            prev = prev_mtd.get(yr_mo)
-            vol_week = vol_mtd - prev if prev is not None else vol_mtd
-            prev_mtd[yr_mo] = vol_mtd
+            prev_v   = prev_vol_mtd.get(yr_mo, 0.0)
+            vol_week = vol_mtd - prev_v
+            prev_vol_mtd[yr_mo] = vol_mtd
         else:
             vol_week = None
-            # Leave prev_mtd unchanged so next week still de-accumulates correctly
+
+        # ── Compute incremental price from de-accumulated revenue / volume ────
+        # Formula: price_USD_kg = rev_week_000USD / vol_week_tons
+        #   because: (rev_000USD × 1000 USD) / (vol_tons × 1000 kg) = rev_000USD / vol_tons
+        if rev_mtd is not None and vol_week is not None and vol_week > 10:
+            prev_r   = prev_rev_mtd.get(yr_mo, 0.0)
+            rev_week = rev_mtd - prev_r
+            prev_rev_mtd[yr_mo] = rev_mtd
+            price_incremental = rev_week / vol_week   # USD/kg
+        elif p_usd is not None:
+            # Seed rows: p_usd is already the incremental weekly price → use directly
+            price_incremental = p_usd
+            # Estimate rev for tracking continuity (needed when live row follows)
+            if vol_week is not None and vol_week > 10:
+                prev_r = prev_rev_mtd.get(yr_mo, 0.0)
+                prev_rev_mtd[yr_mo] = prev_r + p_usd * vol_week
+        else:
+            price_incremental = None
+
+        # ── Business days and daily average volume ────────────────────────────
+        if biz_d is None:
+            biz_d = _biz_days_between(
+                date.fromisoformat(s), date.fromisoformat(e)
+            )
+        vol_daily = (vol_week / biz_d
+                     if vol_week is not None and biz_d and biz_d > 0
+                     else None)
+
+        fx  = _avg(conn, "_fx_raw",    "fx",   s, e)
+        ca  = _avg(conn, "_cepea_raw", "r_kg", s, e)
+        brl = (price_incremental * fx) if price_incremental and fx else None
+        sp  = (brl / ca)               if brl and ca              else None
 
         weekly_rows.append((
             s, e,
-            round(p_usd,    6) if p_usd    else None,
-            round(fx,       6) if fx       else None,
-            round(brl,      6) if brl      else None,
-            round(ca,       6) if ca       else None,
-            round(sp,       6) if sp       else None,
-            round(vol_week, 3) if vol_week is not None else None,
+            round(price_incremental, 6) if price_incremental is not None else None,
+            round(fx,                6) if fx       else None,
+            round(brl,               6) if brl      else None,
+            round(ca,                6) if ca       else None,
+            round(sp,                6) if sp       else None,
+            round(vol_week,          3) if vol_week is not None else None,
+            biz_d,
+            round(vol_daily,         3) if vol_daily is not None else None,
             now_iso,
         ))
 
     conn.executemany(
         "INSERT OR REPLACE INTO weekly"
-        "(start_date,end_date,secex_usd_kg,fx,secex_brl_kg,cepea_r_kg,spread,vol_tons,updated_at)"
-        " VALUES(?,?,?,?,?,?,?,?,?)",
+        "(start_date,end_date,secex_usd_kg,fx,secex_brl_kg,cepea_r_kg,spread,"
+        "vol_tons,biz_days,vol_tons_daily,updated_at)"
+        " VALUES(?,?,?,?,?,?,?,?,?,?,?)",
         weekly_rows
     )
     conn.commit()
@@ -1119,6 +1440,10 @@ def main():
 
         print("\n[3] Fetching BCB PTAX FX …")
         fetch_fx(conn)
+
+        # Fetch latest CEPEA data from web (incremental only — init uses local XLS)
+        print("\n[3b] Fetching CEPEA Boi Gordo from web …")
+        fetch_cepea_web(conn)
 
     # Weekly bulletin: fetch latest price + MTD volume (both init and incremental)
     print("\n[→] Fetching SECEX weekly bulletin (price + MTD volume) …")
