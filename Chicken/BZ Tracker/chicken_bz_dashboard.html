@@ -1051,7 +1051,7 @@ function renderTable() {
       <th style="width:12%;">Export Price<br><span style="font-weight:400;font-size:9px;text-transform:none;">BRL/kg</span></th>
       <th style="width:12%;">Grain Cost<br><span style="font-weight:400;font-size:9px;text-transform:none;">${lagNote}</span></th>
       <th style="width:10%;">Volume<br><span style="font-weight:400;font-size:9px;text-transform:none;">'000 t</span></th>
-      <th style="width:10%;">Daily Vol<br><span style="font-weight:400;font-size:9px;text-transform:none;">t/dia útil</span></th>
+      <th style="width:10%;">Daily Vol<br><span style="font-weight:400;font-size:9px;text-transform:none;">t/biz day</span></th>
       <th style="width:18%;">Spread<br><span style="font-weight:400;font-size:9px;text-transform:none;">price / grain (×)</span></th>
     </tr>`;
     body.innerHTML = WEEKLY.slice().reverse().map(r => `<tr>
@@ -1129,7 +1129,7 @@ function buildReferenceData() {
       { label: curr   ? ['This Wk', shortDate(curr.start_date)]  : ['This Wk','—'], d: curr,   hasVol: hasWVol },
     ];
     const tag = curr ? `${shortDate(curr.start_date)}: this / last / same LY` : 'Weekly';
-    _setREF(periods, tag, hasWVol, "t/dia útil",
+    _setREF(periods, tag, hasWVol, "t/biz day",
       p => p.hasVol ? (p.d?.vol_tons_daily ?? null) : null);
   }
 }
@@ -1159,6 +1159,14 @@ function renderVolumeChart() {
   const volVals  = REF.vol ? REF.vol.filter(v => v != null) : [];
   const usdScale = niceScale(usdVals, 5);
   const volScale = niceScale(volVals, 5);
+  // Anchor the volume axis one full range-width below the minimum, snapped to
+  // the step — bars occupy ~40-50% of chart height without starting at 0.
+  const volMin = (() => {
+    if (!volVals.length || !volScale.stepSize) return 0;
+    const mn = Math.min(...volVals), mx = Math.max(...volVals);
+    const raw = mn - (mx - mn);
+    return Math.max(0, Math.floor(raw / volScale.stepSize) * volScale.stepSize);
+  })();
 
   charts.volume = new Chart(document.getElementById('volumeChart').getContext('2d'), {
     data: {
@@ -1213,7 +1221,7 @@ function renderVolumeChart() {
       scales: {
         yVol: {
           type: 'linear', position: 'left', display: hasVol,
-          min: volScale.min, max: volScale.max,
+          min: volMin, max: volScale.max,
           title: { display: hasVol, text: REF.volUnit, color: '#888', font: { size: 9 } },
           ticks: { color: '#888', font: { size: 9 }, stepSize: volScale.stepSize,
             callback: v => v.toFixed(0) },
