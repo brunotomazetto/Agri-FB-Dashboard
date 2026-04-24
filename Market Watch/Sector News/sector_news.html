@@ -177,59 +177,60 @@ body.subnav-visible #filter-bar { top: 96px; }
 .news-group-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
 
-/* ── News card ── */
+/* ── News card (compact list row) ── */
 .news-card {
-  background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
-  padding: 16px 18px; margin-bottom: 8px; display: flex; align-items: flex-start;
-  gap: 14px; transition: box-shadow 0.15s, border-color 0.15s;
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 9px 12px; margin-bottom: 4px; display: flex; align-items: center;
+  gap: 10px; transition: box-shadow 0.15s, border-color 0.15s;
 }
-.news-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); border-color: #D1D5DB; }
+.news-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.06); border-color: #D1D5DB; }
 .news-card.selected { border-color: var(--orange); background: #FFFAF8; }
 .news-card.excluded-item { opacity: 0.45; }
 .news-card.manually-added { border-left: 3px solid var(--green); }
 
-.card-checkbox { padding-top: 3px; flex-shrink: 0; }
+.card-checkbox { flex-shrink: 0; }
 .form-check-input:checked { background-color: var(--orange); border-color: var(--orange); }
 .form-check-input:focus { box-shadow: 0 0 0 2px rgba(232,69,10,0.2); border-color: var(--orange); }
 
 .card-icon {
-  width: 38px; height: 38px; border-radius: 8px; display: flex;
-  align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; margin-top: 1px;
+  width: 26px; height: 26px; border-radius: 6px; display: flex;
+  align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0;
 }
 .card-main { flex: 1; min-width: 0; }
-.card-top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.card-source { font-size: 12px; color: var(--text-light); font-weight: 500; white-space: nowrap; flex-shrink: 0; padding-top: 1px; }
-.card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.45; flex: 1; }
+.card-title {
+  font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .card-title a { color: inherit; text-decoration: none; }
 .card-title a:hover { color: var(--orange); }
 .card-summary {
-  font-size: 12.5px; color: var(--text-muted); margin-top: 5px; line-height: 1.5;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 11.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.35;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.card-date { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-light); margin-top: 9px; }
-.card-bottom-row { display: flex; align-items: center; justify-content: space-between; margin-top: 9px; gap: 8px; flex-wrap: wrap; }
-.card-tags { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.card-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px;
+  font-size: 10.5px; color: var(--text-light);
+  white-space: nowrap; overflow: hidden;
+}
+.card-meta .sep { opacity: 0.45; }
+.card-source { font-weight: 500; color: var(--text-light); }
+.card-date { font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-light); }
+.card-tags { display: flex; gap: 4px; flex-wrap: nowrap; align-items: center; flex-shrink: 0; }
 .card-tag {
-  font-size: 10px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
-  padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); color: var(--text-muted); background: var(--body-bg);
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.3px; text-transform: uppercase;
+  padding: 1px 6px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-muted); background: var(--body-bg);
+  white-space: nowrap;
 }
 .card-tag.score-high { border-color: #BBF7D0; color: var(--green);  background: #F0FDF4; }
 .card-tag.score-mid  { border-color: #FDE68A; color: var(--yellow); background: #FFFBEB; }
 .card-tag.score-low  { border-color: #FECACA; color: var(--red);    background: #FEF2F2; }
 .card-tag.tag-manual   { border-color: #BBF7D0; color: var(--green); background: #F0FDF4; }
 .card-tag.tag-excluded { border-color: #FECACA; color: var(--red);   background: #FEF2F2; }
-.card-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-
-.btn-open {
-  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600;
-  color: var(--orange); border: 1.5px solid var(--orange); border-radius: 6px; padding: 4px 12px;
-  text-decoration: none; transition: background 0.15s, color 0.15s; white-space: nowrap;
-}
-.btn-open:hover { background: var(--orange); color: white; }
+.card-actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
 
 .btn-icon {
-  border: none; background: none; padding: 4px 7px; border-radius: 5px;
-  color: var(--text-light); cursor: pointer; font-size: 13px; line-height: 1; transition: background 0.15s, color 0.15s;
+  border: none; background: none; padding: 3px 6px; border-radius: 4px;
+  color: var(--text-light); cursor: pointer; font-size: 12px; line-height: 1; transition: background 0.15s, color 0.15s;
 }
 .btn-icon:hover { background: #F3F4F6; color: var(--text-muted); }
 .btn-icon.danger:hover  { background: #FEE2E2; color: var(--red); }
@@ -921,36 +922,34 @@ function newsCardHtml(item) {
         <input class="form-check-input" type="checkbox" id="cb-${item.id}"
                onchange="toggleItem(${item.id}, this.checked)" ${selectedItems.has(item.id) ? "checked" : ""}>
       </div>`;
+  // Compact list row: title links to article (no more Open button); meta line
+  // carries source · date + tags; summary is tiny single-line (or omitted).
+  const metaBits = [];
+  if (item.source) metaBits.push(`<span class="card-source">${escHtml(item.source)}</span>`);
+  if (dateLabel) metaBits.push(`<span class="card-date">${dateLabel}</span>`);
+  const metaHtml = metaBits.join('<span class="sep">·</span>');
   return `
     <div class="news-card ${excludedClass} ${manualClass}" id="card-${item.id}">
       ${checkboxCol}
-      <div class="card-icon" style="background:${iconBg};color:${color}">
+      <div class="card-icon" style="background:${iconBg};color:${color}" title="${escHtml(categoryName)}">
         <i class="bi bi-newspaper"></i>
       </div>
       <div class="card-main">
-        <div class="card-top-row">
-          <div class="card-title">
-            <a href="${escHtml(item.url)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
-          </div>
-          ${item.source ? `<div class="card-source">${escHtml(item.source)}</div>` : ""}
+        <div class="card-title">
+          <a href="${escHtml(item.url)}" target="_blank" rel="noopener">${escHtml(item.title)}</a>
         </div>
-        ${item.summary ? `<div class="card-summary">${escHtml(item.summary)}</div>` : ""}
-        <div class="card-date">${dateLabel}</div>
-        <div class="card-bottom-row">
-          <div class="card-tags">
-            <span class="card-tag" style="border-color:${color};color:${color};background:${iconBg}">${escHtml(categoryName)}</span>
-            <span class="card-tag ${scoreClass}">Score ${score.toFixed(2)} · ${scoreLabel}</span>
-            ${item.is_manually_added ? '<span class="card-tag tag-manual">Manual</span>' : ""}
-            ${item.is_excluded ? '<span class="card-tag tag-excluded">Excluded</span>' : ""}
-          </div>
-          <div class="card-actions">
-            ${excludeBtn}
-            ${deleteBtn}
-            <a href="${escHtml(item.url)}" target="_blank" rel="noopener" class="btn-open">
-              Open <i class="bi bi-arrow-right"></i>
-            </a>
-          </div>
+        ${item.summary ? `<div class="card-summary" title="${escHtml(item.summary)}">${escHtml(item.summary)}</div>` : ""}
+        <div class="card-meta">
+          ${metaHtml}
+          <span class="card-tag" style="border-color:${color};color:${color};background:${iconBg}">${escHtml(categoryName)}</span>
+          <span class="card-tag ${scoreClass}">${score.toFixed(2)} · ${scoreLabel}</span>
+          ${item.is_manually_added ? '<span class="card-tag tag-manual">Manual</span>' : ""}
+          ${item.is_excluded ? '<span class="card-tag tag-excluded">Excluded</span>' : ""}
         </div>
+      </div>
+      <div class="card-actions">
+        ${excludeBtn}
+        ${deleteBtn}
       </div>
     </div>`;
 }
