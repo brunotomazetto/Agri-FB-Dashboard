@@ -152,6 +152,22 @@ CREATE TABLE IF NOT EXISTS vlmo_entries (
     preco_unitario                  REAL,                -- R$ por papel
     volume                          REAL,                -- R$ total (geralmente qtd * preço)
 
+    -- ---------------------------------------------------------------------------
+    -- Classificação semântica (derivada de tipo_empresa + tipo_cargo)
+    --
+    --   'treasury'      -> Companhia reportando operações de tesouraria
+    --                      (Tipo_Empresa='Companhia' + Tipo_Cargo='Controlador ou Vinculado')
+    --                      É o buyback real: a empresa comprando/vendendo suas próprias ações.
+    --
+    --   'insider'       -> Administrador individual negociando ações da companhia
+    --                      (Tipo_Empresa='Companhia' + Tipo_Cargo ≠ Controlador)
+    --                      Ex: Diretor, Conselho de Administração, Conselho Fiscal.
+    --
+    --   'subsidiary'    -> Controlada reportando posição do grupo
+    --                      (Tipo_Empresa='Controlada')
+    -- ---------------------------------------------------------------------------
+    qualificacao                    TEXT,
+
     -- deduplicação
     natural_key                     TEXT    NOT NULL UNIQUE,
     ingested_at                     TEXT    NOT NULL DEFAULT (datetime('now'))
@@ -159,6 +175,7 @@ CREATE TABLE IF NOT EXISTS vlmo_entries (
 CREATE INDEX IF NOT EXISTS idx_vlmo_cnpj_mes    ON vlmo_entries(cnpj_digits, data_referencia);
 CREATE INDEX IF NOT EXISTS idx_vlmo_mov_real    ON vlmo_entries(cnpj_digits, tipo_movimentacao);
 CREATE INDEX IF NOT EXISTS idx_vlmo_cargo       ON vlmo_entries(tipo_cargo);
+CREATE INDEX IF NOT EXISTS idx_vlmo_qualif      ON vlmo_entries(qualificacao);
 
 
 -- ---------------------------------------------------------------------------
@@ -256,7 +273,8 @@ CREATE TABLE IF NOT EXISTS ingestion_log (
 -- VIEWS: consultas prontas
 -- ---------------------------------------------------------------------------
 
--- Apenas OPERAÇÕES REAIS (exclui saldos)
+-- Apenas OPERAÇÕES REAIS de INSIDERS (Diretores, Conselho, etc.)
+-- Exclui saldos e exclui tesouraria (qualificacao = 'treasury')
 DROP VIEW IF EXISTS v_insider_trades;
 CREATE VIEW v_insider_trades AS
 SELECT
@@ -276,14 +294,41 @@ SELECT
     e.quantidade,
     e.preco_unitario,
     e.volume,
-    -- quantidade com sinal: + para Crédito (entrada), - para Débito (saída)
+    e.qualificacao,
     CASE WHEN e.tipo_operacao = 'Débito'
          THEN -COALESCE(e.quantidade, 0)
          ELSE  COALESCE(e.quantidade, 0)
     END                                               AS quantidade_assinada
 FROM vlmo_entries e
 JOIN companies c ON c.cnpj_digits = e.cnpj_digits
-WHERE e.tipo_movimentacao NOT IN ('Saldo Inicial', 'Saldo Final');
+WHERE e.tipo_movimentacao NOT IN ('Saldo Inicial', 'Saldo Final')
+  AND e.qualificacao = 'insider';
+
+
+-- Operações reais de TESOURARIA (buyback — a empresa comprando/vendendo suas próprias ações)
+DROP VIEW IF EXISTS v_treasury_trades;
+CREATE VIEW v_treasury_trades AS
+SELECT
+    c.ticker,
+    e.nome_companhia,
+    e.data_referencia                                 AS mes_competencia,
+    e.data_movimentacao,
+    e.tipo_movimentacao,
+    e.tipo_ativo,
+    e.caracteristica_vm,
+    e.intermediario,
+    e.quantidade,
+    e.preco_unitario,
+    e.volume,
+    CASE WHEN e.tipo_operacao = 'Débito'
+         THEN -COALESCE(e.quantidade, 0)
+         ELSE  COALESCE(e.quantidade, 0)
+    END                                               AS quantidade_assinada
+FROM vlmo_entries e
+JOIN companies c ON c.cnpj_digits = e.cnpj_digits
+WHERE e.tipo_movimentacao NOT IN ('Saldo Inicial', 'Saldo Final')
+  AND e.qualificacao = 'treasury'
+  AND e.tipo_ativo   = 'Ações';
 
 
 -- Saldos FINAIS por (mês, cargo, ativo) — útil pra ver como a posição evoluiu
@@ -386,6 +431,23 @@ def db_conn() -> Iterator[sqlite3.Connection]:
 def init_db() -> None:
     with db_conn() as conn:
         conn.executescript(SCHEMA)
+        # Migration: adiciona coluna qualificacao se ainda não existir
+        # (bancos criados antes desta versão não têm a coluna)
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(vlmo_entries)").fetchall()}
+        if "qualificacao" not in cols:
+            log.info("Migration: adicionando coluna qualificacao a vlmo_entries")
+            conn.execute("ALTER TABLE vlmo_entries ADD COLUMN qualificacao TEXT")
+            conn.execute("""
+                UPDATE vlmo_entries SET qualificacao = CASE
+                    WHEN tipo_empresa = 'Controlada'               THEN 'subsidiary'
+                    WHEN tipo_cargo   = 'Controlador ou Vinculado' THEN 'treasury'
+                    ELSE                                                'insider'
+                END
+            """)
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_vlmo_qualif ON vlmo_entries(qualificacao)"
+            )
+            log.info("Migration qualificacao: concluida")
 
 
 def sync_companies() -> None:
@@ -494,6 +556,20 @@ def _ingest_vlmo_content(df: pd.DataFrame, cnpjs: set[str]) -> int:
     with db_conn() as conn:
         for _, row in df.iterrows():
             nk = _nk_vlmo_entry(row)
+
+            # Classificação semântica derivada dos campos CVM:
+            #   treasury  -> Companhia reportando tesouraria (Controlador ou Vinculado)
+            #   insider   -> Administrador individual (Diretor, Conselho, etc.)
+            #   subsidiary-> Controlada reportando posição do grupo
+            tipo_empresa = str(row.get("Tipo_Empresa") or "")
+            tipo_cargo   = str(row.get("Tipo_Cargo")   or "")
+            if tipo_empresa == "Controlada":
+                qualificacao = "subsidiary"
+            elif tipo_cargo == "Controlador ou Vinculado":
+                qualificacao = "treasury"
+            else:
+                qualificacao = "insider"
+
             cur = conn.execute(
                 """
                 INSERT OR IGNORE INTO vlmo_entries (
@@ -502,8 +578,8 @@ def _ingest_vlmo_content(df: pd.DataFrame, cnpjs: set[str]) -> int:
                     tipo_movimentacao, descricao_movimentacao, tipo_operacao,
                     tipo_ativo, caracteristica_vm, intermediario,
                     data_movimentacao, quantidade, preco_unitario, volume,
-                    natural_key
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    qualificacao, natural_key
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                 """,
                 (
                     row["__cnpj_d"],
@@ -523,6 +599,7 @@ def _ingest_vlmo_content(df: pd.DataFrame, cnpjs: set[str]) -> int:
                     safe_float(row.get("Quantidade")),
                     safe_float(row.get("Preco_Unitario")),
                     safe_float(row.get("Volume")),
+                    qualificacao,
                     nk,
                 ),
             )
@@ -842,4 +919,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
