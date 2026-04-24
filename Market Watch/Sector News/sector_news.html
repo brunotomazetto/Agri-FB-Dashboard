@@ -613,6 +613,49 @@ function selectGroupTab(gid) {
   loadNews();
 }
 
+// ── Content-based categorization (overrides fetch-source group_id) ───────────
+function normalizeText(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+const AGRI_COS = [
+  "slc agricola","slc agríc","slce3","brasilagro","agro3","3tentos","tten3",
+  "boa safra","soja3","vittia","vitt3","sao martinho","são martinho","smto3",
+  "adecoagro","agro.n","jalles machado","jalles","jall3"
+];
+const FNB_COS = [
+  "ambev","abev3","m dias branco","m. dias branco","mdia3","camil","caml3",
+  "minerva foods","minerva","beef3","jbs","jbss3","marfrig","mrfg3",
+  "tyson","tsn","pilgrim","ppc","heineken"
+];
+const AGRI_SECTOR = [
+  "soja","milho","trigo","arroz","algodao","algodão","cana","acucar","açúcar",
+  "etanol","fertilizante","defensivo","agroquimico","agroquímico","safra",
+  "graos","grãos","oleaginosa","biodiesel","usda","conab","clima","seca","geada",
+  "produtor rural","lavoura","plantio","colheita"
+];
+const FNB_SECTOR = [
+  "carne","frango","suino","suíno","pork","beef","bovino","arroba","pecuaria",
+  "pecuária","avicultura","frigorifico","frigorífico","abate","abpa","abrafrigo",
+  "boi gordo","gado","confinamento","miudos","miúdos","aves","protein animal",
+  "protein","poultry"
+];
+
+function matchesAny(text, keywords) {
+  const t = normalizeText(text);
+  return keywords.some(k => t.includes(normalizeText(k)));
+}
+
+function categorizeNews(item) {
+  const text = (item.title || "") + " " + (item.summary || "");
+  // Order matters: most specific (companies) first
+  if (matchesAny(text, AGRI_COS))    return 1;
+  if (matchesAny(text, FNB_COS))     return 3;
+  if (matchesAny(text, FNB_SECTOR))  return 4;
+  if (matchesAny(text, AGRI_SECTOR)) return 2;
+  return item.group_id;
+}
+
 // ── Greeting ──────────────────────────────────────────────────────────────────
 function updateGreeting() {
   const now = new Date();
@@ -718,7 +761,9 @@ async function loadNews() {
   try {
     const res = await fetch(API_BASE + "/api/news?" + params.toString());
     let news = await res.json();
-    if (activeGroupId !== null) news = news.filter(n => n.group_id === activeGroupId);
+    // Recategoriza cada notícia com base no conteúdo (título + resumo)
+    news.forEach(n => n._category_id = categorizeNews(n));
+    if (activeGroupId !== null) news = news.filter(n => n._category_id === activeGroupId);
     allNews = news;
     renderNews(allNews);
     updateSelectedCount();
@@ -750,19 +795,23 @@ function renderNews(items) {
     return;
   }
   empty.classList.add("d-none");
-  const showHeaders = activeCategory === null || activeSubGroup === null;
+  // Agrupa por categoria computada (não mais pelo group_id da origem)
+  const showHeaders = activeGroupId === null;
   let html = "";
   if (showHeaders) {
     const grouped = {};
     items.forEach(item => {
-      if (!grouped[item.group_id]) grouped[item.group_id] = [];
-      grouped[item.group_id].push(item);
+      const cid = item._category_id || item.group_id;
+      if (!grouped[cid]) grouped[cid] = [];
+      grouped[cid].push(item);
     });
-    Object.entries(grouped).forEach(([gid, gitems]) => {
-      const color = getGroupColor(parseInt(gid));
-      const name = getGroupName(parseInt(gid));
+    // Ordem de exibição: Agri Sector, Agri Cos, F&B Sector, F&B Cos
+    [2, 1, 4, 3].forEach(cid => {
+      if (!grouped[cid]) return;
+      const color = getGroupColor(cid);
+      const name = getGroupName(cid);
       html += `<div class="news-group-header"><span class="group-dot" style="background:${color}"></span>${escHtml(name)}</div>`;
-      gitems.forEach(item => { html += newsCardHtml(item); });
+      grouped[cid].forEach(item => { html += newsCardHtml(item); });
     });
   } else {
     items.forEach(item => { html += newsCardHtml(item); });
