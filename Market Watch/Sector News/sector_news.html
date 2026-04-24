@@ -332,17 +332,24 @@ body.subnav-visible #filter-bar { top: 96px; }
       <input type="range" class="filter-range" id="relevance-slider" min="0" max="1" step="0.1" value="0">
       <span id="relevance-value" class="filter-label">All</span>
     </div>
+    <div class="d-flex align-items-center gap-1">
+      <span class="filter-label">Sort by</span>
+      <select class="form-select form-select-sm filter-input" id="sort-mode" style="width:auto;padding-right:24px" onchange="applySortMode()">
+        <option value="date">Date</option>
+        <option value="score">Score</option>
+      </select>
+    </div>
     <button class="btn btn-sm filter-btn" onclick="applyFilters()">
       <i class="bi bi-funnel-fill me-1"></i>Filter
     </button>
     <div class="ms-auto d-flex align-items-center gap-2">
       <div class="form-check mb-0" data-admin-only>
         <input class="form-check-input" type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this.checked)">
-        <label class="form-check-label filter-label" for="select-all-cb">Select all</label>
+        <label class="form-check-label filter-label" for="select-all-cb">Select all (view)</label>
       </div>
       <span id="selected-count" data-admin-only style="color:var(--text-muted);font-size:12px">None</span>
-      <button class="btn btn-sm btn-outline-secondary" data-admin-only style="font-size:12px" onclick="clearSelection()">
-        <i class="bi bi-x-square me-1"></i>Clear
+      <button class="btn btn-sm btn-outline-secondary" data-admin-only style="font-size:12px" onclick="clearSelection()" title="Deselect all — including items from other tabs">
+        <i class="bi bi-x-square me-1"></i>Deselect all
       </button>
       <button class="btn btn-sm" id="btn-export" data-admin-only onclick="openExportModal()" disabled
               style="background:var(--orange);color:white;font-size:12px;border:none">
@@ -558,12 +565,17 @@ const API_BASE = window.location.hostname === 'localhost' || window.location.hos
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allNews = [];
-let selectedIds = new Set();
+// Map id -> item. Guarda o objeto inteiro para que a seleção sobreviva a
+// mudanças de tab (quando allNews é re-filtrado por categoria, não perdemos
+// os itens selecionados em outras tabs).
+let selectedItems = new Map();
 let groupsConfig = [];
 let categories = {};
 let activeCategory = null;
 let activeSubGroup = null;
 let activeGroupId = null;  // filtro da barra de tabs
+let sortMode = "date";    // "date" | "score"
+let exportState = null;   // { sections: [...], buckets: {sec: [items]}, subject, dateLong }
 
 // ── Admin visibility ──────────────────────────────────────────────────────────
 function isAdminUser() {
@@ -843,6 +855,21 @@ function updatePageHeader() {
     allNews.length > 0 ? `${visible} ${visible === 1 ? "item found" : "items found"}` : "";
 }
 
+function sortItems(arr) {
+  const copy = arr.slice();
+  if (sortMode === "score") {
+    copy.sort((a, b) => {
+      const sa = a.relevance_score || 0;
+      const sb = b.relevance_score || 0;
+      if (sb !== sa) return sb - sa;
+      return (b.published_at || "").localeCompare(a.published_at || "");
+    });
+  } else {
+    copy.sort((a, b) => (b.published_at || "").localeCompare(a.published_at || ""));
+  }
+  return copy;
+}
+
 function renderNews(items) {
   const container = document.getElementById("news-list");
   const empty = document.getElementById("empty-state");
@@ -868,13 +895,13 @@ function renderNews(items) {
       const color = getGroupColor(cid);
       const name = getGroupName(cid);
       html += `<div class="news-group-header"><span class="group-dot" style="background:${color}"></span>${escHtml(name)}</div>`;
-      grouped[cid].forEach(item => { html += newsCardHtml(item); });
+      sortItems(grouped[cid]).forEach(item => { html += newsCardHtml(item); });
     });
   } else {
-    items.forEach(item => { html += newsCardHtml(item); });
+    sortItems(items).forEach(item => { html += newsCardHtml(item); });
   }
   container.innerHTML = html;
-  selectedIds.forEach(id => {
+  selectedItems.forEach((item, id) => {
     const cb = document.getElementById(`cb-${id}`);
     if (cb) { cb.checked = true; cb.closest(".news-card").classList.add("selected"); }
   });
@@ -897,7 +924,7 @@ function newsCardHtml(item) {
   const deleteBtn = !admin ? "" : `<button class="btn-icon danger" title="Delete permanently" onclick="deleteNews(${item.id})"><i class="bi bi-trash"></i></button>`;
   const checkboxCol = !admin ? "" : `<div class="card-checkbox">
         <input class="form-check-input" type="checkbox" id="cb-${item.id}"
-               onchange="toggleItem(${item.id}, this.checked)" ${selectedIds.has(item.id) ? "checked" : ""}>
+               onchange="toggleItem(${item.id}, this.checked)" ${selectedItems.has(item.id) ? "checked" : ""}>
       </div>`;
   return `
     <div class="news-card ${excludedClass} ${manualClass}" id="card-${item.id}">
@@ -933,13 +960,24 @@ function newsCardHtml(item) {
 }
 
 // ── Selection ─────────────────────────────────────────────────────────────────
+// selectedItems é um Map persistente: guarda o objeto completo para não perder
+// seleções ao trocar de tab (que re-filtra allNews para a categoria ativa).
 function toggleItem(id, checked) {
   const card = document.getElementById(`card-${id}`);
-  if (checked) { selectedIds.add(id); card.classList.add("selected"); }
-  else         { selectedIds.delete(id); card.classList.remove("selected"); }
+  if (checked) {
+    const item = allNews.find(n => n.id === id) || selectedItems.get(id);
+    if (item) selectedItems.set(id, item);
+    if (card) card.classList.add("selected");
+  } else {
+    selectedItems.delete(id);
+    if (card) card.classList.remove("selected");
+  }
   updateSelectedCount();
 }
 
+// "Select all" aplica só aos itens atualmente visíveis (scope = view atual).
+// Unchecking o toggle aqui limpa apenas os visíveis; para limpar tudo, usar
+// clearSelection (botão "Deselect all").
 function toggleSelectAll(checked) {
   allNews.filter(n => !n.is_excluded).forEach(item => {
     const cb = document.getElementById(`cb-${item.id}`);
@@ -947,16 +985,18 @@ function toggleSelectAll(checked) {
   });
 }
 
+// Deselect all: limpa TUDO (inclusive seleções feitas em outras tabs).
 function clearSelection() {
-  selectedIds.clear();
+  selectedItems.clear();
   document.querySelectorAll(".news-card").forEach(c => c.classList.remove("selected"));
   document.querySelectorAll(".form-check-input[id^='cb-']").forEach(cb => { cb.checked = false; });
-  document.getElementById("select-all-cb").checked = false;
+  const selAll = document.getElementById("select-all-cb");
+  if (selAll) selAll.checked = false;
   updateSelectedCount();
 }
 
 function updateSelectedCount() {
-  const n = selectedIds.size;
+  const n = selectedItems.size;
   document.getElementById("selected-count").textContent =
     n === 0 ? "None" : `${n} selected`;
   document.getElementById("btn-export").disabled = n === 0;
@@ -991,7 +1031,7 @@ async function fetchNews() {
 // ── News Actions ──────────────────────────────────────────────────────────────
 async function excludeNews(id) {
   await fetch(API_BASE + `/api/news/${id}/exclude`, { method: "POST" });
-  selectedIds.delete(id);
+  selectedItems.delete(id);
   const item = allNews.find(n => n.id === id);
   if (item) item.is_excluded = 1;
   const card = document.getElementById(`card-${id}`);
@@ -1013,7 +1053,7 @@ async function includeNews(id) {
 async function deleteNews(id) {
   if (!confirm("Permanently delete this item?")) return;
   await fetch(API_BASE + `/api/news/${id}`, { method: "DELETE" });
-  selectedIds.delete(id);
+  selectedItems.delete(id);
   document.getElementById(`card-${id}`)?.remove();
   allNews = allNews.filter(n => n.id !== id);
   updateSelectedCount();
@@ -1062,11 +1102,13 @@ function sourceFromUrl(url) {
 }
 
 function openExportModal() {
-  if (selectedIds.size === 0) { showToast("Select at least one item", "warning"); return; }
+  if (selectedItems.size === 0) { showToast("Select at least one item", "warning"); return; }
 
-  const selected = allNews.filter(n => selectedIds.has(n.id));
+  // Source: selectedItems (Map persistente, sobrevive a tab-switch).
+  const selected = Array.from(selectedItems.values());
   const buckets = { "Agribusiness": [], "Food & Beverage": [], "Other": [] };
   selected.forEach(item => buckets[exportSupergroup(item)].push(item));
+  // Ordenação inicial por data desc; user pode reordenar manualmente depois.
   Object.values(buckets).forEach(arr =>
     arr.sort((a, b) => (b.published_at || "").localeCompare(a.published_at || ""))
   );
@@ -1074,11 +1116,18 @@ function openExportModal() {
   const today = new Date();
   const dateLong = today.toLocaleDateString("en-GB",
     { day: "numeric", month: "long", year: "numeric" });
-  const subj = `Itaú BBA | Agribusiness, Food & Beverage – Daily News, ${dateLong}`;
+  const subject = `Itaú BBA | Agribusiness, Food & Beverage – Daily News, ${dateLong}`;
 
   const sections = ["Agribusiness", "Food & Beverage"].filter(s => buckets[s].length);
 
-  // ── HTML body (inline styles + <font> tags → Outlook-paste friendly)
+  exportState = { sections, buckets, subject, dateLong };
+  renderExportPreview();
+  new bootstrap.Modal(document.getElementById("exportModal")).show();
+}
+
+function buildExportHtmlPlain() {
+  if (!exportState) return { html: "", plain: "", fullHtml: "" };
+  const { sections, buckets } = exportState;
   const orange = EXPORT_ORANGE;
   const orangeHeader = (txt) =>
     `<p style="margin:10px 0 4px 0;font-weight:bold;font-size:12pt;color:${orange};">`
@@ -1114,10 +1163,8 @@ function openExportModal() {
             + `</div>`;
     });
   });
-
   html += `</div>`;
 
-  // ── Plain-text fallback
   let plain = `*** Itaú BBA | Agribusiness, Food & Beverage - Daily News ***\n\n`;
   sections.forEach(sec => {
     plain += `${sec}\n`;
@@ -1134,15 +1181,102 @@ function openExportModal() {
     });
   });
 
-  // Wrap with full HTML structure — required for .eml MIME body and clipboard paste
   const fullHtml =
     `<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
+  return { html, plain, fullHtml };
+}
 
-  document.getElementById("export-preview").innerHTML = html;
-  window._exportHtml     = fullHtml;
+// Render interactive preview with per-item reorder arrows + remove button.
+// User clicks ↑/↓ to rearrange before firing email; the final export (Outlook /
+// clipboard) uses whatever order the user left the list in.
+function renderExportPreview() {
+  if (!exportState) return;
+  const { sections, buckets } = exportState;
+  const orange = EXPORT_ORANGE;
+
+  let preview = `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;">`;
+  preview += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0 0 12px 0;">`
+          + `<b>*** Itaú BBA | Agribusiness, Food &amp; Beverage – Daily News ***</b></p>`;
+  preview += `<p style="font-size:11px;color:#6B7280;margin:0 0 14px 0;text-align:center;">`
+          + `Use ↑ ↓ to reorder · × to remove · top = shown first in email</p>`;
+
+  sections.forEach(sec => {
+    const items = buckets[sec];
+    preview += `<p style="margin:10px 0 4px 0;font-weight:bold;font-size:12pt;color:${orange};">`
+            + `<font color="${orange}"><b>${escHtml(sec)}</b></font></p>`;
+    preview += `<div style="margin:0 0 14px 0;">`;
+    items.forEach((item, idx) => {
+      const isFirst = idx === 0;
+      const isLast = idx === items.length - 1;
+      const upDisabled = isFirst ? "opacity:0.25;pointer-events:none;" : "";
+      const downDisabled = isLast ? "opacity:0.25;pointer-events:none;" : "";
+      preview += `
+        <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F3F4F6;">
+          <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+            <button type="button" onclick="moveExportItem('${escJs(sec)}',${idx},-1)"
+              style="border:1px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:3px;padding:0 4px;font-size:10px;line-height:14px;cursor:pointer;${upDisabled}"
+              title="Move up">▲</button>
+            <button type="button" onclick="moveExportItem('${escJs(sec)}',${idx},1)"
+              style="border:1px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:3px;padding:0 4px;font-size:10px;line-height:14px;cursor:pointer;${downDisabled}"
+              title="Move down">▼</button>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:500;font-size:12.5px;line-height:1.35;color:#111827;">${escHtml(item.title)}</div>
+            <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">${escHtml(formatDate(item.published_at))} · ${escHtml(item.source && item.source.trim() ? item.source : sourceFromUrl(item.url))}</div>
+          </div>
+          <button type="button" onclick="removeExportItem('${escJs(sec)}',${idx})"
+            style="border:none;background:none;color:#9CA3AF;font-size:16px;line-height:1;padding:2px 6px;cursor:pointer;"
+            title="Remove from email">×</button>
+        </div>`;
+    });
+    preview += `</div>`;
+  });
+  preview += `</div>`;
+
+  document.getElementById("export-preview").innerHTML = preview;
+
+  // Rebuild underlying payload so Outlook / Copy pick up the current ordering.
+  const { html, plain, fullHtml } = buildExportHtmlPlain();
+  window._exportHtml      = fullHtml;
   window._exportPlainText = plain;
-  window._exportSubject   = subj;
-  new bootstrap.Modal(document.getElementById("exportModal")).show();
+  window._exportSubject   = exportState.subject;
+  window._exportHtmlInner = html;  // for debugging / potential reuse
+}
+
+function moveExportItem(sec, idx, delta) {
+  if (!exportState) return;
+  const arr = exportState.buckets[sec];
+  if (!arr) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, moved);
+  renderExportPreview();
+}
+
+function removeExportItem(sec, idx) {
+  if (!exportState) return;
+  const arr = exportState.buckets[sec];
+  if (!arr) return;
+  arr.splice(idx, 1);
+  // If the section emptied out, drop it from sections to skip empty headers.
+  if (arr.length === 0) {
+    exportState.sections = exportState.sections.filter(s => s !== sec);
+  }
+  // If there's nothing left at all, close the modal.
+  const totalRemaining = exportState.sections.reduce(
+    (n, s) => n + (exportState.buckets[s]?.length || 0), 0);
+  if (totalRemaining === 0) {
+    bootstrap.Modal.getInstance(document.getElementById("exportModal"))?.hide();
+    showToast("Nothing left to export", "info");
+    return;
+  }
+  renderExportPreview();
+}
+
+// Escape a section name for safe use inside a single-quoted onclick attribute.
+function escJs(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;");
 }
 
 function openInOutlook() {
@@ -1194,6 +1328,11 @@ async function copyExport() {
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function applyFilters() { loadNews(); }
+
+function applySortMode() {
+  sortMode = document.getElementById("sort-mode").value;
+  renderNews(allNews);
+}
 
 function setQuickRange(days) {
   const today = new Date().toISOString().split("T")[0];
