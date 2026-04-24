@@ -397,16 +397,13 @@ body.subnav-visible #filter-bar { top: 96px; }
       </div>
       <div class="modal-body p-3">
         <p class="small text-muted mb-2">
-          <strong>Copy Subject</strong> &rarr; paste into the email "Subject" field.
-          <strong>Copy (formatted)</strong> &rarr; paste into the email body to keep bold, colors and links.
+          Workflow: <strong>1)</strong> click <strong>Copy (formatted)</strong> &nbsp;<strong>2)</strong> click <strong>Open Email</strong>
+          (subject already filled) &nbsp;<strong>3)</strong> in the body, press <strong>Ctrl+V</strong> to paste the formatted content.
         </p>
         <div id="export-preview" class="export-preview" style="background:#fff;padding:18px;border:1px solid var(--border);border-radius:6px;"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-        <button class="btn btn-outline-secondary" onclick="copyExportSubject()">
-          <i class="bi bi-type me-1"></i>Copy Subject
-        </button>
         <button class="btn" onclick="copyExport()" style="background:var(--orange);color:white;border:none">
           <i class="bi bi-clipboard-check me-1"></i>Copy (formatted)
         </button>
@@ -1134,12 +1131,16 @@ function openExportModal() {
     });
   });
 
+  // Wrap with full HTML structure — some Outlook versions discard fragments without <html>/<body>
+  const fullHtml =
+    `<!doctype html><html><head><meta charset="utf-8"></head><body>${html}</body></html>`;
+
   document.getElementById("export-preview").innerHTML = html;
+  // mailto only carries plain text. Keep body short so user pastes formatted with Ctrl+V.
   document.getElementById("mailto-link").href =
-    `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(plain)}`;
-  window._exportHtml = html;
+    `mailto:?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent("[Paste here with Ctrl+V]")}`;
+  window._exportHtml = fullHtml;
   window._exportPlainText = plain;
-  window._exportSubject = subj;
   new bootstrap.Modal(document.getElementById("exportModal")).show();
 }
 
@@ -1148,27 +1149,20 @@ async function copyExport() {
   try {
     if (window.ClipboardItem && navigator.clipboard?.write) {
       const item = new ClipboardItem({
-        "text/html":  new Blob([window._exportHtml],       { type: "text/html"  }),
+        "text/html":  new Blob([window._exportHtml],      { type: "text/html"  }),
         "text/plain": new Blob([window._exportPlainText], { type: "text/plain" }),
       });
       await navigator.clipboard.write([item]);
     } else {
       await navigator.clipboard.writeText(window._exportPlainText);
     }
-    showToast("Copied (formatted) — paste into the email body", "success");
+    showToast("Copied (formatted) — now Open Email and Ctrl+V in the body", "success");
   } catch (e) {
     try {
       await navigator.clipboard.writeText(window._exportPlainText);
       showToast("Copied as plain text", "success");
     } catch { showToast("Copy error", "danger"); }
   }
-}
-
-function copyExportSubject() {
-  if (!window._exportSubject) return;
-  navigator.clipboard.writeText(window._exportSubject)
-    .then(() => showToast("Subject copied", "success"))
-    .catch(() => showToast("Copy error", "danger"));
 }
 
 // ── Filters ───────────────────────────────────────────────────────────────────
