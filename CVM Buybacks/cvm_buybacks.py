@@ -455,8 +455,14 @@ def init_db() -> None:
             )
             log.info("Migration qualificacao: concluida")
 
-        # 3) Views — agora qualificacao existe com certeza
-        conn.executescript(SCHEMA_VIEWS)
+        # 3) Views — executadas com conn.execute() (não executescript) para
+        #    ficarem dentro da mesma conexão/transação que a migration acima.
+        #    executescript() faz COMMIT implícito e quebraria a visibilidade da coluna.
+        import re as _re
+        for stmt in _re.split(r";\s*\n", SCHEMA_VIEWS):
+            stmt = stmt.strip()
+            if stmt:
+                conn.execute(stmt)
 
 
 def sync_companies() -> None:
