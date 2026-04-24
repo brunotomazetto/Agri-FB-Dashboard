@@ -153,6 +153,21 @@ body.subnav-visible #filter-bar { top: 96px; }
 }
 .btn-orange:hover { background: #D13D08; color: white; }
 
+/* ── Category tabs (below filter) ── */
+#category-tabs-bar {
+  background: white; border-bottom: 1px solid var(--border); padding: 10px 0;
+}
+#category-tabs-bar .cat-tab {
+  background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+  font-size: 12px; font-weight: 500; border-radius: 20px; padding: 5px 14px;
+  cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+#category-tabs-bar .cat-tab:hover { border-color: var(--orange); color: var(--orange); }
+#category-tabs-bar .cat-tab.active {
+  background: var(--orange); border-color: var(--orange); color: white;
+}
+
 /* ── News container ── */
 .news-container { padding-bottom: 56px; }
 .news-group-header {
@@ -303,7 +318,7 @@ body.subnav-visible #filter-bar { top: 96px; }
 <div id="filter-bar">
   <div class="container-fluid px-4 d-flex align-items-center gap-3 flex-wrap">
     <div class="d-flex align-items-center gap-1" id="quick-range-btns">
-      <button class="btn btn-sm quick-range-btn active" data-days="1" onclick="setQuickRange(1)">Hoje</button>
+      <button class="btn btn-sm quick-range-btn" data-days="1" onclick="setQuickRange(1)">Hoje</button>
       <button class="btn btn-sm quick-range-btn" data-days="3" onclick="setQuickRange(3)">3d</button>
       <button class="btn btn-sm quick-range-btn" data-days="7" onclick="setQuickRange(7)">7d</button>
       <button class="btn btn-sm quick-range-btn" data-days="30" onclick="setQuickRange(30)">30d</button>
@@ -337,6 +352,17 @@ body.subnav-visible #filter-bar { top: 96px; }
         <i class="bi bi-plus me-1"></i>Adicionar
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ── Category Tabs ── -->
+<div id="category-tabs-bar">
+  <div class="container-fluid px-4 d-flex align-items-center gap-2 flex-wrap">
+    <button class="cat-tab active" data-gid="" onclick="selectGroupTab(null)">All</button>
+    <button class="cat-tab" data-gid="2" onclick="selectGroupTab(2)">Agribusiness Sector</button>
+    <button class="cat-tab" data-gid="1" onclick="selectGroupTab(1)">Agribusiness Companies</button>
+    <button class="cat-tab" data-gid="4" onclick="selectGroupTab(4)">Food &amp; Beverage Sector</button>
+    <button class="cat-tab" data-gid="3" onclick="selectGroupTab(3)">Food &amp; Beverage Companies</button>
   </div>
 </div>
 
@@ -536,6 +562,7 @@ let groupsConfig = [];
 let categories = {};
 let activeCategory = null;
 let activeSubGroup = null;
+let activeGroupId = null;  // filtro da barra de tabs
 
 // ── Admin visibility ──────────────────────────────────────────────────────────
 function isAdminUser() {
@@ -556,8 +583,11 @@ function applyAdminVisibility() {
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
   const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
   document.getElementById("add-date").value = today;
-  setQuickRange(1);
+  // Default range: D-1 → D0 (ontem até hoje)
+  document.getElementById("date-from").value = yesterday;
+  document.getElementById("date-to").value = today;
 
   document.getElementById("relevance-slider").addEventListener("input", e => {
     const v = parseFloat(e.target.value);
@@ -572,6 +602,16 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStats();
   });
 });
+
+// ── Category tab filter ──────────────────────────────────────────────────────
+function selectGroupTab(gid) {
+  activeGroupId = gid;
+  document.querySelectorAll('#category-tabs-bar .cat-tab').forEach(btn => {
+    const btnGid = btn.dataset.gid === "" ? null : parseInt(btn.dataset.gid);
+    btn.classList.toggle('active', btnGid === gid);
+  });
+  loadNews();
+}
 
 // ── Greeting ──────────────────────────────────────────────────────────────────
 function updateGreeting() {
@@ -678,8 +718,7 @@ async function loadNews() {
   try {
     const res = await fetch(API_BASE + "/api/news?" + params.toString());
     let news = await res.json();
-    const ids = getActiveGroupIds();
-    if (ids !== null) news = news.filter(n => ids.includes(n.group_id));
+    if (activeGroupId !== null) news = news.filter(n => n.group_id === activeGroupId);
     allNews = news;
     renderNews(allNews);
     updateSelectedCount();
