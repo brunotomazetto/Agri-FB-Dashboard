@@ -1002,14 +1002,25 @@ def ingest_recompras(conn: sqlite3.Connection) -> int:
         names = z.namelist()
 
         # --- programas ---
-        prog_f = next((n for n in names if "recompra_acoes.csv" in n and "intermediarios" not in n and "quantidades" not in n), None)
+        # Colunas reais (2025+):
+        #   ID_Programa, CNPJ_Companhia, Nome_Companhia, Data_Deliberacao,
+        #   Data_Final_Prazo, Situacao, Tipo_Operacao, Motivo, Finalidade_Compra,
+        #   Quantidade_Acoes_Ordinarias, Quantidade_Acoes_Preferenciais
+        prog_f = next((n for n in names if "recompra_acoes.csv" in n
+                       and "intermediarios" not in n and "quantidades" not in n), None)
         if prog_f:
             with z.open(prog_f) as f:
                 df = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
             df["cnpj_clean"] = df["CNPJ_Companhia"].str.replace(r"\D", "", regex=True)
             df = df[df["cnpj_clean"].isin(cnpj_set)]
             for _, r in df.iterrows():
-                nk = hashlib.sha1(f"{r['cnpj_clean']}|{r.get('ID_Programa','')}".encode()).hexdigest()
+                # qtd_autorizada = soma de ON + PN (quando disponíveis)
+                qtd_on  = _num(r.get("Quantidade_Acoes_Ordinarias"))
+                qtd_pn  = _num(r.get("Quantidade_Acoes_Preferenciais"))
+                qtd_aut = (qtd_on or 0) + (qtd_pn or 0) or None
+                nk = hashlib.sha1(
+                    f"{r['cnpj_clean']}|{r.get('ID_Programa','')}".encode()
+                ).hexdigest()
                 conn.execute(
                     "INSERT OR IGNORE INTO buyback_programs"
                     "(cnpj_digits,id_programa,data_deliberacao,data_final_prazo,"
@@ -1017,35 +1028,42 @@ def ingest_recompras(conn: sqlite3.Connection) -> int:
                     "VALUES(?,?,?,?,?,?,?,?,?)",
                     (r["cnpj_clean"], _clean(r.get("ID_Programa")),
                      _clean(r.get("Data_Deliberacao")), _clean(r.get("Data_Final_Prazo")),
-                     _clean(r.get("Situacao")), _num(r.get("Quantidade_Autorizada")),
-                     _num(r.get("Quantidade_Acoes_Emitidas_Circulacao")),
-                     _clean(r.get("Destinacao_Acoes_Recompradas")), nk),
+                     _clean(r.get("Situacao")), qtd_aut,
+                     None,   # Quantidade_Acoes_Emitidas_Circulacao não existe mais
+                     _clean(r.get("Finalidade_Compra")), nk),
                 )
                 total += conn.execute("SELECT changes()").fetchone()[0]
 
         # --- quantidades ---
+        # Colunas reais (2025+):
+        #   ID_Programa, Tipo_Acao, Classe_Acao, Quantidade_Circulacao, Quantidade_Operacao
+        # Não tem CNPJ_Companhia — join via ID_Programa com buyback_programs
         qtd_f = next((n for n in names if "quantidades" in n), None)
         if qtd_f:
             with z.open(qtd_f) as f:
-                df = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
-            df["cnpj_clean"] = df["CNPJ_Companhia"].str.replace(r"\D", "", regex=True)
-            df = df[df["cnpj_clean"].isin(cnpj_set)]
-            for _, r in df.iterrows():
+                df_qtd = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
+            # Buscar IDs dos nossos programas no banco
+            our_ids = {str(r[0]) for r in conn.execute(
+                "SELECT id_programa FROM buyback_programs WHERE cnpj_digits IN (%s)"
+                % ",".join("?" * len(cnpj_set)), list(cnpj_set)
+            ).fetchall()}
+            df_qtd = df_qtd[df_qtd["ID_Programa"].isin(our_ids)]
+            for _, r in df_qtd.iterrows():
                 nk = hashlib.sha1(
-                    f"{r['cnpj_clean']}|{r.get('ID_Programa','')}|"
-                    f"{r.get('Data_Referencia','')}|{r.get('Descricao_Valor_Mobiliario','')}".encode()
+                    f"{r.get('ID_Programa','')}|{r.get('Tipo_Acao','')}|"
+                    f"{r.get('Classe_Acao','')}".encode()
                 ).hexdigest()
                 conn.execute(
                     "INSERT OR IGNORE INTO buyback_quantities"
                     "(cnpj_digits,id_programa,data_referencia,descricao_valor_mob,"
                     "qtd_adquirida,qtd_alienada,qtd_cancelada,natural_key)"
                     "VALUES(?,?,?,?,?,?,?,?)",
-                    (r["cnpj_clean"], _clean(r.get("ID_Programa")),
-                     _clean(r.get("Data_Referencia")),
-                     _clean(r.get("Descricao_Valor_Mobiliario")),
-                     _num(r.get("Quantidade_Adquirida")),
-                     _num(r.get("Quantidade_Alienada")),
-                     _num(r.get("Quantidade_Cancelada")), nk),
+                    (None,  # sem CNPJ na tabela de quantidades — recuperar via join
+                     _clean(r.get("ID_Programa")),
+                     None,  # sem data_referencia no novo formato
+                     _clean(r.get("Tipo_Acao")),
+                     _num(r.get("Quantidade_Operacao")),
+                     None, None, nk),
                 )
                 total += conn.execute("SELECT changes()").fetchone()[0]
 
