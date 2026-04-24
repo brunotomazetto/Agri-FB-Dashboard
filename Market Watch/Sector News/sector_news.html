@@ -317,27 +317,23 @@ body.subnav-visible #filter-bar { top: 96px; }
       <input type="range" class="filter-range" id="relevance-slider" min="0" max="1" step="0.1" value="0">
       <span id="relevance-value" class="filter-label">Todas</span>
     </div>
-    <div class="form-check mb-0">
-      <input class="form-check-input" type="checkbox" id="show-excluded">
-      <label class="form-check-label filter-label" for="show-excluded">Excluídas</label>
-    </div>
     <button class="btn btn-sm filter-btn" onclick="applyFilters()">
       <i class="bi bi-funnel-fill me-1"></i>Filtrar
     </button>
     <div class="ms-auto d-flex align-items-center gap-2">
-      <div class="form-check mb-0">
+      <div class="form-check mb-0" data-admin-only>
         <input class="form-check-input" type="checkbox" id="select-all-cb" onchange="toggleSelectAll(this.checked)">
         <label class="form-check-label filter-label" for="select-all-cb">Selecionar todas</label>
       </div>
-      <span id="selected-count" style="color:var(--text-muted);font-size:12px">Nenhuma</span>
-      <button class="btn btn-sm btn-outline-secondary" style="font-size:12px" onclick="clearSelection()">
+      <span id="selected-count" data-admin-only style="color:var(--text-muted);font-size:12px">Nenhuma</span>
+      <button class="btn btn-sm btn-outline-secondary" data-admin-only style="font-size:12px" onclick="clearSelection()">
         <i class="bi bi-x-square me-1"></i>Limpar
       </button>
-      <button class="btn btn-sm" id="btn-export" onclick="openExportModal()" disabled
+      <button class="btn btn-sm" id="btn-export" data-admin-only onclick="openExportModal()" disabled
               style="background:var(--orange);color:white;font-size:12px;border:none">
         <i class="bi bi-envelope me-1"></i>Exportar
       </button>
-      <button class="btn btn-sm btn-add-news" data-bs-toggle="modal" data-bs-target="#addNewsModal">
+      <button class="btn btn-sm btn-add-news" data-admin-only data-bs-toggle="modal" data-bs-target="#addNewsModal">
         <i class="bi bi-plus me-1"></i>Adicionar
       </button>
     </div>
@@ -531,7 +527,7 @@ body.subnav-visible #filter-bar { top: 96px; }
 // ── API base — change this to your deployed backend URL when hosting remotely
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
-  : 'https://ibba-agri-fb-feed-news.onrender.com';  // substitua após o deploy no Railway
+  : 'https://SEU-APP.railway.app';  // substitua após o deploy no Railway
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allNews = [];
@@ -540,6 +536,22 @@ let groupsConfig = [];
 let categories = {};
 let activeCategory = null;
 let activeSubGroup = null;
+
+// ── Admin visibility ──────────────────────────────────────────────────────────
+function isAdminUser() {
+  try {
+    const p = window.parent;
+    if (!p || p === window) return false;
+    return !!(p.STATE && p.STATE.currentUser && p.STATE.currentUser.is_admin);
+  } catch (e) { return false; }
+}
+
+function applyAdminVisibility() {
+  const admin = isAdminUser();
+  document.querySelectorAll('[data-admin-only]').forEach(el => {
+    el.style.display = admin ? '' : 'none';
+  });
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
@@ -552,6 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("relevance-value").textContent = v === 0 ? "Todas" : `≥ ${v.toFixed(1)}`;
   });
 
+  applyAdminVisibility();
   updateGreeting();
   loadGroups().then(() => {
     buildNav();
@@ -659,7 +672,6 @@ async function loadNews() {
   const dt = document.getElementById("date-to").value;
   if (df) params.set("date_from", df);
   if (dt) params.set("date_to", dt);
-  if (document.getElementById("show-excluded").checked) params.set("show_excluded", "true");
   const minScore = parseFloat(document.getElementById("relevance-slider").value);
   if (minScore > 0) params.set("min_score", minScore);
 
@@ -725,6 +737,7 @@ function renderNews(items) {
 }
 
 function newsCardHtml(item) {
+  const admin = isAdminUser();
   const score = item.relevance_score || 0;
   const scoreClass = score >= 0.7 ? "score-high" : score >= 0.5 ? "score-mid" : "score-low";
   const scoreLabel = score >= 0.7 ? "Alta" : score >= 0.5 ? "Média" : "Baixa";
@@ -733,15 +746,17 @@ function newsCardHtml(item) {
   const dateLabel = formatDateUpper(item.published_at);
   const excludedClass = item.is_excluded ? "excluded-item" : "";
   const manualClass = item.is_manually_added ? "manually-added" : "";
-  const excludeBtn = item.is_excluded
+  const excludeBtn = !admin ? "" : (item.is_excluded
     ? `<button class="btn-icon success" title="Incluir novamente" onclick="includeNews(${item.id})"><i class="bi bi-eye"></i></button>`
-    : `<button class="btn-icon danger" title="Excluir" onclick="excludeNews(${item.id})"><i class="bi bi-x-lg"></i></button>`;
-  return `
-    <div class="news-card ${excludedClass} ${manualClass}" id="card-${item.id}">
-      <div class="card-checkbox">
+    : `<button class="btn-icon danger" title="Excluir" onclick="excludeNews(${item.id})"><i class="bi bi-x-lg"></i></button>`);
+  const deleteBtn = !admin ? "" : `<button class="btn-icon danger" title="Excluir permanentemente" onclick="deleteNews(${item.id})"><i class="bi bi-trash"></i></button>`;
+  const checkboxCol = !admin ? "" : `<div class="card-checkbox">
         <input class="form-check-input" type="checkbox" id="cb-${item.id}"
                onchange="toggleItem(${item.id}, this.checked)" ${selectedIds.has(item.id) ? "checked" : ""}>
-      </div>
+      </div>`;
+  return `
+    <div class="news-card ${excludedClass} ${manualClass}" id="card-${item.id}">
+      ${checkboxCol}
       <div class="card-icon" style="background:${iconBg};color:${color}">
         <i class="bi bi-newspaper"></i>
       </div>
@@ -762,9 +777,7 @@ function newsCardHtml(item) {
           </div>
           <div class="card-actions">
             ${excludeBtn}
-            <button class="btn-icon danger" title="Excluir permanentemente" onclick="deleteNews(${item.id})">
-              <i class="bi bi-trash"></i>
-            </button>
+            ${deleteBtn}
             <a href="${escHtml(item.url)}" target="_blank" rel="noopener" class="btn-open">
               Abrir <i class="bi bi-arrow-right"></i>
             </a>
@@ -783,8 +796,7 @@ function toggleItem(id, checked) {
 }
 
 function toggleSelectAll(checked) {
-  const showExcluded = document.getElementById("show-excluded").checked;
-  allNews.filter(n => !n.is_excluded || showExcluded).forEach(item => {
+  allNews.filter(n => !n.is_excluded).forEach(item => {
     const cb = document.getElementById(`cb-${item.id}`);
     if (cb) { cb.checked = checked; toggleItem(item.id, checked); }
   });
@@ -839,13 +851,9 @@ async function excludeNews(id) {
   if (item) item.is_excluded = 1;
   const card = document.getElementById(`card-${id}`);
   if (card) {
-    if (!document.getElementById("show-excluded").checked) {
-      card.style.transition = "opacity 0.25s";
-      card.style.opacity = "0";
-      setTimeout(() => card.remove(), 250);
-    } else {
-      card.classList.add("excluded-item");
-    }
+    card.style.transition = "opacity 0.25s";
+    card.style.opacity = "0";
+    setTimeout(() => card.remove(), 250);
   }
   updateSelectedCount();
   updatePageHeader();
