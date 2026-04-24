@@ -2,21 +2,37 @@
 CVM Buybacks — monitor de negociações de insiders e programas de recompra.
 
 Fontes públicas (Portal de Dados Abertos CVM):
-    1. VLMO (Valores Mobiliários Negociados e Detidos) — art. 11 da Resolução CVM 44
-       (norma que substituiu a Instrução CVM 358 em 2021).
-       Atualizado semanalmente. Cobre compras/vendas e saldos por:
-       Companhia, Controlador, Conselho de Administração, Diretoria,
-       Conselho Fiscal e Pessoas Ligadas.
 
-    2. Programa de Recompra de Ações — dataset lançado pela CVM em nov/2025.
-       Atualizado diariamente. Lista todos os programas aprovados, em
-       andamento e encerrados, com quantidade aprovada vs adquirida.
+    1. VLMO (Valores Mobiliários Negociados e Detidos)
+       https://dados.cvm.gov.br/dataset/cia_aberta-doc-vlmo
+       Base legal: art. 11 da Resolução CVM 44 (substituiu a ICVM 358 em 2021).
+       Atualizado semanalmente pela CVM.
 
-Execução típica (GitHub Actions, semanalmente):
-    python cvm_buybacks.py              # incremental: ano atual + anterior
-    python cvm_buybacks.py --bootstrap  # primeira carga: últimos 5 anos
+       Dentro de cada ZIP anual vêm 2 CSVs:
+         - vlmo_cia_aberta_AAAA.csv      -> índice de entregas (protocolos,
+                                            versões, links para o PDF original)
+         - vlmo_cia_aberta_con_AAAA.csv  -> CONTEÚDO: saldos e movimentações
+                                            dos insiders. É o arquivo principal.
 
-O SQLite (cvm_buybacks.db) é commitado no próprio repositório.
+       Cada linha do arquivo "con" é uma de três coisas, identificadas pela
+       coluna Tipo_Movimentacao:
+         - "Saldo Inicial"  -> posição no 1º dia do mês (sem Data_Movimentacao)
+         - "Saldo Final"    -> posição no último dia do mês
+         - qualquer outro   -> operação real (Compra à vista, Venda à vista,
+                               Posse, Desligamento/saída, Doação, Subscrição,
+                               Plano de remuneração, etc. — ~30 tipos)
+
+    2. Recompras (dataset lançado em nov/2025, atualizado diariamente)
+       https://dados.cvm.gov.br/dataset/cia_aberta-eventos-recompra_acoes
+
+       Dentro do ZIP vêm 3 CSVs complementares:
+         - programa            -> cabeçalho: aprovação, prazo, qtd aprovada
+         - quantidades         -> execução por classe de ação
+         - intermediarios      -> corretoras contratadas
+
+Ingestão idempotente via `natural_key` (hash SHA-1 dos campos que definem
+uma linha univocamente). A CVM reapresenta arquivos passados semanalmente
+com correções; rodar 52 semanas seguidas não duplica nada.
 """
 from __future__ import annotations
 
@@ -39,9 +55,6 @@ import requests
 # CONFIGURAÇÃO — edite aqui os tickers monitorados
 # ============================================================================
 
-# Dict de ticker -> CNPJ (somente dígitos). Usar CNPJ é mais robusto que
-# tentar resolver pelo nome, já que grupos econômicos compartilham nomes.
-# Adicione/remova tickers à vontade.
 TICKERS: dict[str, str] = {
     "MBRF3": "03853896000140",  # MBRF Global Foods (ex-Marfrig, incorporou BRF em set/2025)
     "BEEF3": "67620377000114",  # Minerva
@@ -74,8 +87,7 @@ RECOMPRA_URL = (
     "cia_aberta_recompra_acoes.zip"
 )
 
-# User-Agent cordial (algumas APIs públicas rejeitam clientes anônimos)
-HTTP_HEADERS = {"User-Agent": "cvm-buybacks-monitor/1.0"}
+HTTP_HEADERS = {"User-Agent": "cvm-buybacks-monitor/2.0"}
 
 
 # ============================================================================
@@ -83,6 +95,7 @@ HTTP_HEADERS = {"User-Agent": "cvm-buybacks-monitor/1.0"}
 # ============================================================================
 
 SCHEMA = """
+-- Cadastro dos tickers monitorados (populado a partir do dict TICKERS)
 CREATE TABLE IF NOT EXISTS companies (
     cnpj_digits  TEXT PRIMARY KEY,
     ticker       TEXT NOT NULL,
@@ -91,62 +104,143 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 CREATE INDEX IF NOT EXISTS idx_companies_ticker ON companies(ticker);
 
-CREATE TABLE IF NOT EXISTS vlmo_movements (
-    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
-    cnpj_digits              TEXT    NOT NULL,
-    nome_companhia           TEXT,
-    data_referencia          TEXT    NOT NULL,     -- YYYY-MM-01
-    data_entrega             TEXT,
-    versao                   INTEGER,
-    tipo_cargo               TEXT,                 -- Controlador / Conselho / Diretor / Companhia / etc.
-    tipo_movimentacao        TEXT,                 -- Compra / Venda / Bonificação / etc.
-    intermediario            TEXT,
-    especie_vm               TEXT,                 -- ON / PN / UNT
-    caracteristica_vm        TEXT,
-    mercado                  TEXT,
-    quantidade               REAL,
-    preco                    REAL,
-    volume                   REAL,
-    natural_key              TEXT    NOT NULL UNIQUE,
-    ingested_at              TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_mov_cnpj_data ON vlmo_movements(cnpj_digits, data_referencia);
 
-CREATE TABLE IF NOT EXISTS vlmo_positions (
-    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
-    cnpj_digits              TEXT    NOT NULL,
-    nome_companhia           TEXT,
-    data_referencia          TEXT    NOT NULL,
-    tipo_cargo               TEXT,
-    especie_vm               TEXT,
-    caracteristica_vm        TEXT,
-    saldo_inicial            REAL,
-    saldo_final              REAL,
-    qtd_compra               REAL,
-    qtd_venda                REAL,
-    natural_key              TEXT    NOT NULL UNIQUE,
-    ingested_at              TEXT    NOT NULL DEFAULT (datetime('now'))
-);
-CREATE INDEX IF NOT EXISTS idx_pos_cnpj_data ON vlmo_positions(cnpj_digits, data_referencia);
+-- ---------------------------------------------------------------------------
+-- VLMO: tabela UNIFICADA que espelha o CSV vlmo_cia_aberta_con_AAAA.csv
+--
+-- Cada linha pode ser:
+--   - Saldo Inicial / Saldo Final  (sem data_movimentacao)
+--   - Uma operação real (Compra, Venda, Posse, Doação, etc.)
+--
+-- A view v_insider_trades filtra só operações reais; v_monthly_balances
+-- filtra só saldos finais.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS vlmo_entries (
+    id                              INTEGER PRIMARY KEY AUTOINCREMENT,
 
+    -- identificação da companhia reportante
+    cnpj_digits                     TEXT    NOT NULL,
+    nome_companhia                  TEXT,
+
+    -- período e versão do informe
+    data_referencia                 TEXT    NOT NULL,    -- mês de competência, YYYY-MM-01
+    versao                          INTEGER,
+
+    -- QUEM: categoria e identidade do titular
+    tipo_empresa                    TEXT,                -- Companhia / Controladora / Controlada
+    empresa                         TEXT,                -- nome/razão social do titular
+    tipo_cargo                      TEXT,                -- Controlador ou Vinculado / Conselho de Administração /
+                                                         -- Diretor / Conselho Fiscal / Órgão Estatutário
+
+    -- O QUE aconteceu
+    tipo_movimentacao               TEXT,                -- "Saldo Inicial" / "Saldo Final" / "Compra à vista" /
+                                                         -- "Venda à vista" / "Posse" / "Desligamento/saída" /
+                                                         -- "Doação (donatário)" / "Subscrição" / etc.
+    descricao_movimentacao          TEXT,                -- texto livre (ex.: "Divórcio", "Herança")
+    tipo_operacao                   TEXT,                -- Crédito / Débito (entrada/saída)
+
+    -- ATIVO negociado
+    tipo_ativo                      TEXT,                -- Ações / Debêntures / Opções / Units / BDR / etc.
+    caracteristica_vm               TEXT,                -- ON / PN / PNA / UNT / emissão, etc.
+
+    -- contraparte (corretora)
+    intermediario                   TEXT,
+
+    -- QUANDO e QUANTO
+    data_movimentacao               TEXT,                -- NULL para saldos
+    quantidade                      REAL,                -- nº de papéis (positivo; sinal está em tipo_operacao)
+    preco_unitario                  REAL,                -- R$ por papel
+    volume                          REAL,                -- R$ total (geralmente qtd * preço)
+
+    -- deduplicação
+    natural_key                     TEXT    NOT NULL UNIQUE,
+    ingested_at                     TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_vlmo_cnpj_mes    ON vlmo_entries(cnpj_digits, data_referencia);
+CREATE INDEX IF NOT EXISTS idx_vlmo_mov_real    ON vlmo_entries(cnpj_digits, tipo_movimentacao);
+CREATE INDEX IF NOT EXISTS idx_vlmo_cargo       ON vlmo_entries(tipo_cargo);
+
+
+-- ---------------------------------------------------------------------------
+-- VLMO: metadados das entregas (arquivo vlmo_cia_aberta_AAAA.csv — sem _con_)
+-- Útil para rastrear reapresentações e linkar o PDF original na CVM.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS vlmo_filings (
+    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    cnpj_digits            TEXT    NOT NULL,
+    nome_companhia         TEXT,
+    data_referencia        TEXT    NOT NULL,    -- mês de competência
+    data_entrega           TEXT,                -- quando foi entregue à CVM
+    versao                 INTEGER,
+    codigo_cvm             TEXT,
+    categoria              TEXT,
+    tipo                   TEXT,
+    tipo_apresentacao      TEXT,                -- AP / RE - Reapresentação Espontânea / etc.
+    motivo_reapresentacao  TEXT,
+    protocolo_entrega      TEXT,
+    link_download          TEXT,
+    natural_key            TEXT    NOT NULL UNIQUE,
+    ingested_at            TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_filings_cnpj ON vlmo_filings(cnpj_digits, data_referencia);
+
+
+-- ---------------------------------------------------------------------------
+-- RECOMPRA: programa principal
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS buyback_programs (
-    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
-    cnpj_digits              TEXT    NOT NULL,
-    nome_companhia           TEXT,
-    numero_programa          TEXT,
-    data_aprovacao           TEXT,
-    data_inicio              TEXT,
-    data_fim                 TEXT,
-    situacao                 TEXT,
-    especie_acao             TEXT,
-    qtd_aprovada             REAL,
-    qtd_adquirida            REAL,
-    percentual_free_float    REAL,
-    natural_key              TEXT    NOT NULL UNIQUE,
-    ingested_at              TEXT    NOT NULL DEFAULT (datetime('now'))
+    id                               INTEGER PRIMARY KEY AUTOINCREMENT,
+    cnpj_digits                      TEXT    NOT NULL,
+    nome_companhia                   TEXT,
+    id_programa                      TEXT    NOT NULL,   -- identificador único do programa na CVM
+    quantidade_acoes_ordinarias      REAL,
+    quantidade_acoes_preferenciais   REAL,
+    finalidade_compra                TEXT,
+    motivo                           TEXT,
+    data_deliberacao                 TEXT,
+    data_final_prazo                 TEXT,
+    situacao                         TEXT,                -- Em Andamento / Encerrado / Cancelado
+    tipo_operacao                    TEXT,
+    natural_key                      TEXT    NOT NULL UNIQUE,
+    ingested_at                      TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_buyback_cnpj ON buyback_programs(cnpj_digits);
+CREATE INDEX IF NOT EXISTS idx_buyback_prog ON buyback_programs(id_programa);
 
+
+-- ---------------------------------------------------------------------------
+-- RECOMPRA: quantidades executadas por classe de ação
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS buyback_quantities (
+    id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_programa              TEXT    NOT NULL,
+    classe_acao              TEXT,
+    tipo_acao                TEXT,
+    quantidade_circulacao    REAL,
+    quantidade_operacao      REAL,                         -- qtd efetivamente operada
+    natural_key              TEXT    NOT NULL UNIQUE,
+    ingested_at              TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_buyback_qty_prog ON buyback_quantities(id_programa);
+
+
+-- ---------------------------------------------------------------------------
+-- RECOMPRA: intermediários contratados
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS buyback_intermediaries (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_programa           TEXT    NOT NULL,
+    intermediario         TEXT,
+    cnpj_intermediario    TEXT,
+    natural_key           TEXT    NOT NULL UNIQUE,
+    ingested_at           TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_buyback_int_prog ON buyback_intermediaries(id_programa);
+
+
+-- ---------------------------------------------------------------------------
+-- Auditoria de execuções
+-- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ingestion_log (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     run_at       TEXT NOT NULL DEFAULT (datetime('now')),
@@ -156,6 +250,114 @@ CREATE TABLE IF NOT EXISTS ingestion_log (
     status       TEXT,
     message      TEXT
 );
+
+
+-- ---------------------------------------------------------------------------
+-- VIEWS: consultas prontas
+-- ---------------------------------------------------------------------------
+
+-- Apenas OPERAÇÕES REAIS (exclui saldos)
+DROP VIEW IF EXISTS v_insider_trades;
+CREATE VIEW v_insider_trades AS
+SELECT
+    c.ticker,
+    e.nome_companhia,
+    e.data_referencia                                 AS mes_competencia,
+    e.data_movimentacao,
+    e.tipo_empresa,
+    e.tipo_cargo,
+    e.empresa,
+    e.tipo_movimentacao,
+    e.descricao_movimentacao,
+    e.tipo_operacao,
+    e.tipo_ativo,
+    e.caracteristica_vm,
+    e.intermediario,
+    e.quantidade,
+    e.preco_unitario,
+    e.volume,
+    -- quantidade com sinal: + para Crédito (entrada), - para Débito (saída)
+    CASE WHEN e.tipo_operacao = 'Débito'
+         THEN -COALESCE(e.quantidade, 0)
+         ELSE  COALESCE(e.quantidade, 0)
+    END                                               AS quantidade_assinada
+FROM vlmo_entries e
+JOIN companies c ON c.cnpj_digits = e.cnpj_digits
+WHERE e.tipo_movimentacao NOT IN ('Saldo Inicial', 'Saldo Final');
+
+
+-- Saldos FINAIS por (mês, cargo, ativo) — útil pra ver como a posição evoluiu
+DROP VIEW IF EXISTS v_monthly_balances;
+CREATE VIEW v_monthly_balances AS
+SELECT
+    c.ticker,
+    e.nome_companhia,
+    e.data_referencia           AS mes_competencia,
+    e.tipo_empresa,
+    e.tipo_cargo,
+    e.tipo_ativo,
+    e.caracteristica_vm,
+    SUM(e.quantidade)           AS saldo_final_consolidado
+FROM vlmo_entries e
+JOIN companies c ON c.cnpj_digits = e.cnpj_digits
+WHERE e.tipo_movimentacao = 'Saldo Final'
+GROUP BY c.ticker, e.nome_companhia, e.data_referencia,
+         e.tipo_empresa, e.tipo_cargo, e.tipo_ativo, e.caracteristica_vm;
+
+
+-- Compras e vendas agregadas por mês / cargo (só à vista e à termo, em ações)
+DROP VIEW IF EXISTS v_net_trading_monthly;
+CREATE VIEW v_net_trading_monthly AS
+SELECT
+    c.ticker,
+    e.nome_companhia,
+    e.data_referencia           AS mes_competencia,
+    e.tipo_cargo,
+    e.caracteristica_vm,
+    SUM(CASE WHEN e.tipo_movimentacao LIKE 'Compra%'
+             THEN e.quantidade ELSE 0 END)     AS qtd_compra,
+    SUM(CASE WHEN e.tipo_movimentacao LIKE 'Venda%'
+             THEN e.quantidade ELSE 0 END)     AS qtd_venda,
+    SUM(CASE WHEN e.tipo_movimentacao LIKE 'Compra%' THEN e.quantidade
+             WHEN e.tipo_movimentacao LIKE 'Venda%'  THEN -e.quantidade
+             ELSE 0 END)                       AS qtd_liquida,
+    SUM(CASE WHEN e.tipo_movimentacao LIKE 'Compra%' OR e.tipo_movimentacao LIKE 'Venda%'
+             THEN COALESCE(e.volume, e.quantidade * e.preco_unitario) END) AS volume_total_brl,
+    COUNT(*)                                   AS n_operacoes
+FROM vlmo_entries e
+JOIN companies c ON c.cnpj_digits = e.cnpj_digits
+WHERE e.tipo_ativo = 'Ações'
+  AND (e.tipo_movimentacao LIKE 'Compra%' OR e.tipo_movimentacao LIKE 'Venda%')
+GROUP BY c.ticker, e.nome_companhia, e.data_referencia, e.tipo_cargo, e.caracteristica_vm;
+
+
+-- Programas de recompra, com % executado por classe
+DROP VIEW IF EXISTS v_buyback_status;
+CREATE VIEW v_buyback_status AS
+SELECT
+    c.ticker,
+    p.nome_companhia,
+    p.id_programa,
+    p.data_deliberacao,
+    p.data_final_prazo,
+    p.situacao,
+    p.finalidade_compra,
+    p.tipo_operacao,
+    p.quantidade_acoes_ordinarias,
+    p.quantidade_acoes_preferenciais,
+    q.classe_acao,
+    q.tipo_acao,
+    q.quantidade_circulacao,
+    q.quantidade_operacao,
+    CASE WHEN COALESCE(p.quantidade_acoes_ordinarias, 0)
+            + COALESCE(p.quantidade_acoes_preferenciais, 0) > 0
+         THEN ROUND(100.0 * COALESCE(q.quantidade_operacao, 0) /
+              (COALESCE(p.quantidade_acoes_ordinarias, 0) +
+               COALESCE(p.quantidade_acoes_preferenciais, 0)), 2)
+    END                                                   AS pct_executado
+FROM buyback_programs p
+JOIN companies c ON c.cnpj_digits = p.cnpj_digits
+LEFT JOIN buyback_quantities q ON q.id_programa = p.id_programa;
 """
 
 
@@ -187,7 +389,6 @@ def init_db() -> None:
 
 
 def sync_companies() -> None:
-    """Popula/atualiza a tabela companies a partir do dict TICKERS."""
     with db_conn() as conn:
         for ticker, cnpj in TICKERS.items():
             conn.execute(
@@ -195,7 +396,7 @@ def sync_companies() -> None:
                 INSERT INTO companies (cnpj_digits, ticker, updated_at)
                 VALUES (?, ?, datetime('now'))
                 ON CONFLICT(cnpj_digits) DO UPDATE SET
-                    ticker     = excluded.ticker,
+                    ticker = excluded.ticker,
                     updated_at = datetime('now')
                 """,
                 (cnpj, ticker),
@@ -213,7 +414,6 @@ def only_digits(s) -> str:
 
 
 def parse_date(s) -> str | None:
-    """Aceita vários formatos da CVM e devolve ISO 'YYYY-MM-DD'."""
     if pd.isna(s) or s == "" or s is None:
         return None
     s = str(s).strip()
@@ -232,20 +432,11 @@ def safe_float(v) -> float | None:
         return None
     try:
         s = str(v)
-        # CSV CVM usa ',' decimal e às vezes '.' como milhar
         if "," in s:
             return float(s.replace(".", "").replace(",", "."))
         return float(s)
     except (ValueError, TypeError):
         return None
-
-
-def pick(row: pd.Series, *candidates: str):
-    """Primeiro nome de coluna que existir (tolerante a renomeações da CVM)."""
-    for c in candidates:
-        if c in row.index and not pd.isna(row[c]):
-            return row[c]
-    return None
 
 
 def log_run(source: str, seen: int, new: int, status: str, msg: str = "") -> None:
@@ -260,31 +451,127 @@ def log_run(source: str, seen: int, new: int, status: str, msg: str = "") -> Non
 # INGESTÃO — VLMO
 # ============================================================================
 
-def _natural_key_mov(row: pd.Series) -> str:
+def _nk_vlmo_entry(row: pd.Series) -> str:
+    """Chave natural para uma linha do arquivo _con_."""
     parts = [
         only_digits(row.get("CNPJ_Companhia", "")),
         str(row.get("Data_Referencia", "")),
+        str(row.get("Versao", "")),
+        str(row.get("Tipo_Empresa", "")),
+        str(row.get("Empresa", "")),
         str(row.get("Tipo_Cargo", "")),
         str(row.get("Tipo_Movimentacao", "")),
-        str(row.get("Especie_Valor_Mobiliario", "")),
+        str(row.get("Descricao_Movimentacao", "")),
+        str(row.get("Tipo_Ativo", "")),
         str(row.get("Caracteristica_Valor_Mobiliario", "")),
         str(row.get("Intermediario", "")),
+        str(row.get("Data_Movimentacao", "")),
         str(row.get("Quantidade", "")),
-        str(row.get("Preco", "")),
+        str(row.get("Preco_Unitario", "")),
         str(row.get("Volume", "")),
     ]
     return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
 
 
-def _natural_key_con(row: pd.Series) -> str:
-    parts = [
-        only_digits(row.get("CNPJ_Companhia", "")),
-        str(row.get("Data_Referencia", "")),
-        str(row.get("Tipo_Cargo", "")),
-        str(row.get("Especie_Valor_Mobiliario", "")),
-        str(row.get("Caracteristica_Valor_Mobiliario", "")),
-    ]
-    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+def _nk_vlmo_filing(row: pd.Series) -> str:
+    return hashlib.sha1(
+        str(row.get("Protocolo_Entrega", "")).encode("utf-8")
+    ).hexdigest()
+
+
+def _ingest_vlmo_content(df: pd.DataFrame, cnpjs: set[str]) -> int:
+    """Ingere o CSV _con_ (conteúdo). Retorna linhas novas."""
+    df = df.copy()
+    df["__cnpj_d"] = df["CNPJ_Companhia"].map(only_digits)
+    df = df[df["__cnpj_d"].isin(cnpjs)]
+    if df.empty:
+        return 0
+
+    df["Data_Referencia"]    = df["Data_Referencia"].map(parse_date)
+    df["Data_Movimentacao"]  = df["Data_Movimentacao"].map(parse_date)
+
+    rows_new = 0
+    with db_conn() as conn:
+        for _, row in df.iterrows():
+            nk = _nk_vlmo_entry(row)
+            cur = conn.execute(
+                """
+                INSERT OR IGNORE INTO vlmo_entries (
+                    cnpj_digits, nome_companhia, data_referencia, versao,
+                    tipo_empresa, empresa, tipo_cargo,
+                    tipo_movimentacao, descricao_movimentacao, tipo_operacao,
+                    tipo_ativo, caracteristica_vm, intermediario,
+                    data_movimentacao, quantidade, preco_unitario, volume,
+                    natural_key
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    row["__cnpj_d"],
+                    row.get("Nome_Companhia"),
+                    row.get("Data_Referencia"),
+                    int(row["Versao"]) if pd.notna(row.get("Versao")) else None,
+                    row.get("Tipo_Empresa"),
+                    row.get("Empresa"),
+                    row.get("Tipo_Cargo"),
+                    row.get("Tipo_Movimentacao"),
+                    row.get("Descricao_Movimentacao"),
+                    row.get("Tipo_Operacao"),
+                    row.get("Tipo_Ativo"),
+                    row.get("Caracteristica_Valor_Mobiliario"),
+                    row.get("Intermediario"),
+                    row.get("Data_Movimentacao"),
+                    safe_float(row.get("Quantidade")),
+                    safe_float(row.get("Preco_Unitario")),
+                    safe_float(row.get("Volume")),
+                    nk,
+                ),
+            )
+            rows_new += cur.rowcount
+    return rows_new
+
+
+def _ingest_vlmo_index(df: pd.DataFrame, cnpjs: set[str]) -> int:
+    """Ingere o CSV índice (sem _con_). Retorna linhas novas."""
+    df = df.copy()
+    df["__cnpj_d"] = df["CNPJ_Companhia"].map(only_digits)
+    df = df[df["__cnpj_d"].isin(cnpjs)]
+    if df.empty:
+        return 0
+
+    df["Data_Referencia"] = df["Data_Referencia"].map(parse_date)
+    df["Data_Entrega"]    = df["Data_Entrega"].map(parse_date)
+
+    rows_new = 0
+    with db_conn() as conn:
+        for _, row in df.iterrows():
+            nk = _nk_vlmo_filing(row)
+            cur = conn.execute(
+                """
+                INSERT OR IGNORE INTO vlmo_filings (
+                    cnpj_digits, nome_companhia, data_referencia, data_entrega,
+                    versao, codigo_cvm, categoria, tipo, tipo_apresentacao,
+                    motivo_reapresentacao, protocolo_entrega, link_download,
+                    natural_key
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    row["__cnpj_d"],
+                    row.get("Nome_Companhia"),
+                    row.get("Data_Referencia"),
+                    row.get("Data_Entrega"),
+                    int(row["Versao"]) if pd.notna(row.get("Versao")) else None,
+                    row.get("Codigo_CVM"),
+                    row.get("Categoria"),
+                    row.get("Tipo"),
+                    row.get("Tipo_Apresentacao"),
+                    row.get("Motivo_Reapresentacao"),
+                    row.get("Protocolo_Entrega"),
+                    row.get("Link_Download"),
+                    nk,
+                ),
+            )
+            rows_new += cur.rowcount
+    return rows_new
 
 
 def ingest_vlmo_year(year: int, cnpjs: set[str]) -> dict:
@@ -295,117 +582,154 @@ def ingest_vlmo_year(year: int, cnpjs: set[str]) -> dict:
         if r.status_code == 404:
             log.info("Ano %d ainda não publicado. Pulando.", year)
             log_run(f"vlmo_{year}", 0, 0, "skipped", "404")
-            return {"mov_new": 0, "con_new": 0}
+            return {"entries_new": 0, "filings_new": 0}
         r.raise_for_status()
     except requests.RequestException as e:
         log.error("Falha baixando VLMO %d: %s", year, e)
         log_run(f"vlmo_{year}", 0, 0, "error", str(e))
-        return {"mov_new": 0, "con_new": 0, "error": str(e)}
+        return {"entries_new": 0, "filings_new": 0, "error": str(e)}
 
     zf = zipfile.ZipFile(io.BytesIO(r.content))
-    mov_new = _ingest_vlmo_csv(zf, "_mov_", cnpjs, is_movement=True)
-    con_new = _ingest_vlmo_csv(zf, "_con_", cnpjs, is_movement=False)
 
-    result = {"mov_new": mov_new, "con_new": con_new}
-    log_run(f"vlmo_{year}", mov_new + con_new, mov_new + con_new, "ok", str(result))
+    entries_new = 0
+    filings_new = 0
+
+    for name in zf.namelist():
+        if not name.endswith(".csv"):
+            continue
+        log.info("  Lendo %s", name)
+        with zf.open(name) as f:
+            df = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
+
+        if "_con_" in name:
+            entries_new += _ingest_vlmo_content(df, cnpjs)
+        else:
+            filings_new += _ingest_vlmo_index(df, cnpjs)
+
+    result = {"entries_new": entries_new, "filings_new": filings_new}
+    log_run(f"vlmo_{year}", entries_new + filings_new, entries_new + filings_new,
+            "ok", str(result))
     log.info("VLMO %d: %s", year, result)
     return result
 
 
-def _ingest_vlmo_csv(zf: zipfile.ZipFile, name_substr: str, cnpjs: set[str], is_movement: bool) -> int:
-    candidates = [n for n in zf.namelist() if name_substr in n and n.endswith(".csv")]
-    if not candidates:
-        return 0
+# ============================================================================
+# INGESTÃO — RECOMPRAS (3 arquivos)
+# ============================================================================
 
-    name = candidates[0]
-    log.info("  Lendo %s", name)
-    with zf.open(name) as f:
-        df = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
+def _nk(*parts) -> str:
+    return hashlib.sha1("|".join(str(p or "") for p in parts).encode("utf-8")).hexdigest()
 
-    if df.empty:
-        return 0
 
+def _ingest_buyback_programs(df: pd.DataFrame, cnpjs: set[str]) -> int:
+    df = df.copy()
     df["__cnpj_d"] = df["CNPJ_Companhia"].map(only_digits)
-    df = df[df["__cnpj_d"].isin(cnpjs)].copy()
+    df = df[df["__cnpj_d"].isin(cnpjs)]
     if df.empty:
         return 0
-
-    df["Data_Referencia"] = df["Data_Referencia"].map(parse_date)
-    if is_movement and "Data_Entrega" in df.columns:
-        df["Data_Entrega"] = df["Data_Entrega"].map(parse_date)
 
     rows_new = 0
     with db_conn() as conn:
         for _, row in df.iterrows():
-            if is_movement:
-                nk = _natural_key_mov(row)
-                cur = conn.execute(
-                    """
-                    INSERT OR IGNORE INTO vlmo_movements (
-                        cnpj_digits, nome_companhia, data_referencia, data_entrega,
-                        versao, tipo_cargo, tipo_movimentacao, intermediario,
-                        especie_vm, caracteristica_vm, mercado,
-                        quantidade, preco, volume, natural_key
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-                    """,
-                    (
-                        row["__cnpj_d"],
-                        row.get("Nome_Companhia"),
-                        row.get("Data_Referencia"),
-                        row.get("Data_Entrega"),
-                        row.get("Versao"),
-                        row.get("Tipo_Cargo"),
-                        row.get("Tipo_Movimentacao"),
-                        row.get("Intermediario"),
-                        row.get("Especie_Valor_Mobiliario"),
-                        row.get("Caracteristica_Valor_Mobiliario"),
-                        row.get("Mercado"),
-                        safe_float(row.get("Quantidade")),
-                        safe_float(row.get("Preco")),
-                        safe_float(row.get("Volume")),
-                        nk,
-                    ),
-                )
-            else:
-                nk = _natural_key_con(row)
-                cur = conn.execute(
-                    """
-                    INSERT OR IGNORE INTO vlmo_positions (
-                        cnpj_digits, nome_companhia, data_referencia,
-                        tipo_cargo, especie_vm, caracteristica_vm,
-                        saldo_inicial, saldo_final, qtd_compra, qtd_venda, natural_key
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                    """,
-                    (
-                        row["__cnpj_d"],
-                        row.get("Nome_Companhia"),
-                        row.get("Data_Referencia"),
-                        row.get("Tipo_Cargo"),
-                        row.get("Especie_Valor_Mobiliario"),
-                        row.get("Caracteristica_Valor_Mobiliario"),
-                        safe_float(row.get("Saldo_Inicial")),
-                        safe_float(row.get("Saldo_Final")),
-                        safe_float(row.get("Quantidade_Compra")),
-                        safe_float(row.get("Quantidade_Venda")),
-                        nk,
-                    ),
-                )
-            rows_new += cur.rowcount
+            id_programa = str(row.get("ID_Programa", "") or "")
+            nk = _nk(row["__cnpj_d"], id_programa, row.get("Data_Deliberacao"))
+            cur = conn.execute(
+                """
+                INSERT INTO buyback_programs (
+                    cnpj_digits, nome_companhia, id_programa,
+                    quantidade_acoes_ordinarias, quantidade_acoes_preferenciais,
+                    finalidade_compra, motivo, data_deliberacao, data_final_prazo,
+                    situacao, tipo_operacao, natural_key
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                ON CONFLICT(natural_key) DO UPDATE SET
+                    situacao         = excluded.situacao,
+                    data_final_prazo = COALESCE(excluded.data_final_prazo, buyback_programs.data_final_prazo),
+                    motivo           = COALESCE(excluded.motivo, buyback_programs.motivo),
+                    ingested_at      = datetime('now')
+                """,
+                (
+                    row["__cnpj_d"],
+                    row.get("Nome_Companhia"),
+                    id_programa,
+                    safe_float(row.get("Quantidade_Acoes_Ordinarias")),
+                    safe_float(row.get("Quantidade_Acoes_Preferenciais")),
+                    row.get("Finalidade_Compra"),
+                    row.get("Motivo"),
+                    parse_date(row.get("Data_Deliberacao")),
+                    parse_date(row.get("Data_Final_Prazo")),
+                    row.get("Situacao"),
+                    row.get("Tipo_Operacao"),
+                    nk,
+                ),
+            )
+            if cur.rowcount > 0:
+                rows_new += 1
     return rows_new
 
 
-# ============================================================================
-# INGESTÃO — RECOMPRAS
-# ============================================================================
+def _ingest_buyback_quantities(df: pd.DataFrame, known_programs: set[str]) -> int:
+    """Ingere quantidades só para programas que já monitoramos."""
+    df = df.copy()
+    df["__id"] = df["ID_Programa"].astype(str).str.strip()
+    df = df[df["__id"].isin(known_programs)]
+    if df.empty:
+        return 0
 
-def _natural_key_buyback(row: pd.Series) -> str:
-    parts = [
-        only_digits(pick(row, "CNPJ_Companhia", "CNPJ_CIA", "CNPJ")),
-        str(pick(row, "Numero_Programa", "Programa", "ID_Programa") or ""),
-        str(pick(row, "Data_Aprovacao", "Data_Deliberacao") or ""),
-        str(pick(row, "Especie_Acao", "Especie", "Tipo_Acao") or ""),
-    ]
-    return hashlib.sha1("|".join(parts).encode("utf-8")).hexdigest()
+    rows_new = 0
+    with db_conn() as conn:
+        for _, row in df.iterrows():
+            nk = _nk(row["__id"], row.get("Classe_Acao"), row.get("Tipo_Acao"))
+            cur = conn.execute(
+                """
+                INSERT INTO buyback_quantities (
+                    id_programa, classe_acao, tipo_acao,
+                    quantidade_circulacao, quantidade_operacao, natural_key
+                ) VALUES (?,?,?,?,?,?)
+                ON CONFLICT(natural_key) DO UPDATE SET
+                    quantidade_circulacao = excluded.quantidade_circulacao,
+                    quantidade_operacao   = excluded.quantidade_operacao,
+                    ingested_at           = datetime('now')
+                """,
+                (
+                    row["__id"],
+                    row.get("Classe_Acao"),
+                    row.get("Tipo_Acao"),
+                    safe_float(row.get("Quantidade_Circulacao")),
+                    safe_float(row.get("Quantidade_Operacao")),
+                    nk,
+                ),
+            )
+            if cur.rowcount > 0:
+                rows_new += 1
+    return rows_new
+
+
+def _ingest_buyback_intermediaries(df: pd.DataFrame, known_programs: set[str]) -> int:
+    df = df.copy()
+    df["__id"] = df["ID_Programa"].astype(str).str.strip()
+    df = df[df["__id"].isin(known_programs)]
+    if df.empty:
+        return 0
+
+    rows_new = 0
+    with db_conn() as conn:
+        for _, row in df.iterrows():
+            nk = _nk(row["__id"], row.get("CNPJ_Intermediario"), row.get("Intermediario"))
+            cur = conn.execute(
+                """
+                INSERT OR IGNORE INTO buyback_intermediaries (
+                    id_programa, intermediario, cnpj_intermediario, natural_key
+                ) VALUES (?,?,?,?)
+                """,
+                (
+                    row["__id"],
+                    row.get("Intermediario"),
+                    row.get("CNPJ_Intermediario"),
+                    nk,
+                ),
+            )
+            rows_new += cur.rowcount
+    return rows_new
 
 
 def ingest_recompras(cnpjs: set[str]) -> dict:
@@ -416,68 +740,58 @@ def ingest_recompras(cnpjs: set[str]) -> dict:
     except requests.RequestException as e:
         log.error("Falha baixando recompras: %s", e)
         log_run("recompra", 0, 0, "error", str(e))
-        return {"rows_new": 0, "error": str(e)}
+        return {"error": str(e)}
 
     zf = zipfile.ZipFile(io.BytesIO(r.content))
-    csvs = [n for n in zf.namelist() if n.endswith(".csv")]
-    rows_new = 0
-    rows_seen = 0
 
-    for csv_name in csvs:
-        with zf.open(csv_name) as f:
-            df = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
-        if df.empty:
+    # Lê todos os CSVs primeiro (precisamos conhecer os programas antes das qtds/intermediários)
+    csvs: dict[str, pd.DataFrame] = {}
+    for name in zf.namelist():
+        if name.endswith(".csv"):
+            with zf.open(name) as f:
+                csvs[name] = pd.read_csv(f, sep=";", encoding="latin-1", dtype=str)
+
+    programs_new = 0
+    quantities_new = 0
+    intermediaries_new = 0
+
+    # 1) Programas principais (têm CNPJ_Companhia)
+    for name, df in csvs.items():
+        if "CNPJ_Companhia" in df.columns and "ID_Programa" in df.columns:
+            log.info("  Ingerindo programas: %s", name)
+            programs_new += _ingest_buyback_programs(df, cnpjs)
+
+    # Agora temos os id_programa das nossas companhias no DB — filtramos os outros arquivos por eles
+    with db_conn() as conn:
+        rows = conn.execute("SELECT DISTINCT id_programa FROM buyback_programs").fetchall()
+        known_programs = {r["id_programa"] for r in rows if r["id_programa"]}
+    log.info("  %d programas conhecidos no DB", len(known_programs))
+
+    # 2) Quantidades (tem ID_Programa + Classe_Acao + Quantidade_*)
+    for name, df in csvs.items():
+        if "CNPJ_Companhia" in df.columns:
+            continue  # é o arquivo principal
+        if "Quantidade_Operacao" in df.columns or "Quantidade_Circulacao" in df.columns:
+            log.info("  Ingerindo quantidades: %s", name)
+            quantities_new += _ingest_buyback_quantities(df, known_programs)
+
+    # 3) Intermediários (tem ID_Programa + Intermediario + CNPJ_Intermediario)
+    for name, df in csvs.items():
+        if "CNPJ_Companhia" in df.columns:
             continue
+        if "CNPJ_Intermediario" in df.columns or "Intermediario" in df.columns:
+            log.info("  Ingerindo intermediários: %s", name)
+            intermediaries_new += _ingest_buyback_intermediaries(df, known_programs)
 
-        cnpj_col = next((c for c in ("CNPJ_Companhia", "CNPJ_CIA", "CNPJ") if c in df.columns), None)
-        if cnpj_col is None:
-            log.warning("  %s sem coluna de CNPJ — pulando", csv_name)
-            continue
-
-        df["__cnpj_d"] = df[cnpj_col].map(only_digits)
-        df = df[df["__cnpj_d"].isin(cnpjs)].copy()
-        rows_seen += len(df)
-        if df.empty:
-            continue
-
-        with db_conn() as conn:
-            for _, row in df.iterrows():
-                nk = _natural_key_buyback(row)
-                cur = conn.execute(
-                    """
-                    INSERT INTO buyback_programs (
-                        cnpj_digits, nome_companhia, numero_programa,
-                        data_aprovacao, data_inicio, data_fim, situacao,
-                        especie_acao, qtd_aprovada, qtd_adquirida,
-                        percentual_free_float, natural_key
-                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-                    ON CONFLICT(natural_key) DO UPDATE SET
-                        situacao      = excluded.situacao,
-                        data_fim      = COALESCE(excluded.data_fim, buyback_programs.data_fim),
-                        qtd_adquirida = COALESCE(excluded.qtd_adquirida, buyback_programs.qtd_adquirida),
-                        ingested_at   = datetime('now')
-                    """,
-                    (
-                        row["__cnpj_d"],
-                        pick(row, "Nome_Companhia", "Denom_Social"),
-                        pick(row, "Numero_Programa", "Programa", "ID_Programa"),
-                        parse_date(pick(row, "Data_Aprovacao", "Data_Deliberacao")),
-                        parse_date(pick(row, "Data_Inicio", "Data_Inicio_Programa")),
-                        parse_date(pick(row, "Data_Fim", "Data_Encerramento", "Data_Termino")),
-                        pick(row, "Situacao", "Status"),
-                        pick(row, "Especie_Acao", "Especie", "Tipo_Acao"),
-                        safe_float(pick(row, "Quantidade_Aprovada", "Qtd_Aprovada", "Qtd_Autorizada")),
-                        safe_float(pick(row, "Quantidade_Adquirida", "Qtd_Adquirida", "Qtd_Comprada")),
-                        safe_float(pick(row, "Percentual_Free_Float", "Pct_Free_Float")),
-                        nk,
-                    ),
-                )
-                if cur.rowcount > 0:
-                    rows_new += 1
-
-    log_run("recompra", rows_seen, rows_new, "ok")
-    log.info("Recompras: %d novas (%d vistas)", rows_new, rows_seen)
-    return {"rows_new": rows_new, "rows_seen": rows_seen}
+    result = {
+        "programs_new": programs_new,
+        "quantities_new": quantities_new,
+        "intermediaries_new": intermediaries_new,
+    }
+    total = sum(result.values())
+    log_run("recompra", total, total, "ok", str(result))
+    log.info("Recompras: %s", result)
+    return result
 
 
 # ============================================================================
@@ -486,14 +800,10 @@ def ingest_recompras(cnpjs: set[str]) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="CVM Buybacks monitor")
-    parser.add_argument(
-        "--bootstrap", action="store_true",
-        help="Primeira carga: puxa 5 anos de histórico.",
-    )
-    parser.add_argument(
-        "--years", type=int, default=2,
-        help="Anos para trás (default: 2 — ano atual e anterior).",
-    )
+    parser.add_argument("--bootstrap", action="store_true",
+                        help="Primeira carga: puxa 5 anos.")
+    parser.add_argument("--years", type=int, default=2,
+                        help="Anos para trás (default: 2 — ano atual e anterior).")
     args = parser.parse_args()
 
     logging.basicConfig(
