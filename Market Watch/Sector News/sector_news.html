@@ -1078,15 +1078,19 @@ function openExportModal() {
 
   const sections = ["Agribusiness", "Food & Beverage"].filter(s => buckets[s].length);
 
-  // ── HTML body (inline styles → Outlook-paste friendly)
+  // ── HTML body (inline styles + <font> tags → Outlook-paste friendly)
+  const orange = EXPORT_ORANGE;
+  const orangeHeader = (txt) =>
+    `<p style="margin:10px 0 4px 0;font-weight:bold;font-size:12pt;color:${orange};">`
+    + `<font color="${orange}"><b>${txt}</b></font></p>`;
+
   let html = "";
   html += `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;">`;
-  html += `<div style="text-align:right;font-weight:bold;font-size:12pt;margin-bottom:18px;">`
-        + `*** Itaú BBA | Agribusiness, Food &amp; Beverage – Daily News ***</div>`;
+  html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0 0 18px 0;">`
+        + `<b>*** Itaú BBA | Agribusiness, Food &amp; Beverage – Daily News ***</b></p>`;
 
   sections.forEach(sec => {
-    html += `<div style="font-weight:bold;color:${EXPORT_ORANGE};font-size:12pt;margin-top:10px;">`
-          + `${escHtml(sec)}</div>`;
+    html += orangeHeader(escHtml(sec));
     html += `<ul style="margin:4px 0 12px 0;padding-left:24px;">`;
     buckets[sec].forEach(item => {
       html += `<li style="margin-bottom:2px;">${escHtml(item.title)}</li>`;
@@ -1094,18 +1098,17 @@ function openExportModal() {
     html += `</ul>`;
   });
 
-  const sep = `<div style="border-top:1px dashed #888;margin:18px 0;"></div>`;
+  const sep = `<p style="border-top:1px dashed #888;margin:18px 0;line-height:0;">&nbsp;</p>`;
 
   sections.forEach(sec => {
     html += sep;
-    html += `<div style="font-weight:bold;color:${EXPORT_ORANGE};font-size:12pt;margin-bottom:6px;">`
-          + `Main Headlines – ${escHtml(sec)}</div>`;
-    html += `<div style="border-top:1px dashed #888;margin:6px 0 14px 0;"></div>`;
+    html += orangeHeader(`Main Headlines – ${escHtml(sec)}`);
+    html += `<p style="border-top:1px dashed #888;margin:4px 0 14px 0;line-height:0;">&nbsp;</p>`;
     buckets[sec].forEach(item => {
       const d = formatDate(item.published_at);
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
       html += `<div style="margin-bottom:14px;">`
-            +   `<div style="font-weight:bold;">${escHtml(item.title)}</div>`
+            +   `<div style="font-weight:bold;"><b>${escHtml(item.title)}</b></div>`
             +   `<div>${escHtml(d)}</div>`
             +   `<div>Source: <a href="${escHtml(item.url)}" target="_blank">${escHtml(srcName)}</a></div>`
             + `</div>`;
