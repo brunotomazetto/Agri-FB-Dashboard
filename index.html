@@ -351,6 +351,7 @@ const STATE = {
     analysts: [],
   },
 };
+window.STATE = STATE;  // expose to iframes (e.g. sector_news.html reads window.parent.STATE.currentUser.is_admin)
 
 const SECTORS = [
   { id:'agri',         label:'Agribusiness'                  },
