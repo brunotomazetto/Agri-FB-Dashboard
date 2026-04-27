@@ -1346,4 +1346,38 @@ function renderPriceRefChart() {
           min: usdScale.min, max: usdScale.max,
           title: { display: true, text: 'USD/kg',
             color: '#1A1A1A', font: { size: 9, weight: '600' } },
-      
+                ticks: { color: '#1A1A1A', font: { size: 9 },
+            stepSize: usdScale.stepSize, callback: v => v.toFixed(2) },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+        yBrl: {
+          type: 'linear', position: 'right',
+          min: brlScale.min, max: brlScale.max,
+          title: { display: true, text: 'BRL/kg',
+            color: '#FF5500', font: { size: 9, weight: '600' } },
+          ticks: { color: '#FF5500', font: { size: 9 },
+            stepSize: brlScale.stepSize, callback: v => v.toFixed(2) },
+          grid: { drawOnChartArea: false },
+        },
+        x: {
+          ticks: { color: '#999', font: { size: 9 }, maxRotation: 0 },
+          grid: { color: 'rgba(0,0,0,0.04)' },
+        },
+      },
+    },
+  });
+}
+
+// ─── FULL RENDER ─────────────────────────────────────────────────────────────
+function render() {
+  renderCharts();
+  renderSeasonalityChart();
+  renderComparisonCharts();
+  renderTable();
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────────────────
+loadDB();
+</script>
+</body>
+</html>
