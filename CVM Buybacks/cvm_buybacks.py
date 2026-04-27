@@ -20,14 +20,15 @@ Fontes:
      Baixa apenas os IPEs do mês atual e do mês anterior (para reapresentações).
 
 Execução:
-  python cvm_buybacks_v2.py              # incremental
-  python cvm_buybacks_v2.py --bootstrap  # histórico completo desde 2022
+  python cvm_buybacks.py              # incremental
+  python cvm_buybacks.py --bootstrap  # histórico completo desde 2022
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import io
+import json
 import logging
 import re
 import sqlite3
@@ -238,14 +239,9 @@ def db_conn() -> Iterator[sqlite3.Connection]:
 
 def init_db() -> None:
     with db_conn() as conn:
-        for stmt in SCHEMA.split(";"):
-            stmt = stmt.strip()
-            if stmt:
-                try:
-                    conn.execute(stmt)
-                except sqlite3.OperationalError as e:
-                    if "already exists" not in str(e):
-                        raise
+        # executescript executa o SQL completo incluindo VIEWs com subconsultas
+        # mais robusto que split(";") que quebra em statements multi-linha
+        conn.executescript(SCHEMA)
         # upsert companies
         for ticker, cnpj in TICKERS.items():
             conn.execute(
@@ -740,251 +736,6 @@ def parse_ipe_pdf(pdf_bytes: bytes, cnpj_digits: str, data_ref: str, versao: int
 
     flush_op_buffer()
     return rows
-    try:
-        import pdfplumber
-    except ImportError:
-        raise ImportError("pdfplumber not installed — run: pip install pdfplumber")
-
-    def make_key(*parts) -> str:
-        raw = "|".join(str(p) for p in parts)
-        return hashlib.sha1(raw.encode()).hexdigest()
-
-    def to_date(dia: int | None, ref: str) -> str | None:
-        if not dia:
-            return None
-        y, m = int(ref[:4]), int(ref[5:7])
-        return f"{y:04d}-{m:02d}-{dia:02d}"
-
-    def norm_qty(s: str) -> float | None:
-        s = s.strip().replace(".", "").replace(",", ".")
-        try:
-            return float(s)
-        except ValueError:
-            return None
-
-    def norm_op(words: list[str]) -> str:
-        """Junta fragmentos de operação e normaliza."""
-        raw = " ".join(words)
-        # Normalizar formas quebradas comuns
-        raw = re.sub(r"ENTREGA\s+DE\s+AÇÕES\s+RESTRITAS", "Entrega de ações restritas", raw, flags=re.I)
-        raw = re.sub(r"ENTREGA\s+DE\s+AÇÕES\s+BÔNUS", "Entrega de ações bônus", raw, flags=re.I)
-        raw = re.sub(r"ENTREGA\s+DE\s+AÇÕES\s+BONUS", "Entrega de ações bônus", raw, flags=re.I)
-        raw = re.sub(r"Compra\s+à\s+vista", "Compra à vista", raw, flags=re.I)
-        raw = re.sub(r"Venda\s+à\s+vista", "Venda à vista", raw, flags=re.I)
-        raw = re.sub(r"Compra\s+à\s+termo", "Compra à termo", raw, flags=re.I)
-        raw = re.sub(r"Venda\s+à\s+termo", "Venda à termo", raw, flags=re.I)
-        raw = re.sub(r"DERIVATIVO\s+COM\s+LIQUIDAÇÃ[O]\s+FINANCEIR[A]",
-                     "Derivativo com liquidação financeira", raw, flags=re.I)
-        return " ".join(raw.split())
-
-    # Colunas X aproximadas (centro ± tolerância)
-    COL_ATIVO   = (30,  90)    # tipo_ativo
-    COL_CARACT  = (100, 200)   # característica — pode ir até antes do intermediário
-    COL_INTERM  = (190, 255)   # intermediário
-    COL_OP      = (245, 315)   # operação
-    COL_DIA     = (305, 345)   # dia
-    COL_QTY     = (345, 430)   # quantidade
-    COL_PRECO   = (425, 490)   # preço
-    COL_VOL     = (485, 560)   # volume
-
-    def in_col(x: float, col: tuple) -> bool:
-        return col[0] <= x <= col[1]
-
-    rows: list[dict] = []
-
-    # Estado atual de entidade (qualificação, nome)
-    current_qual = None
-    current_nome = None
-    current_section = None  # 'saldo_inicial' | 'movimentacoes' | 'saldo_final'
-
-    # Buffer para montar operação multi-linha
-    pending: dict | None = None
-
-    def flush_pending():
-        nonlocal pending
-        if pending and pending.get("tipo_ativo"):
-            dia = pending.get("dia")
-            qty = norm_qty(pending.get("qty_str", "")) if pending.get("qty_str") else None
-            preco = norm_qty(pending.get("preco_str", "")) if pending.get("preco_str") else None
-            vol = norm_qty(pending.get("vol_str", "")) if pending.get("vol_str") else None
-            op = norm_op(pending.get("op_words", []))
-            caract = " ".join(pending.get("caract_words", [])).strip()
-            if not caract:
-                caract = pending.get("caract_str", "")
-            interm = " ".join(pending.get("interm_words", [])).strip() or None
-            nk = make_key(cnpj_digits, data_ref, versao, current_qual,
-                          current_nome, pending["tipo_ativo"], caract, op, dia, qty)
-            rows.append({
-                "cnpj_digits": cnpj_digits,
-                "data_referencia": data_ref,
-                "versao": versao,
-                "qualificacao": current_qual or "other",
-                "nome_entidade": current_nome,
-                "tipo_ativo": pending["tipo_ativo"],
-                "caracteristica": caract,
-                "tipo_movimentacao": op if op else "Operação",
-                "intermediario": interm,
-                "dia": dia,
-                "data_movimentacao": to_date(dia, data_ref),
-                "quantidade": qty,
-                "preco_unitario": preco,
-                "volume": vol,
-                "natural_key": nk,
-            })
-        pending = None
-
-    def add_balance(tipo_mov: str, tipo_ativo: str, caract: str, qty_str: str):
-        qty = norm_qty(qty_str)
-        nk = make_key(cnpj_digits, data_ref, versao, current_qual,
-                      current_nome, tipo_ativo, caract, tipo_mov)
-        rows.append({
-            "cnpj_digits": cnpj_digits,
-            "data_referencia": data_ref,
-            "versao": versao,
-            "qualificacao": current_qual or "other",
-            "nome_entidade": current_nome,
-            "tipo_ativo": tipo_ativo,
-            "caracteristica": caract,
-            "tipo_movimentacao": tipo_mov,
-            "intermediario": None,
-            "dia": None,
-            "data_movimentacao": None,
-            "quantidade": qty,
-            "preco_unitario": None,
-            "volume": None,
-            "natural_key": nk,
-        })
-
-    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-        for page in pdf.pages:
-            words = page.extract_words(x_tolerance=3, y_tolerance=3)
-
-            # Agrupar palavras por linha (y0 arredondada)
-            from collections import defaultdict
-            lines_map: dict[int, list] = defaultdict(list)
-            for w in words:
-                y_key = round(w["top"] / 4) * 4  # bucket de 4px
-                lines_map[y_key].append(w)
-
-            for y_key in sorted(lines_map.keys()):
-                line_words = sorted(lines_map[y_key], key=lambda w: w["x0"])
-                texts = [(w["x0"], w["text"]) for w in line_words]
-
-                # Junta todos os textos da linha
-                full_line = " ".join(t for _, t in texts)
-
-                # --- Detectar cabeçalho de entidade ---
-                if "Qualificação:" in full_line or "Qualificação:Companhia" in full_line:
-                    qual_raw = re.sub(r".*Qualificação:\s*", "", full_line).strip()
-                    if "Tesouraria" in qual_raw:
-                        current_qual = "treasury"
-                    elif "Controlada" in qual_raw:
-                        current_qual = "subsidiary"
-                    elif "Coligada" in qual_raw:
-                        current_qual = "affiliated"
-                    else:
-                        current_qual = "other"
-                    current_section = None
-                    flush_pending()
-                    continue
-
-                if "Nome:" in full_line:
-                    m = re.search(r"Nome:\s*(.+?)(?:\s{3,}|CPF|$)", full_line)
-                    if m:
-                        current_nome = m.group(1).strip()
-                    continue
-
-                # --- Detectar seções ---
-                if "Saldo Inicial" in full_line and "Movimentações" not in full_line:
-                    flush_pending()
-                    current_section = "saldo_inicial"
-                    continue
-                if "Movimentações" in full_line:
-                    flush_pending()
-                    current_section = "movimentacoes"
-                    continue
-                if "Saldo Final" in full_line and "Valor Mobiliário" not in full_line:
-                    flush_pending()
-                    current_section = "saldo_final"
-                    continue
-
-                # Pular linhas de cabeçalho de tabela
-                if any(kw in full_line for kw in [
-                    "Valor Mobiliário", "Características dos Títulos",
-                    "Mobiliário/Derivativo", "Intermediário", "Operação",
-                    "FORMULÁRIO", "Negociação de Valores", "Em 0", "ocorreram",
-                    "não foram", "Denominação da Companhia",
-                ]):
-                    continue
-
-                if not current_section or not current_qual:
-                    continue
-
-                # --- Processar Saldo Inicial / Final ---
-                if current_section in ("saldo_inicial", "saldo_final"):
-                    tipo_mov = "Saldo Inicial" if current_section == "saldo_inicial" else "Saldo Final"
-
-                    # Extrair tipo_ativo (x≈42), caract (x≈122-305), qty (x≈462+)
-                    tipo_ativo_w = [t for x, t in texts if in_col(x, COL_ATIVO)]
-                    caract_w = [t for x, t in texts if in_col(x, (100, 460))]
-                    qty_w = [t for x, t in texts if in_col(x, (460, 560))]
-
-                    if tipo_ativo_w and qty_w:
-                        tipo_ativo = tipo_ativo_w[0]
-                        caract = " ".join(caract_w).strip()
-                        qty_str = qty_w[-1]  # último valor
-                        if re.match(r"[\d.,]+$", qty_str.replace(".", "").replace(",", "")):
-                            add_balance(tipo_mov, tipo_ativo, caract, qty_str)
-                    elif not tipo_ativo_w and caract_w:
-                        # Continuação de caract multi-linha (ex: "LIQUIDACAO FINANCEIRA")
-                        # Ignorar — já foi capturado na linha anterior via full caract
-                        pass
-
-                # --- Processar Movimentações ---
-                elif current_section == "movimentacoes":
-                    # Detectar início de nova operação: linha com tipo_ativo em COL_ATIVO
-                    ativo_w = [t for x, t in texts if in_col(x, COL_ATIVO)]
-                    caract_on_line = [t for x, t in texts if in_col(x, COL_CARACT)]
-                    interm_on_line = [t for x, t in texts if in_col(x, COL_INTERM)]
-                    op_on_line     = [t for x, t in texts if in_col(x, COL_OP)]
-                    dia_on_line    = [t for x, t in texts if in_col(x, COL_DIA)]
-                    qty_on_line    = [t for x, t in texts if in_col(x, COL_QTY)]
-                    preco_on_line  = [t for x, t in texts if in_col(x, COL_PRECO)]
-                    vol_on_line    = [t for x, t in texts if in_col(x, COL_VOL)]
-
-                    if ativo_w:
-                        # Nova operação — flush anterior
-                        flush_pending()
-                        pending = {
-                            "tipo_ativo": ativo_w[0],
-                            "caract_words": caract_on_line,
-                            "interm_words": interm_on_line,
-                            "op_words": op_on_line,
-                            "dia": int(dia_on_line[0]) if dia_on_line and dia_on_line[0].isdigit() else None,
-                            "qty_str": qty_on_line[0] if qty_on_line else None,
-                            "preco_str": preco_on_line[0] if preco_on_line else None,
-                            "vol_str": vol_on_line[0] if vol_on_line else None,
-                        }
-                    elif pending:
-                        # Linha de continuação — acumular op e interm multi-linha
-                        if op_on_line:
-                            pending["op_words"].extend(op_on_line)
-                        if interm_on_line:
-                            pending["interm_words"].extend(interm_on_line)
-                        if caract_on_line and not pending.get("caract_words"):
-                            pending["caract_words"] = caract_on_line
-                        # Preencher campos numéricos se ainda vazios
-                        if not pending["dia"] and dia_on_line and dia_on_line[0].isdigit():
-                            pending["dia"] = int(dia_on_line[0])
-                        if not pending["qty_str"] and qty_on_line:
-                            pending["qty_str"] = qty_on_line[0]
-                        if not pending["preco_str"] and preco_on_line:
-                            pending["preco_str"] = preco_on_line[0]
-                        if not pending["vol_str"] and vol_on_line:
-                            pending["vol_str"] = vol_on_line[0]
-
-    flush_pending()
-    return rows
 
 
 # ============================================================================
@@ -1148,11 +899,124 @@ def parse_consolidated_pdf(
             section = None
             op_buffer: list[list] = []
 
-            def flush_op(buf, sec):
+            def make_row(tipo_mov, tipo_ativo, caract, intermediario, dia,
+                         quantidade, preco, volume):
+                """Cria um registro e gera a natural_key."""
+                nk = make_key(cnpj_digits, data_ref, versao, grupo_label,
+                              tipo_mov, tipo_ativo, dia, quantidade, preco)
+                return {
+                    "cnpj_digits":       cnpj_digits,
+                    "data_referencia":   data_ref,
+                    "versao":            versao,
+                    "grupo":             grupo_label,
+                    "tipo_ativo":        tipo_ativo or "Ações",
+                    "caracteristica":    caract,
+                    "tipo_movimentacao": tipo_mov,
+                    "intermediario":     intermediario,
+                    "dia":               dia,
+                    "data_movimentacao": to_date(dia, data_ref),
+                    "quantidade":        quantidade,
+                    "preco_unitario":    preco,
+                    "volume":            volume,
+                    "natural_key":       nk,
+                }
+
+            def flush_saldo(buf, sec):
+                """
+                Para Saldo Inicial/Final: emite UM registro por linha de ativo.
+                Cada linha independente tem tipo_ativo + quantidade na coluna direita.
+                Evita o bug de múltiplos ativos (Ações + Opções + ADRs) numa página.
+                """
                 if not buf:
+                    return []
+                tipo_mov = "Saldo Inicial" if sec == "saldo_inicial" else "Saldo Final"
+                recs = []
+                for line in buf:
+                    sorted_line = sorted(line, key=lambda w: w["x0"])
+                    ativo_w  = [w["text"] for w in sorted_line if in_c(w["x0"], C_ATIVO)]
+                    caract_w = [w["text"] for w in sorted_line
+                                if in_c(w["x0"], C_CARACT) and w["text"] not in ativo_w]
+                    # Quantidade: último número na parte direita da linha (x > 455)
+                    saldo_w  = [w["text"] for w in sorted_line if w["x0"] > 455]
+                    if not ativo_w:
+                        continue
+                    # Tentar extrair quantidade: último token numérico
+                    qty = None
+                    for tok in reversed(saldo_w):
+                        v = norm_num(tok)
+                        if v is not None and v >= 0:
+                            qty = v; break
+                    if qty is None:
+                        # Fallback: qualquer número na linha inteira
+                        all_nums = [norm_num(w["text"]) for w in sorted_line
+                                    if norm_num(w["text"]) is not None]
+                        if all_nums:
+                            qty = max(all_nums)  # maior valor = quantidade de ações
+                    tipo_ativo = ativo_w[0]
+                    caract     = " ".join(caract_w).strip() or None
+                    recs.append(make_row(tipo_mov, tipo_ativo, caract,
+                                        None, None, qty, None, None))
+                return recs
+
+            def _norm_consolidated_op(raw: str) -> str:
+                """Normaliza fragmentos de operação quebrada no Formulário Consolidado."""
+                r = re.sub(r"\s+", " ", raw).strip()
+                # Fragmentos de "Compra à vista" / "Venda à vista"
+                r = re.sub(r"^vista\b", "Compra à vista", r)
+                r = re.sub(r"\bCompra\s+à$", "Compra à vista", r)
+                r = re.sub(r"\bVenda\s+à$",  "Venda à vista",  r)
+                r = re.sub(r"\bvista\s+Compra\s+à\b", "Compra à vista", r, flags=re.I)
+                r = re.sub(r"\bvista\s+Venda\s+à\b",  "Venda à vista",  r, flags=re.I)
+                r = re.sub(r"\btermo\s+Compra\s+à\b", "Compra à termo", r, flags=re.I)
+                r = re.sub(r"\btermo\s+Venda\s+à\b",  "Venda à termo",  r, flags=re.I)
+                r = re.sub(r"\bCompra\s+à\s+vista\b", "Compra à vista", r, flags=re.I)
+                r = re.sub(r"\bVenda\s+à\s+vista\b",  "Venda à vista",  r, flags=re.I)
+                r = re.sub(r"\bCompra\s+à\s+termo\b", "Compra à termo", r, flags=re.I)
+                r = re.sub(r"\bVenda\s+à\s+termo\b",  "Venda à termo",  r, flags=re.I)
+                # Entrega de ações restritas / bônus
+                r = re.sub(r"ACOES\s+RESTRITAS\s+ENTREGA", "Entrega de ações restritas", r, flags=re.I)
+                r = re.sub(r"ACOES\s+RESTRITAS\b",         "Entrega de ações restritas", r, flags=re.I)
+                r = re.sub(r"AÇÕES\s+RESTRITAS\s+ENTREGA", "Entrega de ações restritas", r, flags=re.I)
+                r = re.sub(r"AÇÕES\s+RESTRITAS\b",         "Entrega de ações restritas", r, flags=re.I)
+                r = re.sub(r"ENTREGA\s+DE\s+AÇÕES\s+RESTRITAS", "Entrega de ações restritas", r, flags=re.I)
+                r = re.sub(r"^ENTREGA$", "Entrega de ações restritas", r, flags=re.I)
+                # Exercício de opção
+                r = re.sub(r"\d{2}\s+DE\s+OPCOES\s+EXERCICIO", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"\d{2}\s+DE\s+OPCOES\b",            "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"\d{2}\s+Opções\s+Exercício\s+de",  "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"DE\s+OPÇÕES\s+ENTREGA",              "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"DE\s+OPÇÕES\s+EXERCÍCIO",            "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"DE\s+OPCOES\b",                      "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"Direto\s+AÇÕES\s+RESTRITAS\s+EXERCÍCIO", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"Direto\s+DE\s+OPÇÕES\s+EXERCÍCIO",       "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"Direto\s+DE\s+OPÇÕES\s+ENTREGA",         "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"Direto\s+DE\s+OPÇÕES\b",                 "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"STOCK\s+OPTION",  "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"PLANO\s+DE\b",   "Ações de plano de remuneração", r, flags=re.I)
+                # Desdobramento/bonificação
+                r = re.sub(r"o/bonificação\s+Desdobrament", "Desdobramento/bonificação", r, flags=re.I)
+                r = re.sub(r"\d{2}\s+o/bonificação.*",     "Desdobramento/bonificação", r, flags=re.I)
+                r = re.sub(r"Desdobrament$",                 "Desdobramento/bonificação", r, flags=re.I)
+                # Devolução/Contratação de empréstimo
+                r = re.sub(r"empréstimo\s+\(locador\)\s+Devolução\s+de", "Devolução de empréstimo (locador)", r, flags=re.I)
+                r = re.sub(r"empréstimo\s+\(locador\)\s+Contratação\s+de", "Contratação de empréstimo (locador)", r, flags=re.I)
+                # Ações decorrentes de exercício
+                r = re.sub(r"Ações\s+decorrentes\s+de.*exercício.*opção.*compra", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"AÇÕES\s+DECORREN\s+TES\s+DE", "Exercício de opção de compra", r, flags=re.I)
+                # Desligamento
+                r = re.sub(r"Desligamento/$", "Desligamento/saída", r)
+                # Posse com dia anexado
+                r = re.sub(r"Posse\s+\d{1,2}$", "Posse", r)
+                # Limpar DIA no início da string (artefato do parser)
+                r = re.sub(r"^\d{1,2}\s+", "", r).strip()
+                return r.strip()
+
+            def flush_op(buf, sec):
+                """Para movimentações: acumula multi-linha e emite 1 registro."""
+                if not buf or sec != "movimentacoes":
                     return None
-                ativo_w, caract_w, interm_w, op_w, dia_w, qty_w, preco_w, vol_w = (
-                    [], [], [], [], [], [], [], [])
+                ativo_w=[]; caract_w=[]; interm_w=[]; op_w=[]
+                dia_w=[]; qty_w=[]; preco_w=[]; vol_w=[]
                 for line in buf:
                     for w in sorted(line, key=lambda x: x["x0"]):
                         x = w["x0"]; t = w["text"]
@@ -1166,68 +1030,57 @@ def parse_consolidated_pdf(
                         if in_c(x, C_PRECO):   preco_w.append(t)
                         if in_c(x, C_VOL):     vol_w.append(t)
 
-                tipo_ativo    = " ".join(ativo_w).strip() or None
+                tipo_ativo    = ativo_w[0] if ativo_w else "Ações"
                 caracteristica = " ".join(caract_w).strip() or None
                 intermediario  = " ".join(interm_w).strip() or None
-                operacao       = " ".join(op_w).strip() or None
+                operacao       = _norm_consolidated_op(" ".join(op_w))
                 dia            = int(dia_w[0]) if dia_w else None
                 quantidade     = norm_num(" ".join(qty_w))
                 preco          = norm_num(" ".join(preco_w))
                 volume         = norm_num(" ".join(vol_w))
-
-                # Saldos: quantidade em coluna mais à direita
-                if sec in ("saldo_inicial", "saldo_final") and not quantidade:
-                    sw = []
-                    for line in buf:
-                        for w in sorted(line, key=lambda x: x["x0"]):
-                            if in_c(w["x0"], C_SALDO):
-                                sw.append(w["text"])
-                    quantidade = norm_num(" ".join(sw))
-
-                tipo_mov = (
-                    "Saldo Inicial" if sec == "saldo_inicial"
-                    else "Saldo Final" if sec == "saldo_final"
-                    else operacao
-                )
-                if not tipo_mov:
+                if not operacao:
                     return None
-
-                nk = make_key(cnpj_digits, data_ref, versao, grupo_label, tipo_mov, dia, quantidade, preco)
-                return {
-                    "cnpj_digits":       cnpj_digits,
-                    "data_referencia":   data_ref,
-                    "versao":            versao,
-                    "grupo":             grupo_label,
-                    "tipo_ativo":        tipo_ativo or "Ações",
-                    "caracteristica":    caracteristica,
-                    "tipo_movimentacao": tipo_mov,
-                    "intermediario":     intermediario,
-                    "dia":               dia,
-                    "data_movimentacao": to_date(dia, data_ref),
-                    "quantidade":        quantidade,
-                    "preco_unitario":    preco,
-                    "volume":            volume,
-                    "natural_key":       nk,
-                }
+                # Descartar fragmentos sem dados úteis
+                if dia is None and quantidade is None:
+                    return None
+                # Normalizar operações que ficaram como fragmento de linha 2
+                # ex: "empréstimo (locador)" sozinho → completar com contexto
+                if re.match(r"^empréstimo", operacao, re.I):
+                    if "locador" in operacao:
+                        operacao = "Devolução de empréstimo (locador)"
+                    else:
+                        operacao = "Devolução de empréstimo"
+                return make_row(operacao, tipo_ativo, caracteristica,
+                                intermediario, dia, quantidade, preco, volume)
 
             for y in sorted_ys:
                 line = sorted(lines_map[y], key=lambda w: w["x0"])
                 text = " ".join(w["text"] for w in line).lower()
 
                 if "saldo inicial" in text:
+                    # Flush anterior: saldo → flush_saldo, movs → flush_op
                     if op_buffer:
-                        rec = flush_op(op_buffer, section)
-                        if rec: rows.append(rec)
+                        if section in ("saldo_inicial", "saldo_final"):
+                            rows.extend(flush_saldo(op_buffer, section))
+                        else:
+                            rec = flush_op(op_buffer, section)
+                            if rec: rows.append(rec)
                     op_buffer = []; section = "saldo_inicial"; continue
                 elif "movimenta" in text and ("mês" in text or "mes" in text):
                     if op_buffer:
-                        rec = flush_op(op_buffer, section)
-                        if rec: rows.append(rec)
+                        if section in ("saldo_inicial", "saldo_final"):
+                            rows.extend(flush_saldo(op_buffer, section))
+                        else:
+                            rec = flush_op(op_buffer, section)
+                            if rec: rows.append(rec)
                     op_buffer = []; section = "movimentacoes"; continue
                 elif "saldo final" in text:
                     if op_buffer:
-                        rec = flush_op(op_buffer, section)
-                        if rec: rows.append(rec)
+                        if section in ("saldo_inicial", "saldo_final"):
+                            rows.extend(flush_saldo(op_buffer, section))
+                        else:
+                            rec = flush_op(op_buffer, section)
+                            if rec: rows.append(rec)
                     op_buffer = []; section = "saldo_final"; continue
                 elif any(hdr in text for hdr in [
                     "valor mobiliário", "intermediário", "operação",
@@ -1248,8 +1101,11 @@ def parse_consolidated_pdf(
                     op_buffer.append(line)
 
             if op_buffer:
-                rec = flush_op(op_buffer, section)
-                if rec: rows.append(rec)
+                if section in ("saldo_inicial", "saldo_final"):
+                    rows.extend(flush_saldo(op_buffer, section))
+                else:
+                    rec = flush_op(op_buffer, section)
+                    if rec: rows.append(rec)
 
     return rows
 
@@ -1525,54 +1381,310 @@ def ingest_recompras(conn: sqlite3.Connection) -> int:
 
 
 # ============================================================================
+# DASHBOARD — extrai dados do banco e injeta no HTML
+# ============================================================================
+
+DASHBOARD_HTML = SCRIPT_DIR / "cvm_buybacks.html"
+
+GRUPO_TO_ROLE: dict[str, str] = {
+    "Controlador":            "ctrl",
+    "Diretoria":              "mgmt",
+    "Conselho Administração": "board",
+    "Conselho Fiscal":        "board",
+    "Órgãos Técnicos":        "board",
+}
+
+
+def _classify_op(op: str | None) -> str | None:
+    if not op:
+        return None
+    o = op.lower()
+    if any(x in o for x in ["venda", "desligamento", "saída", "saida", "doador",
+                              "liquidaç", "contratação de empréstimo",
+                              "contratacao de emprestimo"]):
+        return "sell"
+    if any(x in o for x in ["compra", "subscri", "exercí", "exerci", "restritas",
+                              "bonificac", "bonificaç", "desdobr", "plano", "posse",
+                              "ilp", "incorpora", "devolução de empréstimo",
+                              "devolucao de emprestimo", "vista", "termo"]):
+        return "buy"
+    return None
+
+
+def _replace_block(html: str, name: str, new_val: str) -> str:
+    m = re.search(rf"(const {re.escape(name)}\s+=\s+)", html)
+    if not m:
+        log.warning("Constante '%s' não encontrada no HTML — pulando", name)
+        return html
+    start = m.end()
+    depth = 0
+    i = start
+    while i < len(html):
+        c = html[i]
+        if c in "{[":   depth += 1
+        elif c in "}]":
+            depth -= 1
+            if depth == 0:
+                break
+        i += 1
+    return html[:start] + new_val + html[i + 1:]
+
+
+def build_dashboard(conn: sqlite3.Connection) -> None:
+    """Lê dados do banco e injeta no cvm_buybacks.html."""
+    if not DASHBOARD_HTML.exists():
+        log.warning("Template HTML não encontrado: %s — pulando build", DASHBOARD_HTML)
+        return
+
+    tickers = [r[0] for r in conn.execute(
+        "SELECT ticker FROM companies ORDER BY ticker"
+    ).fetchall()]
+    cnpj_of = {r[0]: r[1] for r in conn.execute(
+        "SELECT ticker, cnpj_digits FROM companies"
+    ).fetchall()}
+
+    # ── BUYBACK_DAILY ─────────────────────────────────────────────────────────
+    buyback_daily: dict = {}
+    for r in conn.execute("""
+        SELECT c.ticker, e.data_movimentacao, e.caracteristica,
+               e.quantidade, e.preco_unitario, e.volume, e.intermediario
+        FROM ipe_entries e JOIN companies c ON c.cnpj_digits=e.cnpj_digits
+        WHERE e.tipo_ativo='Ações'
+          AND e.tipo_movimentacao IN ('Compra à vista','Compra à termo','Compra')
+          AND (e.preco_unitario IS NULL OR e.preco_unitario > 0)
+        ORDER BY c.ticker, e.data_movimentacao
+    """):
+        t = r["ticker"]
+        if t not in buyback_daily:
+            buyback_daily[t] = []
+        buyback_daily[t].append({
+            "d":  r["data_movimentacao"],
+            "cl": r["caracteristica"] or "ON",
+            "q":  round(r["quantidade"] or 0),
+            "p":  round(r["preco_unitario"], 4) if r["preco_unitario"] else None,
+            "v":  round(r["volume"], 2)          if r["volume"]        else None,
+            "i":  r["intermediario"],
+        })
+
+    # ── BUYBACK_MONTHLY ───────────────────────────────────────────────────────
+    buyback_monthly: dict = {}
+    for t, rows in buyback_daily.items():
+        mon: dict = {}
+        for r in rows:
+            if not r["d"]:
+                continue
+            k = r["d"][:7] + "-01"
+            if k not in mon:
+                mon[k] = {"d": k, "bq": 0, "bv": 0.0}
+            mon[k]["bq"] += r["q"]
+            mon[k]["bv"] += r["v"] or 0.0
+        buyback_monthly[t] = sorted(mon.values(), key=lambda x: x["d"])
+
+    # ── INSIDER_SERIES ────────────────────────────────────────────────────────
+    tsy_sf: dict = defaultdict(dict)
+    for r in conn.execute("""
+        SELECT c.ticker, e.data_referencia, SUM(e.quantidade) qty
+        FROM ipe_entries e JOIN companies c ON c.cnpj_digits=e.cnpj_digits
+        WHERE e.tipo_movimentacao='Saldo Final' AND e.tipo_ativo='Ações'
+          AND e.quantidade IS NOT NULL
+        GROUP BY c.ticker, e.data_referencia
+    """):
+        tsy_sf[r["ticker"]][r["data_referencia"]] = round(r["qty"] or 0)
+
+    cons_sf: dict = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
+    for r in conn.execute("""
+        SELECT c.ticker, cp.data_referencia, cp.grupo, SUM(cp.quantidade) qty
+        FROM consolidated_positions cp
+        JOIN companies c ON c.cnpj_digits=cp.cnpj_digits
+        WHERE cp.tipo_movimentacao='Saldo Final' AND cp.tipo_ativo='Ações'
+          AND cp.quantidade IS NOT NULL
+        GROUP BY c.ticker, cp.data_referencia, cp.grupo
+    """):
+        role = GRUPO_TO_ROLE.get(r["grupo"])
+        if role:
+            cons_sf[r["ticker"]][r["data_referencia"]][role] += r["qty"] or 0
+
+    insider_series: dict = {}
+    for t in tickers:
+        months = sorted(
+            set(tsy_sf.get(t, {}).keys()) | set(cons_sf.get(t, {}).keys())
+        )
+        if not months:
+            continue
+        series = []
+        last: dict = {"ctrl": None, "mgmt": None, "board": None, "tsy": None}
+        for m in months:
+            cg  = cons_sf.get(t, {}).get(m, {})
+            tsy = tsy_sf.get(t, {}).get(m)
+            row = {
+                "d":     m,
+                "tsy":   tsy              if tsy   is not None else last["tsy"],
+                "ctrl":  round(cg["ctrl"])  if "ctrl"  in cg   else last["ctrl"],
+                "mgmt":  round(cg["mgmt"])  if "mgmt"  in cg   else last["mgmt"],
+                "board": round(cg["board"]) if "board" in cg   else last["board"],
+            }
+            last = {k: row[k] for k in ["ctrl", "mgmt", "board", "tsy"]}
+            series.append(row)
+        insider_series[t] = series
+
+    # ── INSIDER_AGG ───────────────────────────────────────────────────────────
+    agg_raw: dict = defaultdict(lambda: defaultdict(lambda: {
+        "ctrl_bq": 0, "ctrl_bv": 0.0, "ctrl_sq": 0, "ctrl_sv": 0.0,
+        "mgmt_bq": 0, "mgmt_bv": 0.0, "mgmt_sq": 0, "mgmt_sv": 0.0,
+        "board_bq": 0, "board_bv": 0.0, "board_sq": 0, "board_sv": 0.0,
+    }))
+    for r in conn.execute("""
+        SELECT c.ticker, cp.data_referencia, cp.grupo, cp.tipo_movimentacao,
+               SUM(cp.quantidade) qty, SUM(COALESCE(cp.volume, 0)) vol
+        FROM consolidated_positions cp
+        JOIN companies c ON c.cnpj_digits=cp.cnpj_digits
+        WHERE cp.tipo_ativo='Ações'
+          AND cp.tipo_movimentacao NOT IN ('Saldo Inicial','Saldo Final')
+        GROUP BY c.ticker, cp.data_referencia, cp.grupo, cp.tipo_movimentacao
+    """):
+        role      = GRUPO_TO_ROLE.get(r["grupo"])
+        direction = _classify_op(r["tipo_movimentacao"])
+        if not role or not direction:
+            continue
+        qty = round(r["qty"] or 0)
+        vol = round(r["vol"] or 0, 2)
+        d   = agg_raw[r["ticker"]][r["data_referencia"]]
+        if direction == "buy":
+            d[f"{role}_bq"] += qty;  d[f"{role}_bv"] += vol
+        else:
+            d[f"{role}_sq"] += qty;  d[f"{role}_sv"] += vol
+
+    insider_agg: dict = {
+        t: sorted([{"d": m, **v} for m, v in months.items()], key=lambda x: x["d"])
+        for t, months in agg_raw.items()
+    }
+
+    # ── PROGRAMS_FULL ─────────────────────────────────────────────────────────
+    programs_full: dict = defaultdict(list)
+    for r in conn.execute("""
+        SELECT c.ticker, b.id_programa, b.data_deliberacao, b.data_final_prazo,
+               b.situacao, b.qtd_autorizada, b.qtd_acoes_em_circ, b.destinacao
+        FROM buyback_programs b JOIN companies c ON c.cnpj_digits=b.cnpj_digits
+        ORDER BY c.ticker, b.data_deliberacao
+    """):
+        programs_full[r["ticker"]].append({
+            "id_programa":      r["id_programa"],
+            "data_deliberacao": r["data_deliberacao"],
+            "data_final_prazo": r["data_final_prazo"],
+            "situacao":         r["situacao"],
+            "auth_qty":         r["qtd_autorizada"],
+            "float_qty":        r["qtd_acoes_em_circ"],
+            "dest":             r["destinacao"] or "—",
+        })
+
+    # ── CONSOLIDATED + REALIZED ───────────────────────────────────────────────
+    consolidated: dict = {}
+    realized:     dict = {}
+    for t in tickers:
+        cnpj   = cnpj_of[t]
+        active = [p for p in programs_full.get(t, []) if p["situacao"] == "Em Andamento"]
+        realized[t] = {
+            p["id_programa"]: {"realized_q": 0, "realized_v": 0, "pct_done": 0.0}
+            for p in programs_full.get(t, [])
+        }
+        if not active:
+            consolidated[t] = None
+            continue
+        oldest     = min(p["data_deliberacao"] for p in active if p["data_deliberacao"])
+        total_auth = sum(p["auth_qty"] or 0 for p in active)
+        bought     = conn.execute("""
+            SELECT SUM(e.quantidade) total FROM ipe_entries e
+            WHERE e.cnpj_digits=? AND e.tipo_ativo='Ações'
+              AND e.tipo_movimentacao IN ('Compra à vista','Compra à termo','Compra')
+              AND (e.preco_unitario IS NULL OR e.preco_unitario > 0)
+              AND e.data_movimentacao >= ?
+        """, (cnpj, oldest)).fetchone()["total"] or 0
+        pct = round(bought / total_auth * 100, 1) if total_auth else 0.0
+        consolidated[t] = {
+            "n_programs":    len(active),
+            "total_auth":    round(total_auth),
+            "total_done":    round(bought),
+            "total_vol":     0,
+            "pct_done":      pct,
+            "float_qty":     active[0]["float_qty"],
+            "oldest_delib":  oldest,
+            "latest_expiry": max(p["data_final_prazo"] for p in active
+                                 if p["data_final_prazo"]),
+        }
+
+    # ── COMPANY_NAMES ─────────────────────────────────────────────────────────
+    company_names = {t: t for t in tickers}
+
+    # ── Injetar no HTML ───────────────────────────────────────────────────────
+    html = DASHBOARD_HTML.read_text(encoding="utf-8")
+    js   = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+
+    for name, obj in [
+        ("BUYBACK_DAILY",   buyback_daily),
+        ("BUYBACK_MONTHLY", buyback_monthly),
+        ("INSIDER_AGG",     insider_agg),
+        ("PROGRAMS_FULL",   dict(programs_full)),
+        ("REALIZED",        realized),
+        ("CONSOLIDATED",    consolidated),
+        ("INSIDER_SERIES",  insider_series),
+        ("COMPANY_NAMES",   company_names),
+    ]:
+        html = _replace_block(html, name, js(obj))
+
+    DASHBOARD_HTML.write_text(html, encoding="utf-8")
+    log.info("Dashboard atualizado: %s (%d bytes)", DASHBOARD_HTML, len(html))
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="CVM Buybacks v2 — IPE Individual")
+    parser = argparse.ArgumentParser(description="CVM Buybacks — IPE Individual + Consolidado")
     parser.add_argument("--bootstrap", action="store_true",
                         help=f"Puxa histórico completo desde {BOOTSTRAP_START_YEAR}")
+    parser.add_argument("--no-dashboard", action="store_true",
+                        help="Pula a atualização do dashboard HTML")
     args = parser.parse_args()
 
     init_db()
     cnpj_to_ticker = {v: k for k, v in TICKERS.items()}
 
     with db_conn() as conn:
-        # Determinar anos a processar
         current_year = date.today().year
         if args.bootstrap:
             years = list(range(BOOTSTRAP_START_YEAR, current_year + 1))
         else:
-            # Incremental: apenas ano atual (e anterior em dezembro)
             years = [current_year]
-            if date.today().month == 1:
+            if date.today().month <= 2:
                 years.insert(0, current_year - 1)
 
-        log.info("Iniciando ingestão IPE Individual para anos: %s", years)
+        log.info("IPE Individual — anos: %s", years)
         total_ipe = 0
         for year in years:
             n = ingest_ipe_year(year, cnpj_to_ticker, conn)
             total_ipe += n
-            log.info("Ano %d: %d linhas inseridas", year, n)
-
+            log.info("  Ano %d: %d linhas", year, n)
         log.info("IPE total: %d linhas", total_ipe)
 
-        # Formulário Consolidado — posição por grupo (Controlador, CA, Diretoria, CF, Órgãos)
-        log.info("Iniciando ingestão Formulário Consolidado para anos: %s", years)
-        total_consolidated = 0
+        log.info("Formulário Consolidado — anos: %s", years)
+        total_con = 0
         for year in years:
             n = ingest_consolidated_year(year, cnpj_to_ticker, conn)
-            total_consolidated += n
-            log.info("Consolidado ano %d: %d linhas inseridas", year, n)
+            total_con += n
+            log.info("  Consolidado %d: %d linhas", year, n)
+        log.info("Consolidado total: %d linhas", total_con)
 
-        log.info("Consolidado total: %d linhas", total_consolidated)
-
-        # Recompras
         n_recompra = ingest_recompras(conn)
-        log.info("Recompras: %d registros inseridos", n_recompra)
+        log.info("Recompras: %d registros", n_recompra)
+
+        if not args.no_dashboard:
+            log.info("Atualizando dashboard …")
+            build_dashboard(conn)
 
     log.info("Concluído. DB: %s", DB_PATH)
 
 
 if __name__ == "__main__":
     main()
+
