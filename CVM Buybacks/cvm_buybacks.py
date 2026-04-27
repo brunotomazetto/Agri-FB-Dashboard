@@ -1277,12 +1277,18 @@ def upsert_consolidated_positions(conn: sqlite3.Connection, rows: list[dict]) ->
 def already_ingested_consolidated(
     conn: sqlite3.Connection, cnpj_digits: str, data_ref: str, versao: int
 ) -> bool:
+    """
+    Retorna True apenas se todos os 5 grupos com Saldo Final já estão no banco.
+    Isso garante que PDFs com grupos perdidos pelo bug do checkbox (ex: Diretoria)
+    sejam re-parseados e completados corretamente.
+    """
     r = conn.execute(
-        "SELECT COUNT(*) FROM consolidated_positions "
-        "WHERE cnpj_digits=? AND data_referencia=? AND versao=?",
+        "SELECT COUNT(DISTINCT grupo) FROM consolidated_positions "
+        "WHERE cnpj_digits=? AND data_referencia=? AND versao=? "
+        "AND tipo_movimentacao='Saldo Final'",
         (cnpj_digits, data_ref, versao),
     ).fetchone()
-    return r[0] > 0
+    return r[0] >= 5
 
 
 def ingest_consolidated_year(
