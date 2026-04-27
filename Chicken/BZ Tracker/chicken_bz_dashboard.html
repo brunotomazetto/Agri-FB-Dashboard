@@ -661,12 +661,14 @@ function setTab(t) {
 }
 
 // ── niceScale: returns {min, max, stepSize}
-function niceScale(vals, nTicks) {
+// bottomPadFrac = 0 → tight (time-series); 1.5 → 1.5× range below min (comparison bars)
+function niceScale(vals, nTicks, bottomPadFrac) {
   nTicks = nTicks || 5;
+  bottomPadFrac = (bottomPadFrac !== undefined) ? bottomPadFrac : 0;
   if (!vals || !vals.length) return {};
   const mn = Math.min(...vals);
   const mx = Math.max(...vals);
-  const range = (mx - mn) || 1;
+  const range = (mx - mn) || Math.abs(mn * 0.1) || 1;
   let rawStep = range / (nTicks - 1);
   const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
   const norm = rawStep / mag;
@@ -675,7 +677,12 @@ function niceScale(vals, nTicks) {
            : norm <= 2.5 ? 2.5 * mag
            : norm <= 5.0 ? 5.0 * mag
            :               10.0 * mag;
-  const axMin = Math.floor((mn - step * 0.15) / step) * step;
+  // Tight mode: tiny step-based padding (original behaviour for time-series)
+  // Wide mode:  range-based padding so 3-bar comparison charts aren't misleading
+  const padAmt = bottomPadFrac > 0 ? range * bottomPadFrac : step * 0.15;
+  const axMin  = bottomPadFrac > 0
+    ? Math.max(0, Math.floor((mn - padAmt) / step) * step)
+    : Math.floor((mn - padAmt) / step) * step;
   const axMax = axMin + step * Math.ceil((mx - axMin + step * 0.15) / step);
   const fix = v => Math.round(v * 1e9) / 1e9;
   return { min: fix(axMin), max: fix(axMax), stepSize: step };
@@ -1157,7 +1164,7 @@ function renderVolumeChart() {
   const barBdr = ['rgba(130,130,130,0.70)', 'rgba(70,70,70,0.70)',    'rgba(255,85,0,1.00)'];
   const usdVals  = REF.usd.filter(v => v != null);
   const volVals  = REF.vol ? REF.vol.filter(v => v != null) : [];
-  const usdScale = niceScale(usdVals, 5);
+  const usdScale = niceScale(usdVals, 5, 1.5);  // wide padding — 3-bar comparison
   const volScale = niceScale(volVals, 5);
   // Anchor the volume axis one full range-width below the minimum, snapped to
   // the step — bars occupy ~40-50% of chart height without starting at 0.
@@ -1252,8 +1259,8 @@ function renderPriceRefChart() {
   const brlBg = ['rgba(255,85,0,0.30)', 'rgba(255,85,0,0.55)', 'rgba(255,85,0,0.85)'];
   const usdVals  = REF.usd.filter(v => v != null);
   const brlVals  = REF.brl.filter(v => v != null);
-  const usdScale = niceScale(usdVals, 5);
-  const brlScale = niceScale(brlVals, 5);
+  const usdScale = niceScale(usdVals, 5, 1.5);  // wide padding — 3-bar comparison
+  const brlScale = niceScale(brlVals, 5, 1.5);  // wide padding — 3-bar comparison
 
   charts.priceRef = new Chart(document.getElementById('priceRefChart').getContext('2d'), {
     type: 'bar',
