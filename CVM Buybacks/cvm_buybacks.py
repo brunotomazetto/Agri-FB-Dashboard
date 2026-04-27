@@ -151,6 +151,37 @@ CREATE TABLE IF NOT EXISTS buyback_quantities (
     natural_key         TEXT    UNIQUE
 );
 
+-- ============================================================
+-- Formulário Consolidado — Posição de Grupos de Pessoas Ligadas
+-- Fonte: IPE Tipo = "Posição Consolidada"
+-- Um PDF por empresa por mês, com uma PÁGINA por grupo:
+--   Controlador | Conselho Administração | Diretoria | Conselho Fiscal | Órgãos Técnicos
+-- Mesmo layout de tabela do Formulário Individual:
+--   Saldo Inicial / Movimentações / Saldo Final por grupo
+-- ============================================================
+CREATE TABLE IF NOT EXISTS consolidated_positions (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    cnpj_digits         TEXT    NOT NULL,
+    data_referencia     TEXT    NOT NULL,   -- YYYY-MM-01
+    versao              INTEGER NOT NULL DEFAULT 1,
+    -- Grupo (detectado pelo checkbox '( X )' na página)
+    grupo               TEXT    NOT NULL,  -- Controlador | CA | Diretoria | CF | Orgaos
+    -- Campos idênticos ao ipe_entries
+    tipo_ativo          TEXT,              -- Ações | Derivativos
+    caracteristica      TEXT,              -- ON | PN
+    tipo_movimentacao   TEXT    NOT NULL,  -- Saldo Inicial | Saldo Final | Compra à vista | ...
+    intermediario       TEXT,
+    dia                 INTEGER,
+    data_movimentacao   TEXT,              -- YYYY-MM-DD
+    quantidade          REAL,
+    preco_unitario      REAL,
+    volume              REAL,
+    natural_key         TEXT    UNIQUE
+);
+CREATE INDEX IF NOT EXISTS idx_cp_cnpj_ref ON consolidated_positions(cnpj_digits, data_referencia);
+CREATE INDEX IF NOT EXISTS idx_cp_grupo    ON consolidated_positions(grupo);
+CREATE INDEX IF NOT EXISTS idx_cp_movm     ON consolidated_positions(tipo_movimentacao);
+
 -- Views úteis
 CREATE VIEW IF NOT EXISTS v_treasury_trades AS
 SELECT
@@ -275,7 +306,7 @@ def filter_individual_links(
     df: pd.DataFrame,
     cnpj_set: set[str],
 ) -> pd.DataFrame:
-    """Filtra apenas Posição Individual para os CNPJs monitorados."""
+    """Filtra Posição Individual (tesouraria) para os CNPJs monitorados."""
     df = df.copy()
     df["cnpj_clean"] = df["CNPJ_Companhia"].str.replace(r"\D", "", regex=True)
     mask = (
@@ -285,6 +316,42 @@ def filter_individual_links(
     result = df[mask].copy()
     # Manter apenas versão mais alta por (cnpj, data_referencia)
     result["Versao"] = result["Versao"].astype(int)
+    result = (
+        result.sort_values("Versao", ascending=False)
+        .groupby(["cnpj_clean", "Data_Referencia"], as_index=False)
+        .first()
+    )
+    return result
+
+
+def filter_consolidated_links(
+    df: pd.DataFrame,
+    cnpj_set: set[str],
+) -> pd.DataFrame:
+    """
+    Filtra documentos 'Posição Consolidada' do índice IPE.
+
+    Confirmado no portal CVM (imagem VITTIA fev/2026):
+      Categoria = "Valores Mobiliários Negociados e Detidos"
+      Tipo      = "Posição Consolidada"
+
+    Cada PDF tem uma página por grupo de pessoas ligadas:
+      Controlador | Conselho Administração | Diretoria | Conselho Fiscal | Órgãos Técnicos
+    """
+    df = df.copy()
+    df["cnpj_clean"] = df["CNPJ_Companhia"].str.replace(r"\D", "", regex=True)
+
+    tipo_col = df.get("Tipo", pd.Series(dtype=str)).fillna("")
+
+    mask = df["cnpj_clean"].isin(cnpj_set) & tipo_col.str.contains("Consolidada", case=False, na=False)
+    result = df[mask].copy()
+
+    if result.empty:
+        avail = df[df["cnpj_clean"].isin(cnpj_set)]["Tipo"].dropna().unique().tolist()
+        log.warning("  [CONSOLIDADO] Nenhum doc. Tipos disponíveis: %s", avail)
+        return result
+
+    result["Versao"] = pd.to_numeric(result["Versao"], errors="coerce").fillna(1).astype(int)
     result = (
         result.sort_values("Versao", ascending=False)
         .groupby(["cnpj_clean", "Data_Referencia"], as_index=False)
@@ -948,6 +1015,321 @@ def upsert_ipe_rows(conn: sqlite3.Connection, rows: list[dict]) -> int:
 # INGESTÃO IPE
 # ============================================================================
 
+
+# ============================================================================
+# FORMULÁRIO CONSOLIDADO — POSIÇÃO DE GRUPOS (Controlador, CA, Diretoria, etc.)
+# ============================================================================
+
+# Mapeamento X do label de grupo no checkbox da página do Consolidado
+# Confirmado com pdfplumber nos PDFs da VITTIA fev/2026
+GRUPO_X_RANGES = [
+    (115, 175, "Controlador"),
+    (195, 270, "CA"),        # Conselho Administração
+    (255, 345, "Diretoria"),
+    (330, 400, "CF"),        # Conselho Fiscal
+    (405, 495, "Orgaos"),   # Órgãos Técnicos ou Consultivos
+]
+GRUPO_LABELS = {
+    "Controlador": "Controlador",
+    "CA":          "Conselho Administração",
+    "Diretoria":   "Diretoria",
+    "CF":          "Conselho Fiscal",
+    "Orgaos":      "Órgãos Técnicos",
+}
+
+
+def parse_consolidated_pdf(
+    pdf_bytes: bytes,
+    cnpj_digits: str,
+    data_ref: str,
+    versao: int,
+) -> list[dict]:
+    """
+    Parse do PDF 'Formulário Consolidado' (Posição Consolidada).
+
+    Layout confirmado pelos PDFs da VITTIA fev/2026:
+    - Cada PÁGINA = 1 grupo de pessoas ligadas
+    - Linha y≈150-220: checkbox '( X )' indica qual grupo
+    - Tabela de movimentações: mesmas colunas X do Formulário Individual
+    - Grupos: Controlador | CA | Diretoria | CF | Órgãos Técnicos
+    """
+    try:
+        import pdfplumber
+    except ImportError:
+        raise ImportError("pdfplumber not installed")
+
+    from collections import defaultdict
+
+    def make_key(*parts) -> str:
+        return hashlib.sha1("|".join(str(p) for p in parts).encode()).hexdigest()
+
+    def to_date(dia, ref: str):
+        if not dia:
+            return None
+        y, m = int(ref[:4]), int(ref[5:7])
+        return f"{y:04d}-{m:02d}-{int(dia):02d}"
+
+    def norm_num(s):
+        if not s:
+            return None
+        s = str(s).strip().replace(".", "").replace(",", ".")
+        try:
+            return float(s)
+        except ValueError:
+            return None
+
+    # Colunas X — idênticas ao parser Individual
+    C_ATIVO  = (30,  90)
+    C_CARACT = (100, 200)
+    C_INTERM = (190, 255)
+    C_OP     = (245, 322)
+    C_DIA    = (305, 348)
+    C_QTY    = (345, 435)
+    C_PRECO  = (425, 495)
+    C_VOL    = (485, 562)
+    C_SALDO  = (455, 562)
+
+    def in_c(x, c): return c[0] <= x <= c[1]
+
+    rows: list[dict] = []
+
+    with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        for page in pdf.pages:
+            ws = page.extract_words(x_tolerance=3, y_tolerance=3)
+            if not ws:
+                continue
+
+            # ── Detectar grupo pelo checkbox '( X )' em y≈150-220 ──────────
+            grupo_code = None
+            checkbox_words = sorted(
+                [w for w in ws if 150 <= w["top"] <= 220],
+                key=lambda w: w["x0"]
+            )
+            for i, w in enumerate(checkbox_words):
+                if w["text"] in ("X", "x") and 0 < i < len(checkbox_words) - 1:
+                    if checkbox_words[i-1]["text"] == "(" and checkbox_words[i+1]["text"] == ")":
+                        # Encontrou '( X )' — qual grupo vem depois?
+                        after_x = checkbox_words[i+1]["x1"]
+                        label_words = [
+                            cw for cw in checkbox_words
+                            if cw["x0"] > after_x and cw["text"] not in ("(", ")", "X", "x")
+                        ]
+                        if label_words:
+                            lx = label_words[0]["x0"]
+                            for x_lo, x_hi, code in GRUPO_X_RANGES:
+                                if x_lo <= lx <= x_hi:
+                                    grupo_code = code
+                                    break
+                        # Fallback texto
+                        if not grupo_code and label_words:
+                            lt = " ".join(lw["text"] for lw in label_words[:3]).lower()
+                            if "control" in lt:   grupo_code = "Controlador"
+                            elif "administr" in lt: grupo_code = "CA"
+                            elif "diretor" in lt or "direto" in lt: grupo_code = "Diretoria"
+                            elif "fiscal" in lt:  grupo_code = "CF"
+                            elif "órgão" in lt or "orgao" in lt or "técn" in lt: grupo_code = "Orgaos"
+                        break
+
+            if not grupo_code:
+                log.debug("  parse_consolidated: página sem grupo, skip")
+                continue
+
+            grupo_label = GRUPO_LABELS.get(grupo_code, grupo_code)
+
+            # ── Parse da tabela (idêntico ao Individual) ─────────────────────
+            lines_map: dict[int, list] = defaultdict(list)
+            for w in ws:
+                y_key = round(w["top"] / 3) * 3
+                lines_map[y_key].append(w)
+            sorted_ys = sorted(lines_map.keys())
+
+            section = None
+            op_buffer: list[list] = []
+
+            def flush_op(buf, sec):
+                if not buf:
+                    return None
+                ativo_w, caract_w, interm_w, op_w, dia_w, qty_w, preco_w, vol_w = (
+                    [], [], [], [], [], [], [], [])
+                for line in buf:
+                    for w in sorted(line, key=lambda x: x["x0"]):
+                        x = w["x0"]; t = w["text"]
+                        if in_c(x, C_ATIVO):   ativo_w.append(t)
+                        if in_c(x, C_CARACT):  caract_w.append(t)
+                        if in_c(x, C_INTERM):  interm_w.append(t)
+                        if in_c(x, C_OP):      op_w.append(t)
+                        if in_c(x, C_DIA) and re.match(r"^\d{1,2}$", t):
+                            dia_w.append(t)
+                        if in_c(x, C_QTY):     qty_w.append(t)
+                        if in_c(x, C_PRECO):   preco_w.append(t)
+                        if in_c(x, C_VOL):     vol_w.append(t)
+
+                tipo_ativo    = " ".join(ativo_w).strip() or None
+                caracteristica = " ".join(caract_w).strip() or None
+                intermediario  = " ".join(interm_w).strip() or None
+                operacao       = " ".join(op_w).strip() or None
+                dia            = int(dia_w[0]) if dia_w else None
+                quantidade     = norm_num(" ".join(qty_w))
+                preco          = norm_num(" ".join(preco_w))
+                volume         = norm_num(" ".join(vol_w))
+
+                # Saldos: quantidade em coluna mais à direita
+                if sec in ("saldo_inicial", "saldo_final") and not quantidade:
+                    sw = []
+                    for line in buf:
+                        for w in sorted(line, key=lambda x: x["x0"]):
+                            if in_c(w["x0"], C_SALDO):
+                                sw.append(w["text"])
+                    quantidade = norm_num(" ".join(sw))
+
+                tipo_mov = (
+                    "Saldo Inicial" if sec == "saldo_inicial"
+                    else "Saldo Final" if sec == "saldo_final"
+                    else operacao
+                )
+                if not tipo_mov:
+                    return None
+
+                nk = make_key(cnpj_digits, data_ref, versao, grupo_label, tipo_mov, dia, quantidade, preco)
+                return {
+                    "cnpj_digits":       cnpj_digits,
+                    "data_referencia":   data_ref,
+                    "versao":            versao,
+                    "grupo":             grupo_label,
+                    "tipo_ativo":        tipo_ativo or "Ações",
+                    "caracteristica":    caracteristica,
+                    "tipo_movimentacao": tipo_mov,
+                    "intermediario":     intermediario,
+                    "dia":               dia,
+                    "data_movimentacao": to_date(dia, data_ref),
+                    "quantidade":        quantidade,
+                    "preco_unitario":    preco,
+                    "volume":            volume,
+                    "natural_key":       nk,
+                }
+
+            for y in sorted_ys:
+                line = sorted(lines_map[y], key=lambda w: w["x0"])
+                text = " ".join(w["text"] for w in line).lower()
+
+                if "saldo inicial" in text:
+                    if op_buffer:
+                        rec = flush_op(op_buffer, section)
+                        if rec: rows.append(rec)
+                    op_buffer = []; section = "saldo_inicial"; continue
+                elif "movimenta" in text and ("mês" in text or "mes" in text):
+                    if op_buffer:
+                        rec = flush_op(op_buffer, section)
+                        if rec: rows.append(rec)
+                    op_buffer = []; section = "movimentacoes"; continue
+                elif "saldo final" in text:
+                    if op_buffer:
+                        rec = flush_op(op_buffer, section)
+                        if rec: rows.append(rec)
+                    op_buffer = []; section = "saldo_final"; continue
+                elif any(hdr in text for hdr in [
+                    "valor mobiliário", "intermediário", "operação",
+                    "características", "derivativo", "quantidade",
+                ]):
+                    continue  # header, skip
+                if section is None:
+                    continue
+                dia_words = [
+                    w for w in line
+                    if in_c(w["x0"], C_DIA) and re.match(r"^\d{1,2}$", w["text"])
+                ]
+                if dia_words and op_buffer:
+                    rec = flush_op(op_buffer, section)
+                    if rec: rows.append(rec)
+                    op_buffer = [line]
+                else:
+                    op_buffer.append(line)
+
+            if op_buffer:
+                rec = flush_op(op_buffer, section)
+                if rec: rows.append(rec)
+
+    return rows
+
+
+def upsert_consolidated_positions(conn: sqlite3.Connection, rows: list[dict]) -> int:
+    total = 0
+    for r in rows:
+        conn.execute(
+            "INSERT OR IGNORE INTO consolidated_positions"
+            "(cnpj_digits,data_referencia,versao,grupo,tipo_ativo,caracteristica,"
+            "tipo_movimentacao,intermediario,dia,data_movimentacao,quantidade,"
+            "preco_unitario,volume,natural_key)"
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (r["cnpj_digits"], r["data_referencia"], r["versao"],
+             r["grupo"], r.get("tipo_ativo"), r.get("caracteristica"),
+             r["tipo_movimentacao"], r.get("intermediario"),
+             r.get("dia"), r.get("data_movimentacao"),
+             r.get("quantidade"), r.get("preco_unitario"), r.get("volume"),
+             r["natural_key"]),
+        )
+        total += conn.execute("SELECT changes()").fetchone()[0]
+    return total
+
+
+def already_ingested_consolidated(
+    conn: sqlite3.Connection, cnpj_digits: str, data_ref: str, versao: int
+) -> bool:
+    r = conn.execute(
+        "SELECT COUNT(*) FROM consolidated_positions "
+        "WHERE cnpj_digits=? AND data_referencia=? AND versao=?",
+        (cnpj_digits, data_ref, versao),
+    ).fetchone()
+    return r[0] > 0
+
+
+def ingest_consolidated_year(
+    year: int, cnpj_to_ticker: dict[str, str], conn: sqlite3.Connection
+) -> int:
+    """
+    Baixa e parseia documentos 'Posição Consolidada' do índice IPE.
+    Uma página por grupo; mesmo layout de tabela do Individual.
+    """
+    try:
+        df_idx = load_ipe_index(year)
+    except Exception as e:
+        log.warning("Índice IPE %d indisponível para Consolidado: %s", year, e)
+        return 0
+
+    cnpj_set = set(cnpj_to_ticker.keys())
+    links_df = filter_consolidated_links(df_idx, cnpj_set)
+    if links_df.empty:
+        return 0
+
+    log.info("  Consolidado: %d documentos em %d", len(links_df), year)
+    total = 0
+    for _, row in links_df.iterrows():
+        cnpj   = row["cnpj_clean"]
+        ticker = cnpj_to_ticker.get(cnpj, cnpj)
+        ref    = row["Data_Referencia"]
+        versao = int(row.get("Versao", 1))
+        url    = row["Link_Download"]
+
+        if already_ingested_consolidated(conn, cnpj, ref, versao):
+            log.debug("  skip Consolidado %s %s v%d", ticker, ref, versao)
+            continue
+
+        log.info("  Consolidado baixando %s %s v%d …", ticker, ref, versao)
+        try:
+            pdf_bytes = fetch(url, timeout=30)
+            rows_parsed = parse_consolidated_pdf(pdf_bytes, cnpj, ref, versao)
+            n = upsert_consolidated_positions(conn, rows_parsed)
+            total += n
+            conn.commit()
+            log.info("    → %d linhas inseridas (%d parsed)", n, len(rows_parsed))
+            time.sleep(0.3)
+        except Exception as e:
+            log.error("  ERRO Consolidado %s %s: %s", ticker, ref, e)
+            continue
+
+    return total
+
+
 def already_ingested(conn: sqlite3.Connection, cnpj_digits: str, data_ref: str, versao: int) -> bool:
     """Verifica se já temos dados para este (cnpj, mes, versao)."""
     r = conn.execute(
@@ -1136,6 +1518,16 @@ def main() -> None:
             log.info("Ano %d: %d linhas inseridas", year, n)
 
         log.info("IPE total: %d linhas", total_ipe)
+
+        # Formulário Consolidado — posição por grupo (Controlador, CA, Diretoria, CF, Órgãos)
+        log.info("Iniciando ingestão Formulário Consolidado para anos: %s", years)
+        total_consolidated = 0
+        for year in years:
+            n = ingest_consolidated_year(year, cnpj_to_ticker, conn)
+            total_consolidated += n
+            log.info("Consolidado ano %d: %d linhas inseridas", year, n)
+
+        log.info("Consolidado total: %d linhas", total_consolidated)
 
         # Recompras
         n_recompra = ingest_recompras(conn)
