@@ -1302,9 +1302,16 @@ def fetch_weekly_bulletin(conn):
     else:
         s_date, e_date, existing_price, existing_bd = existing
 
-        # Fix phantom rows: if start_date is not the 1st of the month
-        # (e.g. "2026-04-13"), delete it and reset to "YYYY-MM-01"
-        if not s_date.endswith("-01"):
+        # Fix phantom rows: a phantom is a mid-month row (not starting on the 1st)
+        # that exists WITHOUT a corresponding first-of-month row.  This happens
+        # when a previous bulletin run mis-computed the start_date.
+        # Do NOT treat SEED-derived incremental rows (e.g. Apr 11, Apr 20) as
+        # phantoms — they are legitimate if an Apr-01 row already exists.
+        first_of_month = conn.execute(
+            "SELECT 1 FROM _weekly_raw WHERE start_date = ?",
+            (f"{yr_s}-{mo_s}-01",)
+        ).fetchone()
+        if not s_date.endswith("-01") and first_of_month is None:
             phantom = s_date
             s_date = f"{yr_s}-{mo_s}-01"
             conn.execute("DELETE FROM _weekly_raw WHERE start_date = ?", (phantom,))
