@@ -769,7 +769,15 @@ def coletar_pagina(page, url, supermercado, nome_produto="", embalagem="", con=N
         "rota_css": None, "url_recuperada": None, "tentativas": tentativa, "erro": None,
     }
     try:
-        page.goto(url, wait_until="domcontentloaded", timeout=18000)
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=18000)
+        except Exception as e:
+            if "ERR_HTTP2_PROTOCOL_ERROR" in str(e):
+                # Espera mais e tenta de novo
+                time.sleep(random.uniform(8, 12))
+                page.goto(url, wait_until="domcontentloaded", timeout=25000)
+            else:
+                raise
 
         # Injeta CEP após carregar a página (para sites que leem do localStorage)
         scroll_e_aguarda(page, supermercado)
@@ -1099,8 +1107,8 @@ def main(categorias_filtro=None):
                         total_erro += not bool(dados["preco_atual"])
 
                         # Delay humanizado — mais longo nos sites com maior bloqueio
-                        base_delay = 2.5 if sm_nome in ["Pão de Açúcar", "Extra"] else 1.0
-                        time.sleep(random.uniform(base_delay, base_delay + 2.0))
+                        base_delay = 4.0 if sm_nome in ["Pão de Açúcar", "Extra"] else 1.5
+                        time.sleep(random.uniform(base_delay, base_delay + 3.0))
 
                     ctx.close()
 
