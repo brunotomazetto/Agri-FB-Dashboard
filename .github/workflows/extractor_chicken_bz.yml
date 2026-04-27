@@ -42,7 +42,7 @@ jobs:
 
       # ── 3. Install Python dependencies ───────────────────────────────────
       - name: Install dependencies
-        run: pip install requests
+        pip install requests openpyxl
 
       # ── 4. Run the extractor (incremental update) ────────────────────────
       #    --init would reseed from scratch; omit it here so we only fetch
