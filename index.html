@@ -368,9 +368,6 @@ const SUBSECTORS = {
     { id:'beverages', label:'Beverages' },
   ],
 };
-// Normalize legacy Supabase sector/subsector IDs (food->fnb, bev->fnb; subsector food->staples)
-function normalizeSector(s){ return (s==='food'||s==='bev')?'fnb':s; }
-function normalizeSubsector(s){ return s==='food'?'staples':s; }
 
 /* ══ UTILS ══ */
 const esc = s => s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -517,7 +514,7 @@ function toggleAvatarMenu(e){ e.stopPropagation(); document.getElementById('avat
 /* ══ NAVIGATION ══ */
 const visibleSubs = sec => (SUBSECTORS[sec]||[]).filter(s=>{
   if(STATE.currentUser?.is_admin) return true;
-  return STATE.dashboards.some(d=>normalizeSector(d.sector)===sec&&normalizeSubsector(d.subsector)===s.id&&d.visible_to_all);
+  return STATE.dashboards.some(d=>d.sector===sec&&d.subsector===s.id&&d.visible_to_all);
 });
 function navigateSector(sid){ STATE.activeSector=sid; STATE.activeDash=null; STATE.searchQuery=''; const subs=visibleSubs(sid); STATE.activeSubsector=subs.length?subs[0].id:null; renderAll(); }
 function navigateSubsector(sid){ STATE.activeSubsector=sid; STATE.activeDash=null; STATE.searchQuery=''; renderSubNav(); renderContent(); }
@@ -541,7 +538,7 @@ function renderTopNav(){
   let html='';
   SECTORS.forEach(s=>{
     const alwaysVisible = s.always_visible;
-    if(!isAdmin && !alwaysVisible && !STATE.dashboards.some(d=>normalizeSector(d.sector)===s.id&&d.visible_to_all)) return;
+    if(!isAdmin && !alwaysVisible && !STATE.dashboards.some(d=>d.sector===s.id&&d.visible_to_all)) return;
     const a=STATE.activeSector===s.id?'active':'';
     html+=`<div class="top-nav-tab ${a}" onclick="navigateSector('${s.id}')">${esc(s.label)}</div>`;
   });
@@ -571,7 +568,7 @@ function getDashes(sector, subsector){
   const isAdmin=STATE.currentUser?.is_admin;
   // Normalize legacy sector/subsector IDs from Supabase
   let list = STATE.dashboards
-    .filter(d=>normalizeSector(d.sector)===sector && (normalizeSubsector(d.subsector)||null)===(subsector||null) && (isAdmin||d.visible_to_all))
+    .filter(d=>d.sector===sector && (d.subsector||null)===(subsector||null) && (isAdmin||d.visible_to_all))
     .sort((a,b)=>(a.display_order||0)-(b.display_order||0));
   if(STATE.searchQuery){
     const q=STATE.searchQuery.toLowerCase();
@@ -854,12 +851,12 @@ function buildPaneContent(){
     const secSubs = SUBSECTORS[sec.id]||[];
     const subBlocks = secSubs.map(function(sub){
       const dashes = STATE.dashboards
-        .filter(function(d){ return normalizeSector(d.sector)===sec.id && normalizeSubsector(d.subsector)===sub.id; })
+        .filter(function(d){ return d.sector===sec.id && d.subsector===sub.id; })
         .sort(function(a,b){ return (a.display_order||0)-(b.display_order||0); });
 
       const rows = dashes.map(function(d){
-        const secOptsSelected  = SECTORS.map(s=>'<option value="'+s.id+'"'+(normalizeSector(d.sector)===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
-        const subOptsSelected  = Object.values(SUBSECTORS).flat().map(s=>'<option value="'+s.id+'"'+(normalizeSubsector(d.subsector)===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
+        const secOptsSelected  = SECTORS.map(s=>'<option value="'+s.id+'"'+(d.sector===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
+        const subOptsSelected  = Object.values(SUBSECTORS).flat().map(s=>'<option value="'+s.id+'"'+(d.subsector===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
         return '<div class="dash-edit-card">'
           +'<div class="dash-edit-header">'
           +'<span>ID '+d.id+' &mdash; '+esc(d.title)+'</span>'
@@ -918,10 +915,10 @@ function buildPaneContent(){
     let body = subBlocks;
     if(!body){
       const directDashes = STATE.dashboards
-        .filter(function(d){ return normalizeSector(d.sector)===sec.id; })
+        .filter(function(d){ return d.sector===sec.id; })
         .sort(function(a,b){ return (a.display_order||0)-(b.display_order||0); });
       const directRows = directDashes.map(function(d){
-        const secOptsSelected = SECTORS.map(s=>'<option value="'+s.id+'"'+(normalizeSector(d.sector)===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
+        const secOptsSelected = SECTORS.map(s=>'<option value="'+s.id+'"'+(d.sector===s.id?' selected':'')+'>'+esc(s.label)+'</option>').join('');
         return '<div class="dash-edit-card">'
           +'<div class="dash-edit-header">'
           +'<span>ID '+d.id+' &mdash; '+esc(d.title)+'</span>'
