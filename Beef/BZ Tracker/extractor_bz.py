@@ -259,6 +259,8 @@ WEEKLY_SEED = [
     ("2026-03-09","2026-03-13",5.848168,115678.5,666888.9),
     ("2026-03-16","2026-03-20",5.825231,167061.8,966208.5),
     ("2026-03-23","2026-03-31",5.892906,233951.5,1360383.2),
+    # ── 2026-Apr (first bulletin: Apr 1-10, biz_days=7) ────────────────────────
+    ("2026-04-01","2026-04-10",6.078718,97264.669,591244.475),
 ]
 
 
@@ -1289,7 +1291,7 @@ def fetch_weekly_bulletin(conn):
           + (f"  ({biz_days} biz days)" if biz_days else ""))
 
     existing = conn.execute(
-        "SELECT start_date, end_date, price_usd_kg FROM _weekly_raw"
+        "SELECT start_date, end_date, price_usd_kg, biz_days FROM _weekly_raw"
         " WHERE start_date LIKE ? ORDER BY start_date DESC LIMIT 1",
         (f"{yr_s}-{mo_s}-%",)
     ).fetchone()
@@ -1304,7 +1306,6 @@ def fetch_weekly_bulletin(conn):
                 end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
                 e_date = str(end_dt) if end_dt else str(today)
             else:
-                # Fallback: last business day before today (or today if business day)
                 e_date = str(today - _td(days=max(0, today.weekday() - 4)) if today.weekday() > 4 else today)
             existing_price = None
             print(f"  [BULLETIN] No existing row — creating new row {s_date} → {e_date}")
@@ -1312,7 +1313,8 @@ def fetch_weekly_bulletin(conn):
             print(f"  [BULLETIN] No row for {yr_s}-{mo_s} and it is a past month — skipping.")
             return 0
     else:
-        s_date, e_date, existing_price = existing
+        s_date, e_date, existing_price, existing_bd = existing
+
         # Fix phantom rows: if start_date is not the 1st of the month
         # (e.g. "2026-04-13"), delete it and reset to "YYYY-MM-01"
         if not s_date.endswith("-01"):
@@ -1322,18 +1324,39 @@ def fetch_weekly_bulletin(conn):
             conn.commit()
             print(f"  [BULLETIN] Deleted phantom row {phantom} — will insert {s_date}")
             existing_price = None
-            e_date = str(today)   # will be overwritten by biz_days below
+            existing_bd    = None
+            e_date = str(today)
 
-        # If biz_days is known and row starts on 1st, recompute end_date accurately
-        if biz_days is not None and biz_days > 0 and s_date.endswith("-01"):
-            end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
-            if end_dt:
-                new_e = str(end_dt)
-                if new_e != e_date:
-                    print(f"  [BULLETIN] Correcting end_date: {e_date} → {new_e} "
-                          f"(biz_days={biz_days})")
-                    e_date = new_e
-        print(f"  [BULLETIN] Updating existing row: {s_date} → {e_date}")
+        # ── NEW BULLETIN DETECTION ────────────────────────────────────────────
+        # If biz_days from the bulletin is greater than what the latest stored
+        # row already covers, a new SECEX bulletin was published.
+        # Instead of overwriting the existing row (which destroys historical data),
+        # create a NEW incremental row whose start_date = next business day after
+        # the previous row's end_date, storing the new MTD cumulative values.
+        # materialise() will de-accumulate correctly when it sees multiple rows.
+        if (biz_days is not None and existing_bd is not None
+                and biz_days > existing_bd):
+            prev_end_dt  = date.fromisoformat(e_date)
+            new_start_dt = prev_end_dt + _td(days=1)
+            while new_start_dt.weekday() >= 5:   # skip weekends
+                new_start_dt += _td(days=1)
+            new_end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
+            s_date = str(new_start_dt)
+            e_date = str(new_end_dt) if new_end_dt else str(today)
+            existing_price = None
+            print(f"  [BULLETIN] New bulletin detected (biz_days {existing_bd}→{biz_days})"
+                  f" — inserting NEW row {s_date} → {e_date}")
+        else:
+            # Same bulletin or first row — update in place
+            if biz_days is not None and biz_days > 0:
+                end_dt = _nth_biz_day(target_yr, target_mo, biz_days)
+                if end_dt:
+                    new_e = str(end_dt)
+                    if new_e != e_date:
+                        print(f"  [BULLETIN] Correcting end_date: {e_date} → {new_e} "
+                              f"(biz_days={biz_days})")
+                        e_date = new_e
+            print(f"  [BULLETIN] Updating existing row: {s_date} → {e_date}")
 
     # Validate existing_price; don't carry forward a previously bad value
     if existing_price is not None and not (PRICE_MIN <= existing_price <= PRICE_MAX):

@@ -221,7 +221,7 @@ tr:hover td{background:#FFF8F5;}
         <div>
           <div class="chart-title">Volume &amp; Export Price — <span id="comp-period-label">Period Comparison</span></div>
           <div style="font-size:10.5px;color:var(--gray-mid);margin-top:3px;">
-            <span style="color:#888;font-weight:700;">■</span> Volume ('000 t, left axis)
+            <span style="color:#888;font-weight:700;">■</span> Volume (<span id="vol-unit-label">'000 t</span>, left axis)
             &nbsp;·&nbsp;
             <span style="color:#1A1A1A;font-weight:700;">●</span> Export Price USD/kg (right axis)
           </div>
@@ -362,7 +362,7 @@ async function loadDB() {
 
     // ── weekly ────────────────────────────────────────────────────────────────
     const wStmt = db.exec(`
-      SELECT start_date, end_date, secex_usd_kg, fx, secex_brl_kg, cepea_r_kg, spread, vol_tons
+      SELECT start_date, end_date, secex_usd_kg, fx, secex_brl_kg, cepea_r_kg, spread, vol_tons, biz_days
       FROM weekly ORDER BY start_date ASC
     `);
     if (wStmt.length) {
@@ -894,22 +894,30 @@ function buildReferenceData() {
       { label: curr   ? ['This Wk', shortDate(curr.start_date)]   : ['This Wk','—'], d: curr,   hasVol: hasWVol },
     ];
     const tag = curr ? `${shortDate(curr.start_date)}: this / last / same LY` : 'Weekly';
-    _setREF(periods, tag, hasWVol);
+    _setREF(periods, tag, hasWVol, true);  // dailyVol=true for weekly view
   }
 }
 
-function _setREF(periods, tag, hasVolume) {
+function _setREF(periods, tag, hasVolume, dailyVol) {
+  // dailyVol=true → weekly view: divide vol by biz_days to get t/day
   REF = {
     labels:    periods.map(p => p.label),
     usd:       periods.map(p => p.d?.secex_usd_kg  ?? null),
     brl:       periods.map(p => p.d?.secex_brl_kg  ?? null),
-    vol:       periods.map(p => p.hasVol ? (p.d?.vol_tons != null ? p.d.vol_tons / 1000 : null) : null),
+    vol:       periods.map(p => {
+      if (!p.hasVol || p.d?.vol_tons == null) return null;
+      if (dailyVol && p.d?.biz_days > 0) return p.d.vol_tons / p.d.biz_days;
+      return p.d.vol_tons / 1000;
+    }),
+    dailyVol:  !!dailyVol,
     hasVolume: hasVolume,
     tag:       tag,
   };
   // Update dynamic labels in chart card headers
   document.getElementById('comp-period-label').textContent  = tag;
   document.getElementById('comp-period-label2').textContent = tag;
+  const volUnitEl = document.getElementById('vol-unit-label');
+  if (volUnitEl) volUnitEl.textContent = dailyVol ? 't/day' : "'000 t";
 }
 
 function renderVolumeChart() {
@@ -935,7 +943,7 @@ function renderVolumeChart() {
         // ── Volume bars (always present; null values = invisible in weekly) ──
         {
           type: 'bar',
-          label: "Volume ('000 t)",
+          label: REF.dailyVol ? "Volume (t/day)" : "Volume ('000 t)",
           data: hasVol ? REF.vol : [null, null, null],
           backgroundColor: barBg,
           borderColor: barBdr,
@@ -986,8 +994,11 @@ function renderVolumeChart() {
           borderColor: '#555', borderWidth: 1,
           callbacks: {
             label: ctx => {
-              if (ctx.dataset.label?.includes('Volume'))
-                return hasVol ? `Volume: ${ctx.parsed.y?.toFixed(0) ?? '—'} '000 t` : null;
+              if (ctx.dataset.label?.includes('Volume')) {
+                if (!hasVol) return null;
+                const unit = REF.dailyVol ? 't/day' : "'000 t";
+                return `Volume: ${ctx.parsed.y?.toFixed(0) ?? '—'} ${unit}`;
+              }
               return `Price: ${ctx.parsed.y?.toFixed(2) ?? '—'} USD/kg`;
             },
           },
@@ -998,7 +1009,7 @@ function renderVolumeChart() {
           type: 'linear', position: 'left',
           display: hasVol,
           min: volScale.min, max: volScale.max,
-          title: { display: hasVol, text: "'000 t", color: '#888', font: { size: 9 } },
+          title: { display: hasVol, text: REF.dailyVol ? 't/day' : "'000 t", color: '#888', font: { size: 9 } },
           ticks: {
             color: '#888', font: { size: 9 },
             stepSize: volScale.stepSize,
