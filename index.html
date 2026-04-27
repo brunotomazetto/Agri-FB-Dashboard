@@ -798,7 +798,7 @@ function buildPaneUsersTeam(){
           <div class="info-box" style="margin-bottom:12px;">New users must be created in <strong>Supabase Auth</strong> first (Authentication → Users → Add user), then they will appear here automatically on next login.</div>
           <div class="form-grid">
             <div><label class="admin-label">Display Name</label><input class="admin-input" id="nu-name" placeholder="Full Name"/></div>
-            <div><label class="admin-label">Corporate Email</label><input class="admin-input" id="nu-email" type="email" placeholder="name@itaubba.com"/></div>
+            <div><label class="admin-label">Corporate Email</label><input class="admin-input" id="nu-email" type="email" placeholder="name@corporateemail.com"/></div>
           </div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
             <label class="toggle"><input type="checkbox" id="nu-admin"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
@@ -991,7 +991,7 @@ function buildPaneMyAccount(){
           <label class="admin-label">Display Name</label>
           <input class="admin-input" id="acc-name" value="${esc(u.display_name||'')}" placeholder="Your full name"/>
           <label class="admin-label">Corporate Email (login)</label>
-          <input class="admin-input" id="acc-email" type="email" value="${esc(u.email||'')}" placeholder="your.name@itaubba.com"/>
+          <input class="admin-input" id="acc-email" type="email" value="${esc(u.email||'')}" placeholder="your.name@corporateemail.com"/>
           <hr class="sep"/>
           <div style="font-size:13px;font-weight:700;color:var(--black);margin-bottom:12px;">Change Password</div>
           <label class="admin-label">New Password</label>
