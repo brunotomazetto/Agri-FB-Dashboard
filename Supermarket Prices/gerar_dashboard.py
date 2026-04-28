@@ -112,13 +112,13 @@ random.seed(42)
 
 GRUPOS = {
     "Cervejas":                         ["Cervejas"],
-    "Carnes, Processados e Preparados": ["Carnes"],
-    "Mercearias Secas":                 ["Biscoitos","Massas","Mercearia"],
+    "Meat & Prepared": ["Carnes"],
+    "Dry Goods":                 ["Biscoitos","Massas","Mercearia"],
 }
 GRUPOS_EN = {
     "Cervejas": "Beers",
-    "Carnes, Processados e Preparados": "Meat & Prepared",
-    "Mercearias Secas": "Dry Goods",
+    "Meat & Prepared": "Meat & Prepared",
+    "Dry Goods": "Dry Goods",
 }
 CLUSTERS_DEF = {
     "Cervejas": [
@@ -128,13 +128,13 @@ CLUSTERS_DEF = {
         {"id":"premium",    "nome":"Premium",    "skus":["Heineken Lata_350ml","Heineken Lata_269ml","Heineken 0.0_350ml","Stella Artois Long Neck_330ml","Corona Extra Long Neck_330ml","Corona Extra Lata_350ml","Spaten Puro Malte Lata_350ml","Spaten Puro Malte Lata_269ml","Budweiser Lata_350ml","Budweiser Lata_269ml"]},
         {"id":"mainstream", "nome":"Mainstream", "skus":["Skol Lata_350ml","Skol Lata_269ml","Brahma Duplo Malte_350ml","Brahma Duplo Malte_269ml","Amstel Lata_350ml","Amstel Lata_269ml","Itaipava Lata_350ml","Original Lata_350ml","Original Lata_269ml"]},
     ],
-    "Carnes, Processados e Preparados": [
+    "Meat & Prepared": [
         {"id":"beef",       "nome":"Beef",       "skus":["Picanha 1kg Bassi_1kg","Picanha 1kg Friboi_1kg","Picanha 1kg Estância 92_1kg","Fraldinha 1kg Bassi_1kg","Carne Moida 1kg Swift_1kg"]},
         {"id":"chicken",    "nome":"Chicken",    "skus":["Peito de Frango 1kg Sadia_1kg","Peito de Frango 1kg Swift_1kg","Peito de Frango 1kg Seara_1kg","Coxa de Frango 1kg Sadia_1kg","Coxa de Frango 1kg Swift_1kg","Coxa de Frango 1kg Seara_1kg","Asa de Frango 1kg Swift_1kg","Asa de Frango 1kg Sadia_1kg"]},
         {"id":"processed",  "nome":"Processed",  "skus":["Salsicha Hot Dog 500g Sadia_500g","Salsicha Hot Dog 500g Perdigão_500g","Salsicha Hot Dog 500g Seara_500g","Linguiça Toscana 700g Sadia_700g","Linguiça Toscana 700g Perdigão_700g","Linguiça Toscana 700g Swift_700g"]},
         {"id":"prepared",   "nome":"Prepared",   "skus":["Lasanha Bolonhesa 600g Sadia_600g","Lasanha Bolonhesa 600g Perdigão_600g","Lasanha Bolonhesa 600g Seara_600g","Nuggets de Frango 300g Sadia_300g"]},
     ],
-    "Mercearias Secas": [
+    "Dry Goods": [
         {"id":"cookies",    "nome":"Cookies",    "skus":["Água e Sal 300g Marilan_300g","Água e Sal 300g Mabel_300g","Água e Sal 350g Vitarella_350g","Água e Sal 170g Adria_170g","Água e Sal 184g Piraque_184g","Cream Cracker 300g Marilan_300g","Cream Cracker 300g Mabel_300g","Cream Cracker 350g Vitarella_350g","Cream Cracker 184g Piraque_184g","Cream Cracker 140g Marilan_140g","Cream Cracker 165g Bauducco_165g","Cream Cracker 170g Adria_170g","Oreo 90g Mondelez_90g","Passatempo 150g Nestlé_150g","Recheado Chocolate 140g Bauducco_140g","Recheado Chocolate 100g Piraque_100g"]},
         {"id":"pasta",      "nome":"Pasta",      "skus":["Macarrão Espaguete 500g Barilla_500g","Macarrão Espaguete 500g Adria_500g","Macarrão Espaguete 500g Camil_500g","Macarrão Espaguete 500g Dona Benta_500g","Miojo Carne 85g Nissin_85g"]},
         {"id":"rice",       "nome":"Rice",       "skus":["Arroz Branco 5kg Tio João_5kg","Arroz Branco 5kg Camil_5kg"]},
@@ -155,7 +155,7 @@ def aba_cervejas():
       <!-- BLOCK 1: BREWERY PRICE INDEX -->
       <div class="section">
         <div class="section-head">
-          <span class="section-title">Brewery Price Index — R$/hl</span>
+          <span class="section-title">Brewery Price Index — BRL/hl</span>
           <span style="font-size:11px;color:var(--muted)">Weighted average across supermarkets</span>
         </div>
         <p style="font-size:11px;color:var(--muted);margin-bottom:.85rem">
@@ -170,7 +170,7 @@ def aba_cervejas():
       <div class="section">
         <div class="section-head">
           <span class="section-title">Price per Hectoliter by Brand</span>
-          <span style="font-size:11px;color:var(--muted)">Average across supermarkets · R$/hl</span>
+          <span style="font-size:11px;color:var(--muted)">Average across supermarkets · BRL/hl</span>
         </div>
         <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:.85rem">
           <div>
@@ -200,7 +200,7 @@ def aba_cervejas():
       <!-- BLOCK 3: PRICE HISTORY -->
       <div class="section">
         <div class="section-head">
-          <span class="section-title">Cervejas — Price History</span>
+          <span class="section-title">Beers — Price History</span>
           <span style="font-size:11px;color:var(--muted)">São Paulo — SP</span>
         </div>
         <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:.85rem">
@@ -270,7 +270,7 @@ def aba_grupo(grupo_nome, cats):
       <!-- BLOCK 2: FILTERS + CHART -->
       <div class="section">
         <div class="section-head">
-          <span class="section-title">{grupo_nome} — Price History</span>
+          <span class="section-title">{GRUPOS_EN.get(grupo_nome, grupo_nome)} — Price History</span>
           <span style="font-size:11px;color:var(--muted)">São Paulo — SP</span>
         </div>
         <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-start;margin-bottom:.85rem">
@@ -461,8 +461,8 @@ tr:hover td{{background:#fafafa}}
           <select id="f-grupo" onchange="filtrarTabela()">
             <option value="">All</option>
             <option value="Cervejas">Beers</option>
-            <option value="Carnes, Processados e Preparados">Meat &amp; Prepared</option>
-            <option value="Mercearias Secas">Dry Goods</option>
+            <option value="Meat & Prepared">Meat &amp; Prepared</option>
+            <option value="Dry Goods">Dry Goods</option>
           </select>
           <label>Category:</label>
           <select id="f-cat" onchange="filtrarTabela()">
@@ -562,7 +562,7 @@ const CLUSTERS_DEF_ORIG = {clusters_j};
 const CLUSTER_COLORS = {colors_j};
 const SM_BADGE = {{"Pão de Açúcar":"b-pa","Extra":"b-ex","Atacadão":"b-at"}};
 
-function fmt(v){{return v!=null?"R$ "+v.toFixed(2).replace(".",","):"—"}}
+function fmt(v){{return v!=null?"BRL "+v.toFixed(2).replace(".",","):"—"}}
 function fmtPct(a,b){{return(a&&b&&b>a)?"-"+Math.round((b-a)/b*100)+"%":"—"}}
 
 // ── Auth ────────────────────────────────────────────────────────────────────
@@ -842,9 +842,9 @@ function renderGrupo(gid){{
     type:"line",data:{{labels:datas,datasets}},
     options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:"index",intersect:false}},
       plugins:{{legend:{{position:"top",labels:{{boxWidth:12,font:{{size:10}}}}}},
-        tooltip:{{callbacks:{{label:c=>`${{c.dataset.label}}: ${{c.parsed.y!=null?"R$ "+c.parsed.y.toFixed(2).replace(".",","):"—"}}`}}}}}},
+        tooltip:{{callbacks:{{label:c=>`${{c.dataset.label}}: ${{c.parsed.y!=null?"BRL "+c.parsed.y.toFixed(2).replace(".",","):"—"}}`}}}}}},
       scales:{{x:{{ticks:{{font:{{size:11}},maxRotation:45}}}},
-        y:{{ticks:{{font:{{size:11}},callback:v=>"R$"+v.toFixed(2).replace(".",",")}},beginAtZero:false}}}}}}
+        y:{{ticks:{{font:{{size:11}},callback:v=>"BRL"+v.toFixed(2).replace(".",",")}},beginAtZero:false}}}}}}
   }});
 
   const ultimoDia=datas[datas.length-1]||"";
@@ -972,9 +972,9 @@ function renderClusterChart(gid){{
     type:"line",data:{{labels:datas,datasets}},
     options:{{responsive:true,maintainAspectRatio:false,interaction:{{mode:"index",intersect:false}},
       plugins:{{legend:{{position:"top",labels:{{boxWidth:12,font:{{size:11}}}}}},
-        tooltip:{{callbacks:{{label:c=>`${{c.dataset.label}}: ${{c.parsed.y!=null?"R$ "+c.parsed.y.toFixed(2).replace(".",","):"—"}}`}}}}}},
+        tooltip:{{callbacks:{{label:c=>`${{c.dataset.label}}: ${{c.parsed.y!=null?"BRL "+c.parsed.y.toFixed(2).replace(".",","):"—"}}`}}}}}},
       scales:{{x:{{ticks:{{font:{{size:11}},maxRotation:45}}}},
-        y:{{ticks:{{font:{{size:11}},callback:v=>"R$"+v.toFixed(2).replace(".",",")}},beginAtZero:false}}}}}}
+        y:{{ticks:{{font:{{size:11}},callback:v=>"BRL"+v.toFixed(2).replace(".",",")}},beginAtZero:false}}}}}}
   }});
 }}
 
@@ -1120,7 +1120,7 @@ function renderBreweryIndex() {{
     options:{{
       responsive:true, maintainAspectRatio:false,
       plugins:{{legend:{{position:"top"}}}},
-      scales:{{y:{{ticks:{{callback:v=>"R$"+v.toFixed(0)}},title:{{display:true,text:"R$/hl"}}}}}}
+      scales:{{y:{{ticks:{{callback:v=>"BRL"+v.toFixed(0)}},title:{{display:true,text:"BRL/hl"}}}}}}
     }}
   }});
 
@@ -1131,7 +1131,7 @@ function renderBreweryIndex() {{
   tbl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:var(--bg2)">
       <th style="padding:6px 10px;text-align:left">Brewery</th>
-      <th style="padding:6px 10px;text-align:right">R$/hl (latest)</th>
+      <th style="padding:6px 10px;text-align:right">BRL/hl (latest)</th>
     </tr></thead><tbody>`+
     Object.entries(BREWERY_WEIGHTS).map(([brewery,weights])=>{{
       let total=0,wSum=0;
@@ -1139,7 +1139,7 @@ function renderBreweryIndex() {{
         const hl=(mediaHL(brand,[ultima])||{{}})[ultima];
         if(hl){{total+=hl*w;wSum+=w;}}
       }});
-      const val = wSum>0?`R$ ${{(total/wSum).toFixed(2)}}`:"—";
+      const val = wSum>0?`BRL ${{(total/wSum).toFixed(2)}}`:"—";
       return `<tr style="border-bottom:1px solid var(--border)">
         <td style="padding:6px 10px;font-weight:600;color:${{BREWERY_COLORS[brewery]}}">${{brewery}}</td>
         <td style="padding:6px 10px;text-align:right">${{val}}</td></tr>`;
@@ -1197,7 +1197,7 @@ function renderPrecoHL() {{
     options:{{
       responsive:true, maintainAspectRatio:false,
       plugins:{{legend:{{position:"top"}}}},
-      scales:{{y:{{ticks:{{callback:v=>"R$"+v.toFixed(0)}},title:{{display:true,text:"R$/hl"}}}}}}
+      scales:{{y:{{ticks:{{callback:v=>"BRL"+v.toFixed(0)}},title:{{display:true,text:"BRL/hl"}}}}}}
     }}
   }});
 
@@ -1208,13 +1208,13 @@ function renderPrecoHL() {{
   tbl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:var(--bg2)">
       <th style="padding:6px 10px;text-align:left">Brand</th>
-      <th style="padding:6px 10px;text-align:right">R$/hl (latest)</th>
+      <th style="padding:6px 10px;text-align:right">BRL/hl (latest)</th>
     </tr></thead><tbody>`+
     selBrands.map(b=>{{
       const hl=(mediaHL(b,[ultima])||{{}})[ultima];
       return `<tr style="border-bottom:1px solid var(--border)">
         <td style="padding:6px 10px;font-weight:600">${{b}}</td>
-        <td style="padding:6px 10px;text-align:right">${{hl?`R$ ${{hl.toFixed(2)}}`:"—"}}</td></tr>`;
+        <td style="padding:6px 10px;text-align:right">${{hl?`BRL ${{hl.toFixed(2)}}`:"—"}}</td></tr>`;
     }}).join("")+`</tbody></table>`;
 }}
 function salvarNovoCluster(){{
