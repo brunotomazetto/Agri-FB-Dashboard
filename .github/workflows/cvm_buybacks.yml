@@ -2,8 +2,7 @@ name: Update CVM Buybacks DB (v2 — IPE Individual)
 
 on:
   schedule:
-    - cron: "0 10 * * 1,4"   # segunda e quinta, 10:00 UTC (07:00 BRT)
-
+    - cron: "0 10 * * 1,4"
   workflow_dispatch:
     inputs:
       bootstrap:
@@ -24,7 +23,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # busca histórico completo para evitar conflitos de push
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -42,15 +41,14 @@ jobs:
         if: ${{ github.event.inputs.bootstrap == 'true' }}
         run: python cvm_buybacks.py --bootstrap
 
-      - name: Commit DB + HTML
+      - name: Commit DB + HTMLs
         working-directory: ${{ github.workspace }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "CVM Buybacks/cvm_buybacks.db"
-          if [ -f "CVM Buybacks/cvm_buybacks.html" ]; then
-            git add "CVM Buybacks/cvm_buybacks.html"
-          fi
+          [ -f "CVM Buybacks/cvm_buybacks.html" ] && git add "CVM Buybacks/cvm_buybacks.html"
+          [ -f "CVM Buybacks/cvm_insider.html"  ] && git add "CVM Buybacks/cvm_insider.html"
           if git diff --staged --quiet; then
             echo "Sem mudanças."
           else
