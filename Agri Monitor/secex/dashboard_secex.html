@@ -352,7 +352,7 @@ function renderKPIs(rows){
         <div class="kpi-unit">last 12 months</div>
       </div>
       <div class="kpi-card" style="border-top-color:${col}">
-        <div class="kpi-label">${cat} — Volume</div>
+        <div class="kpi-label">${CAT_LABEL[cat]||cat} — Volume</div>
         <div class="kpi-value">${fmt(kg/1e6,1)} Mt</div>
         <div class="kpi-unit">million metric tons</div>
       </div>
