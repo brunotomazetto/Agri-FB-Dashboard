@@ -156,12 +156,12 @@ select.map-select:focus{border-color:var(--orange);}
 <div class="chart-grid g1">
   <div class="chart-card">
     <div class="chart-title">Price Comparison</div>
-    <div class="chart-sub">Sugar NY11 (black) · Hydrous Ethanol Sugar Equiv. (orange) · Spread = Sugar − Ethanol Equiv. (filled area, right axis)</div>
+    <div class="chart-sub">Sugar NY11 (black) · Hydrous Ethanol Equiv. (orange) · Spread = Sugar − Ethanol Equiv. (filled area, right axis)</div>
     <div style="position:relative;height:260px"><canvas id="ch-se"></canvas></div>
     <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:14px;">
       <div class="chart-grid g2" style="margin-bottom:0;">
         <div>
-          <div class="chart-title" style="font-size:12px;">Hydrous Ethanol Price (R$/m³)</div>
+          <div class="chart-title" style="font-size:12px;">Hydrous Ethanol Price (BRL/m³)</div>
           <div class="chart-sub">CEPEA/ESALQ · Paulínia (SP) — Hydrous</div>
           <div style="position:relative;height:180px"><canvas id="ch-eth"></canvas></div>
         </div>
@@ -563,7 +563,7 @@ function renderSE(){
   CH['ch-se']=new Chart(document.getElementById('ch-se').getContext('2d'),{
     type:'line',data:{labels:lbl,datasets:[
       {label:'Sugar NY11',data:d.map(r=>r.sugar),borderColor:'#1A1A1A',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.2,order:1},
-      {label:'Hydrous Ethanol Sugar Equiv.',data:d.map(r=>r.equiv),borderColor:'#FF5500',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.2,order:0},
+      {label:'Hydrous Ethanol Equiv.',data:d.map(r=>r.equiv),borderColor:'#FF5500',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0.2,order:0},
       {label:'Spread (Sugar−Ethanol)',data:d.map(r=>+(r.sugar-r.equiv).toFixed(2)),borderColor:'transparent',backgroundColor:'rgba(80,80,80,0.28)',fill:true,borderWidth:0,pointRadius:0,tension:0.2,yAxisID:'y1',order:2},
       {label:'_zero',data:d.map(()=>0),borderColor:'#000',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:0,yAxisID:'y1',order:3},
     ]},options:opts
@@ -571,9 +571,9 @@ function renderSE(){
 
   kill('ch-eth');
   CH['ch-eth']=new Chart(document.getElementById('ch-eth').getContext('2d'),{
-    type:'line',data:{labels:lbl,datasets:[{label:'Hydrous Ethanol (R$/m³)',data:d.map(r=>r.eth),
+    type:'line',data:{labels:lbl,datasets:[{label:'Hydrous Ethanol (BRL/m³)',data:d.map(r=>r.eth),
       borderColor:'#FF5500',backgroundColor:'rgba(255,85,0,0.05)',fill:true,borderWidth:1.5,pointRadius:0,tension:0.2}]},
-    options:baseOpts('R$/m³')
+    options:baseOpts('BRL/m³')
   });
 
   kill('ch-sugar');
