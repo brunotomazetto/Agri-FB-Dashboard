@@ -438,10 +438,7 @@ tr:hover td{{background:#fafafa}}
   
 
   <div class="tab-bar">
-    <button class="tab-btn active" onclick="showTab('inicio',this)">Overview</button>
     {grupo_tabs}
-    <button class="tab-btn" onclick="showTab('erros',this)">Errors{'<span class="nbadge">'+str(len(err))+'</span>' if err else ''}</button>
-    <button class="tab-btn" onclick="showTab('alertas',this)">Alerts{'<span class="nbadge">'+str(badge)+'</span>' if badge else ''}</button>
   </div>
 
   <div class="main">
@@ -576,6 +573,9 @@ function showTab(id,btn){{
   document.getElementById("page-"+id)?.classList.add("active"); btn.classList.add("active");
 }}
 function init(){{
+  // Mostra Beers por default
+  const firstBtn = document.querySelector('.tab-bar .tab-btn');
+  if(firstBtn) firstBtn.click();
   renderBreweryIndex();
   renderPrecoHL();
   renderKPIs(); renderAlertasBanner(); renderAlertasLista();
@@ -727,7 +727,7 @@ function popularChkProdGrupo(gid,cats){{
   const el=document.getElementById("chk-prod-"+gid); if(!el)return;
   const prods=[...new Map(HIST.filter(r=>cats.includes(r.categoria)).map(r=>[r.nome_produto+"_"+r.embalagem,r.nome_produto+" "+r.embalagem])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
   el.innerHTML=prods.map(([k,v],i)=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;cursor:pointer">
-    <input type="checkbox" value="${{k}}" ${{i<2?"checked":""}} onchange="renderGrupo('${{gid}}')" style="accent-color:var(--accent)"> ${{v}}</label>`).join("");
+    <input type="checkbox" value="${{k}}" ${{new Set(["Heineken Lata_350ml","Amstel Lata_350ml","Brahma Duplo Malte_350ml","Corona Extra Lata_350ml","Itaipava Lata_350ml","Skol Lata_350ml"]).has(k)?"checked":""}} onchange="renderGrupo('${{gid}}')" style="accent-color:var(--accent)"> ${{v}}</label>`).join("");
 }}
 
 function popularChkSMGrupo(gid){{
@@ -1150,8 +1150,9 @@ function initBrandHL() {{
   const el = document.getElementById("chk-brand-hl");
   if (!el || el.innerHTML) return;
   const brands = [...new Set(Object.values(BRAND_MAP))].sort();
+  const defaultBrands = new Set(["Skol","Brahma","Corona","Heineken","Itaipava"]);
   el.innerHTML = brands.map((b,i)=>`<label style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:11px;cursor:pointer">
-    <input type="checkbox" class="brand-hl-cb" value="${{b}}" ${{i<2?"checked":""}} onchange="renderPrecoHL()" style="accent-color:var(--accent)"> ${{b}}</label>`).join("");
+    <input type="checkbox" class="brand-hl-cb" value="${{b}}" ${{defaultBrands.has(b)?"checked":""}} onchange="renderPrecoHL()" style="accent-color:var(--accent)"> ${{b}}</label>`).join("");
 }}
 function toggleBrandsHL(v) {{
   document.querySelectorAll(".brand-hl-cb").forEach(cb=>cb.checked=v);
