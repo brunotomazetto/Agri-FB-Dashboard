@@ -153,8 +153,8 @@ tr:hover td{background:#fafafa}
           <span style="font-size:11px;color:var(--muted)">Weighted average across supermarkets</span>
         </div>
         <p style="font-size:11px;color:var(--muted);margin-bottom:.85rem">
-          Ambev: Brahma 40%, Skol 20%, Corona 10%, Original/Spaten/Stella 6.7% each, Antarctica & Bud 5% each ·
-          Heineken: Heineken 75%, Amstel 25% · Petrópolis: Itaipava 100%
+          Ambev: Brahma 30%, Skol 25%, Antarctica/Original/Bud 10% each, Corona/Spaten/Stella 5% each ·
+          Heineken: Heineken 80%, Amstel 20% · Petrópolis: Itaipava 100%
         </p>
         <div style="height:300px;margin-bottom:.5rem"><canvas id="chart-brewery-index"></canvas></div>
         <div id="tabela-brewery-index" style="margin-top:.5rem"></div>
@@ -943,11 +943,11 @@ const BRAND_MAP = {
 
 const BREWERY_WEIGHTS = {
   "Ambev": {
-    "Antarctica":0.05,"Brahma":0.40,"Budweiser":0.05,
-    "Skol":0.20,"Corona":0.10,"Original":0.067,
-    "Spaten":0.067,"Stella":0.067
+    "Brahma":0.30,"Skol":0.25,"Antarctica":0.10,
+    "Original":0.10,"Budweiser":0.10,"Corona":0.05,
+    "Spaten":0.05,"Stella":0.05
   },
-  "Heineken": {"Heineken":0.75,"Amstel":0.25},
+  "Heineken": {"Heineken":0.80,"Amstel":0.20},
   "Petrópolis": {"Itaipava":1.0},
 };
 
