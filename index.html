@@ -1285,6 +1285,7 @@ function downloadIBBA(rows, columns, sheetName, baseName){
 async function logEvent(type, dash){
   try {
     if(!STATE.currentUser) return;
+    if(STATE.currentUser.is_admin) return;
     await sb.from('access_logs').insert({
       user_id:    STATE.currentUser.id,
       user_email: STATE.currentUser.email,
@@ -1303,8 +1304,11 @@ async function buildPaneAnalytics(){
   const days  = STATE.analyticsPeriod;
   const since = new Date(Date.now() - days*24*60*60*1000).toISOString();
 
-  const { data: logs } = await sb.from('access_logs')
+  const { data: rawLogs } = await sb.from('access_logs')
     .select('*').gte('created_at', since).order('created_at', {ascending:false});
+
+  const adminEmails = new Set((STATE.portalUsers||[]).filter(u=>u.is_admin).map(u=>u.email?.toLowerCase()));
+  const logs = (rawLogs||[]).filter(l => !adminEmails.has(l.user_email?.toLowerCase()));
 
   if(!logs || !logs.length){
     return '<div class="admin-panel"><div class="analytics-empty">&#128202; No activity data yet for the selected period.<br><span style="font-size:12px;color:#bbb;">Data is collected automatically as users log in and open dashboards.</span></div></div>';
