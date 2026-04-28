@@ -157,17 +157,18 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 <script>
 const DB_URL = './secex.db';
 
+const CAT_LABEL = {'Soja':'Soybean','Milho':'Corn','Algodão':'Cotton','Açúcar':'Sugar'};
 const CAT_COLORS = {
-  'Soybean':    '#1A1A1A',
-  'Corn':   '#FF5500',
-  'Cotton': '#2980B9',
-  'Sugar':  '#27AE60',
+  'Soja':    '#1A1A1A',
+  'Milho':   '#FF5500',
+  'Algodão': '#2980B9',
+  'Açúcar':  '#27AE60',
 };
 
 const MESES = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 let ROWS = [], CHARTS = {};
-let ACTIVE  = new Set(['Soybean']);
+let ACTIVE  = new Set(['Soja']);
 let PERIOD  = 'monthly';
 let N_YEARS = 5;
 let METRIC  = 'fob';
@@ -197,10 +198,10 @@ function buildPills(){
   el.innerHTML = '';
   Object.entries(CAT_COLORS).forEach(([cat, color])=>{
     const div = document.createElement('div');
-    div.className = cat === 'Soybean' ? 'pill on' : 'pill';
+    div.className = cat === 'Soja' ? 'pill on' : 'pill';
     div.style.setProperty('--c', color);
     div.id = 'pill-'+cat;
-    div.innerHTML = `<span class="dot"></span>${cat}`;
+    div.innerHTML = `<span class="dot"></span>${CAT_LABEL[cat]||cat}`;
     div.onclick = ()=>toggleCat(cat);
     el.appendChild(div);
   });
@@ -252,7 +253,7 @@ function buildSeries(rows, getVal){
         byMonth[k].kg  += r.kg_liquido||0;
       });
       return {
-        label:cat, borderColor:CAT_COLORS[cat], backgroundColor:CAT_COLORS[cat]+'22',
+        label:CAT_LABEL[cat]||cat, borderColor:CAT_COLORS[cat], backgroundColor:CAT_COLORS[cat]+'22',
         borderWidth:2, pointRadius:2, pointHoverRadius:5, tension:.3, fill:false, spanGaps:true,
         data: rawLabels.map(l=>getVal(byMonth[l]))
       };
@@ -269,7 +270,7 @@ function buildSeries(rows, getVal){
         byYear[r.co_ano].kg  += r.kg_liquido||0;
       });
       return {
-        label:cat, backgroundColor:CAT_COLORS[cat]+'CC', borderColor:CAT_COLORS[cat],
+        label:CAT_LABEL[cat]||cat, backgroundColor:CAT_COLORS[cat]+'CC', borderColor:CAT_COLORS[cat],
         borderWidth:1, borderRadius:3, spanGaps:true,
         data: years.map(y=>getVal(byYear[y]))
       };
