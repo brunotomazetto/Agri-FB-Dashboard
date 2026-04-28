@@ -39,8 +39,8 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 
 /* ── VIEW CONTROLS ── */
 .controls-bar{background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:flex-end;
-  padding:0 20px;height:40px;gap:16px;flex-shrink:0;}
+  display:flex;align-items:center;justify-content:flex-start;
+  padding:0 20px;height:40px;gap:12px;flex-shrink:0;}
 .view-label{font-size:11px;font-weight:700;color:var(--gray-mid);
   text-transform:uppercase;letter-spacing:.5px;}
 .view-btns{display:flex;gap:4px;}
@@ -52,9 +52,6 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 .view-btn:hover:not(.active),.tab-btn:hover:not(.active),.season-btn:hover:not(.active){border-color:#ccc;color:var(--gray-dark);}
 .season-btn{padding:3px 9px;font-size:11px;}
 
-/* ── GRANULARITY BAR (Q / M / W — drives comparison charts + table) ── */
-.granularity-bar{background:var(--white);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 20px;height:40px;gap:16px;flex-shrink:0;}
 
 /* ── MAIN LAYOUT ── */
 .main-wrap{display:flex;flex-direction:column;}
@@ -139,8 +136,15 @@ tr:hover td{background:#FFF8F5;}
 </div>
 <div class="orange-rule"></div>
 
-<!-- VIEW CONTROLS (charts 1 & 2 only) -->
+<!-- VIEW CONTROLS: granularity (drives all charts + table) + chart view (drives time window) -->
 <div class="controls-bar">
+  <span class="view-label">GRANULARITY:</span>
+  <div class="view-btns">
+    <button class="tab-btn active" data-tab="quarterly" onclick="setTab('quarterly')">Quarterly</button>
+    <button class="tab-btn" data-tab="monthly"   onclick="setTab('monthly')">Monthly</button>
+    <button class="tab-btn" data-tab="weekly"    onclick="setTab('weekly')">Weekly</button>
+  </div>
+  <div style="width:1px;height:20px;background:var(--border);margin:0 6px;flex-shrink:0;"></div>
   <span class="view-label">CHART VIEW:</span>
   <div class="view-btns">
     <button class="view-btn" data-view="all" onclick="setView('all')">All</button>
@@ -204,16 +208,6 @@ tr:hover td{background:#FFF8F5;}
     </div>
   </div>
 
-  <!-- GRANULARITY SELECTOR — drives comparison charts + table below -->
-  <div class="granularity-bar">
-    <span class="view-label">GRANULARITY:</span>
-    <div class="view-btns">
-      <button class="tab-btn active" data-tab="quarterly" onclick="setTab('quarterly')">Quarterly</button>
-      <button class="tab-btn" data-tab="monthly"   onclick="setTab('monthly')">Monthly</button>
-      <button class="tab-btn" data-tab="weekly"    onclick="setTab('weekly')">Weekly</button>
-    </div>
-  </div>
-
   <!-- COMPARISON CHARTS: driven by granularity selector — current / prev / same period LY -->
   <div class="refcharts-row">
     <div class="chart-card">
@@ -255,7 +249,7 @@ tr:hover td{background:#FFF8F5;}
   </div>
 
   <div class="note-bar">
-    Sources: <em>SECEX/MDIC</em> — NCM 0201+0202 · <em>CEPEA/ESALQ</em> Boi Gordo (BRL/arroba ÷ 15 = BRL/kg) · <em>BCB PTAX</em> BRL/USD · Spread = Export BRL/kg ÷ Cattle BRL/kg · Vol = total export volume (000 t) · Q/M/W tab drives comparison charts + table · top chart view filter applies to spread &amp; price line charts only
+    Sources: <em>SECEX/MDIC</em> — NCM 0201+0202 · <em>CEPEA/ESALQ</em> Boi Gordo (BRL/arroba ÷ 15 = BRL/kg) · <em>BCB PTAX</em> BRL/USD · Spread = Export BRL/kg ÷ Cattle BRL/kg · Vol = total export volume (000 t) · Granularity drives all charts &amp; table · Chart View narrows the time window shown in spread &amp; price line charts
   </div>
 
 </div><!-- main-wrap -->
@@ -403,8 +397,9 @@ function setTab(t) {
   currentTab = t;
   document.querySelectorAll('.tab-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === t));
+  renderCharts();           // top 2 charts also follow granularity
   renderTable();
-  renderComparisonCharts(); // comparison charts follow the Q/M/W tab
+  renderComparisonCharts();
 }
 
 /// ── Axis helper: returns {min, max, stepSize} where max-min is an exact
