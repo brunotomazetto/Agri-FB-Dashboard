@@ -167,7 +167,7 @@ const CAT_COLORS = {
 const MESES = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 let ROWS = [], CHARTS = {};
-let ACTIVE  = new Set(Object.keys(CAT_COLORS));
+let ACTIVE  = new Set(['Soja']);
 let PERIOD  = 'monthly';
 let N_YEARS = 5;
 let METRIC  = 'fob';
@@ -197,7 +197,7 @@ function buildPills(){
   el.innerHTML = '';
   Object.entries(CAT_COLORS).forEach(([cat, color])=>{
     const div = document.createElement('div');
-    div.className = 'pill on';
+    div.className = cat === 'Soja' ? 'pill on' : 'pill';
     div.style.setProperty('--c', color);
     div.id = 'pill-'+cat;
     div.innerHTML = `<span class="dot"></span>${cat}`;
