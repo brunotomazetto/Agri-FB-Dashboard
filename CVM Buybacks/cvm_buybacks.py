@@ -1385,7 +1385,8 @@ def ingest_recompras(conn: sqlite3.Connection) -> int:
 # DASHBOARD — extrai dados do banco e injeta no HTML
 # ============================================================================
 
-DASHBOARD_HTML = SCRIPT_DIR / "cvm_buybacks.html"
+DASHBOARD_HTML         = SCRIPT_DIR / "cvm_buybacks.html"
+DASHBOARD_INSIDER_HTML = SCRIPT_DIR / "cvm_insider.html"
 
 GRUPO_TO_ROLE: dict[str, str] = {
     "Controlador":            "ctrl",
@@ -1616,11 +1617,9 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
     # ── COMPANY_NAMES ─────────────────────────────────────────────────────────
     company_names = {t: t for t in tickers}
 
-    # ── Injetar no HTML ───────────────────────────────────────────────────────
-    html = DASHBOARD_HTML.read_text(encoding="utf-8")
-    js   = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
-
-    for name, obj in [
+    # ── Injetar nos HTMLs (buybacks + insider) ────────────────────────────────
+    js = lambda obj: json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    data_map = [
         ("BUYBACK_DAILY",   buyback_daily),
         ("BUYBACK_MONTHLY", buyback_monthly),
         ("INSIDER_AGG",     insider_agg),
@@ -1629,11 +1628,28 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         ("CONSOLIDATED",    consolidated),
         ("INSIDER_SERIES",  insider_series),
         ("COMPANY_NAMES",   company_names),
-    ]:
-        html = _replace_block(html, name, js(obj))
+    ]
 
-    DASHBOARD_HTML.write_text(html, encoding="utf-8")
-    log.info("Dashboard atualizado: %s (%d bytes)", DASHBOARD_HTML, len(html))
+    for html_path in [DASHBOARD_HTML, DASHBOARD_INSIDER_HTML]:
+        if not html_path.exists():
+            log.warning("Template não encontrado: %s — pulando", html_path)
+            continue
+        html = html_path.read_text(encoding="utf-8")
+        for name, obj in data_map:
+            html = _replace_block(html, name, js(obj))
+        # JBSS3: dados mantidos no banco mas removido do dropdown
+        html = html.replace('<option value="JBSS3">JBSS3</option>', '')
+        # Remover declarações de variáveis duplicadas (artefato de geração)
+        import re as _re
+        for _var in ["let SEL_TICKER='ABEV3', PERIOD='all', VIEW='qty', GRAN='monthly';",
+                     "let CH={};",
+                     "const C  = {ctrl:'#FF5500', mgmt:'#1A1A1A', board:'#888888'};",
+                     "const CA = {ctrl:'rgba(255,85,0,0.75)', mgmt:'rgba(26,26,26,0.75)', board:'rgba(136,136,136,0.75)'};"]:
+            _positions = [m.start() for m in _re.finditer(_re.escape(_var), html)]
+            for _pos in reversed(_positions[1:]):
+                html = html[:_pos] + html[_pos+len(_var):]
+        html_path.write_text(html, encoding="utf-8")
+        log.info("Dashboard atualizado: %s (%d bytes)", html_path, len(html))
 
 
 # ============================================================================
