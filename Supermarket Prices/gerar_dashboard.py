@@ -112,13 +112,13 @@ random.seed(42)
 
 GRUPOS = {
     "Cervejas":                         ["Cervejas"],
-    "Meat & Prepared": ["Carnes"],
-    "Dry Goods":                 ["Biscoitos","Massas","Mercearia"],
+    "Carnes, Processados e Preparados": ["Carnes"],
+    "Mercearias Secas":          ["Biscoitos","Massas","Mercearia"],
 }
 GRUPOS_EN = {
     "Cervejas": "Beers",
-    "Meat & Prepared": "Meat & Prepared",
-    "Dry Goods": "Dry Goods",
+    "Carnes, Processados e Preparados": "Meat & Prepared",
+    "Mercearias Secas": "Dry Goods",
 }
 CLUSTERS_DEF = {
     "Cervejas": [
@@ -128,13 +128,13 @@ CLUSTERS_DEF = {
         {"id":"premium",    "nome":"Premium",    "skus":["Heineken Lata_350ml","Heineken Lata_269ml","Heineken 0.0_350ml","Stella Artois Long Neck_330ml","Corona Extra Long Neck_330ml","Corona Extra Lata_350ml","Spaten Puro Malte Lata_350ml","Spaten Puro Malte Lata_269ml","Budweiser Lata_350ml","Budweiser Lata_269ml"]},
         {"id":"mainstream", "nome":"Mainstream", "skus":["Skol Lata_350ml","Skol Lata_269ml","Brahma Duplo Malte_350ml","Brahma Duplo Malte_269ml","Amstel Lata_350ml","Amstel Lata_269ml","Itaipava Lata_350ml","Original Lata_350ml","Original Lata_269ml"]},
     ],
-    "Meat & Prepared": [
+    "Carnes, Processados e Preparados": [
         {"id":"beef",       "nome":"Beef",       "skus":["Picanha 1kg Bassi_1kg","Picanha 1kg Friboi_1kg","Picanha 1kg Estância 92_1kg","Fraldinha 1kg Bassi_1kg","Carne Moida 1kg Swift_1kg"]},
         {"id":"chicken",    "nome":"Chicken",    "skus":["Peito de Frango 1kg Sadia_1kg","Peito de Frango 1kg Swift_1kg","Peito de Frango 1kg Seara_1kg","Coxa de Frango 1kg Sadia_1kg","Coxa de Frango 1kg Swift_1kg","Coxa de Frango 1kg Seara_1kg","Asa de Frango 1kg Swift_1kg","Asa de Frango 1kg Sadia_1kg"]},
         {"id":"processed",  "nome":"Processed",  "skus":["Salsicha Hot Dog 500g Sadia_500g","Salsicha Hot Dog 500g Perdigão_500g","Salsicha Hot Dog 500g Seara_500g","Linguiça Toscana 700g Sadia_700g","Linguiça Toscana 700g Perdigão_700g","Linguiça Toscana 700g Swift_700g"]},
         {"id":"prepared",   "nome":"Prepared",   "skus":["Lasanha Bolonhesa 600g Sadia_600g","Lasanha Bolonhesa 600g Perdigão_600g","Lasanha Bolonhesa 600g Seara_600g","Nuggets de Frango 300g Sadia_300g"]},
     ],
-    "Dry Goods": [
+    "Mercearias Secas": [
         {"id":"cookies",    "nome":"Cookies",    "skus":["Água e Sal 300g Marilan_300g","Água e Sal 300g Mabel_300g","Água e Sal 350g Vitarella_350g","Água e Sal 170g Adria_170g","Água e Sal 184g Piraque_184g","Cream Cracker 300g Marilan_300g","Cream Cracker 300g Mabel_300g","Cream Cracker 350g Vitarella_350g","Cream Cracker 184g Piraque_184g","Cream Cracker 140g Marilan_140g","Cream Cracker 165g Bauducco_165g","Cream Cracker 170g Adria_170g","Oreo 90g Mondelez_90g","Passatempo 150g Nestlé_150g","Recheado Chocolate 140g Bauducco_140g","Recheado Chocolate 100g Piraque_100g"]},
         {"id":"pasta",      "nome":"Pasta",      "skus":["Macarrão Espaguete 500g Barilla_500g","Macarrão Espaguete 500g Adria_500g","Macarrão Espaguete 500g Camil_500g","Macarrão Espaguete 500g Dona Benta_500g","Miojo Carne 85g Nissin_85g"]},
         {"id":"rice",       "nome":"Rice",       "skus":["Arroz Branco 5kg Tio João_5kg","Arroz Branco 5kg Camil_5kg"]},
