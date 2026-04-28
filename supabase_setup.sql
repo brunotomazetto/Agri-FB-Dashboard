@@ -42,26 +42,85 @@ create table if not exists public.team_settings (
 -- ── 2. ROW LEVEL SECURITY ──────────────────────────────────────────
 
 alter table public.portal_users  enable row level security;
-alter table public.dashboards     enable row level security;
-alter table public.team_settings  enable row level security;
+alter table public.dashboards    enable row level security;
+alter table public.team_settings enable row level security;
 
--- Drop existing policies if re-running
-drop policy if exists "read_all"       on public.portal_users;
-drop policy if exists "read_all"       on public.dashboards;
-drop policy if exists "read_all"       on public.team_settings;
-drop policy if exists "write_anon"     on public.portal_users;
-drop policy if exists "write_anon"     on public.dashboards;
-drop policy if exists "write_anon"     on public.team_settings;
+-- Helper: returns true if the JWT belongs to an active admin in portal_users.
+-- SECURITY DEFINER bypasses RLS so the policy doesn't recurse.
+create or replace function public.is_current_user_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select is_admin from public.portal_users
+       where lower(email) = lower(auth.jwt()->>'email')
+         and active = true
+       limit 1),
+    false
+  );
+$$;
 
--- Allow anon key to read everything (portal loads data before login check)
-create policy "read_all"   on public.portal_users  for select using (true);
-create policy "read_all"   on public.dashboards     for select using (true);
-create policy "read_all"   on public.team_settings  for select using (true);
+-- Drop legacy / current policies (idempotent)
+drop policy if exists "read_all"             on public.portal_users;
+drop policy if exists "write_anon"           on public.portal_users;
+drop policy if exists "select_authenticated" on public.portal_users;
+drop policy if exists "modify_admin"         on public.portal_users;
+drop policy if exists "update_self"          on public.portal_users;
+drop policy if exists "read_all"             on public.dashboards;
+drop policy if exists "write_anon"           on public.dashboards;
+drop policy if exists "select_authenticated" on public.dashboards;
+drop policy if exists "modify_admin"         on public.dashboards;
+drop policy if exists "read_all"             on public.team_settings;
+drop policy if exists "write_anon"           on public.team_settings;
+drop policy if exists "select_authenticated" on public.team_settings;
+drop policy if exists "modify_admin"         on public.team_settings;
 
--- Allow anon key to write (admin actions go through the anon key in this setup)
-create policy "write_anon" on public.portal_users  for all using (true) with check (true);
-create policy "write_anon" on public.dashboards     for all using (true) with check (true);
-create policy "write_anon" on public.team_settings  for all using (true) with check (true);
+-- Read: any authenticated user. Write: admins only.
+create policy "select_authenticated" on public.portal_users
+  for select using (auth.uid() is not null);
+create policy "modify_admin" on public.portal_users
+  for all using (public.is_current_user_admin())
+  with check (public.is_current_user_admin());
+-- Self-update: a user can update their own row (display_name, email).
+-- A trigger below blocks privilege escalation (is_admin / active).
+create policy "update_self" on public.portal_users
+  for update
+  using  (lower(email) = lower(auth.jwt()->>'email'))
+  with check (lower(email) = lower(auth.jwt()->>'email'));
+
+create policy "select_authenticated" on public.dashboards
+  for select using (auth.uid() is not null);
+create policy "modify_admin" on public.dashboards
+  for all using (public.is_current_user_admin())
+  with check (public.is_current_user_admin());
+
+create policy "select_authenticated" on public.team_settings
+  for select using (auth.uid() is not null);
+create policy "modify_admin" on public.team_settings
+  for all using (public.is_current_user_admin())
+  with check (public.is_current_user_admin());
+
+-- Trigger: prevent non-admins from elevating their own privileges.
+create or replace function public.portal_users_protect_admin_fields()
+returns trigger
+language plpgsql
+as $$
+begin
+  if (new.is_admin is distinct from old.is_admin
+      or new.active is distinct from old.active)
+     and not public.is_current_user_admin() then
+    raise exception 'permission denied: only admins can change is_admin or active';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists portal_users_protect_admin on public.portal_users;
+create trigger portal_users_protect_admin
+  before update on public.portal_users
+  for each row execute function public.portal_users_protect_admin_fields();
 
 -- ── 3. TEAM SETTINGS (initial row) ────────────────────────────────
 
@@ -72,24 +131,22 @@ values (
   'Itaú BBA Equity Research',
   '', '',
   '[
-    {"name":"Gustavo Troyano","role":"Head of Sector — Agribusiness, Food & Beverage","email":"gustavo.troyano@itaubba.com"},
-    {"name":"Bruno Tomazetto","role":"Equity Research Analyst","email":"bruno.tomazetto@itaubba.com"},
-    {"name":"Ryu Matsuyama","role":"Equity Research Analyst","email":"ryu.matsuyama@itaubba.com"}
+    {"name":"Analyst One",  "role":"Head of Sector — Agribusiness, Food & Beverage","email":"analyst.one@example.com"},
+    {"name":"Analyst Two",  "role":"Equity Research Analyst",                       "email":"analyst.two@example.com"},
+    {"name":"Analyst Three","role":"Equity Research Analyst",                       "email":"analyst.three@example.com"}
   ]'::jsonb
 )
-on conflict (id) do update set
-  banner_title = excluded.banner_title,
-  banner_sub   = excluded.banner_sub,
-  analysts     = excluded.analysts;
+-- Preserve real production data on re-run (banner / analysts edited in the admin UI).
+on conflict (id) do nothing;
 
 -- ── 4. PORTAL USERS (initial) ─────────────────────────────────────
 -- Note: passwords are managed by Supabase Auth.
 -- Create matching users in Authentication → Users first.
 
 insert into public.portal_users (email, display_name, is_admin, active) values
-  ('admin@itaubba.com',           'Admin',          true,  true),
-  ('bruno.tomazetto@itaubba.com', 'Bruno Tomazetto', false, true),
-  ('ryu.matsuyama@itaubba.com',   'Ryu Matsuyama',   false, true)
+  ('admin@example.com',    'Admin',     true,  true),
+  ('user.one@example.com', 'User One',  false, true),
+  ('user.two@example.com', 'User Two',  false, true)
 on conflict (email) do nothing;
 
 -- ── 5. DASHBOARDS (14 placeholder entries) ────────────────────────
