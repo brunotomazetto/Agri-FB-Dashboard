@@ -335,7 +335,7 @@ const STATE = {
   authSession: null,       // supabase auth session
   activeSector: 'agri',
   activeSubsector: 'grains',
-  activeSettingsTab: 'admin-panel',
+  activeSettingsTab: 'my-account',
   activeDash: null,
   searchQuery: '',
   usersExpanded: false,
@@ -409,6 +409,10 @@ async function loadUserAndData(email){
   document.getElementById('screen-login').style.display='none';
   document.getElementById('screen-login').classList.remove('active');
   document.getElementById('screen-app').classList.add('active');
+  // Always land on the first sector after login — never on Settings
+  STATE.activeSector = 'agri';
+  STATE.activeSubsector = 'grains';
+  STATE.activeDash = null;
   renderAll();
 }
 
@@ -546,7 +550,7 @@ const visibleSubs = sec => (SUBSECTORS[sec]||[]).filter(s=>{
 });
 function navigateSector(sid){ STATE.activeSector=sid; STATE.activeDash=null; STATE.searchQuery=''; const subs=visibleSubs(sid); STATE.activeSubsector=subs.length?subs[0].id:null; renderAll(); }
 function navigateSubsector(sid){ STATE.activeSubsector=sid; STATE.activeDash=null; STATE.searchQuery=''; renderSubNav(); renderContent(); }
-function navigateSettings(){ STATE.activeSector='settings'; STATE.activeDash=null; STATE.activeSettingsTab=STATE.currentUser?.is_admin?'admin-panel':'my-account'; renderAll(); }
+function navigateSettings(){ STATE.activeSector='settings'; STATE.activeDash=null; STATE.activeSettingsTab='my-account'; if(STATE.currentUser?.is_admin) STATE.activeSettingsTab='admin-panel'; renderAll(); }
 function switchSettingsTab(tab){ STATE.activeSettingsTab=tab; renderContent(); }
 function openDashView(id){
   const d=STATE.dashboards.find(x=>x.id===id);
@@ -759,10 +763,12 @@ function buildSettings(){
     { id:'my-account',   label:'&#128273; My Account'         },
   ]:[{ id:'my-account', label:'&#128273; My Account' }];
   const tabBar=tabs.map(t=>`<div class="settings-tab ${STATE.activeSettingsTab===t.id?'active':''}" onclick="switchSettingsTab('${t.id}')">${t.label}</div>`).join('');
+  // Safety guard: non-admins can only ever see 'my-account'
+  if(!isAdmin && STATE.activeSettingsTab !== 'my-account') STATE.activeSettingsTab = 'my-account';
   let pane='';
-  if(STATE.activeSettingsTab==='admin-panel')  pane=buildPaneUsersTeam();
-  if(STATE.activeSettingsTab==='content-mgmt') pane=buildPaneContent();
-  if(STATE.activeSettingsTab==='analytics')     { renderAnalytics(); return; }
+  if(isAdmin && STATE.activeSettingsTab==='admin-panel')  pane=buildPaneUsersTeam();
+  if(isAdmin && STATE.activeSettingsTab==='content-mgmt') pane=buildPaneContent();
+  if(isAdmin && STATE.activeSettingsTab==='analytics')     { renderAnalytics(); return; }
   if(STATE.activeSettingsTab==='my-account')   pane=buildPaneMyAccount();
   return `
     <div class="greeting"><h1>${isAdmin?'Settings &mdash; Administration Panel':'My Account'}</h1><p>${todayStr()}</p></div>
