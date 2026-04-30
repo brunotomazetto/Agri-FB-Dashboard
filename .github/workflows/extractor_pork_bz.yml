@@ -48,7 +48,7 @@ jobs:
       #    --init would reseed from scratch; omit it here so we only fetch
       #    new data and leave the existing DB intact.
       - name: Run extractor
-        run: python extractor_pork_bz.py --init
+        run: python extractor_pork_bz.py
 
       # ── 5. Commit and push the updated DB if it changed ──────────────────
       - name: Commit updated DB
