@@ -1,0 +1,77 @@
+name: Update U.S. Pork Tracker DB
+
+on:
+  schedule:
+    - cron: '0 7 */3 * *'
+
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'Manual update'
+
+jobs:
+  update-pork-db:
+    name: Refresh pork_us.db
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests openpyxl pdfplumber
+
+      - name: Run extractor_pork_us.py
+        working-directory: Pork/U.S. Tracker
+        run: python extractor_pork_us.py
+        env:
+          USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
+
+      - name: Verify pork_us.db
+        working-directory: Pork/U.S. Tracker
+        run: |
+          python3 - <<'EOF'
+          import sqlite3, os
+          db_path = "pork_us.db"
+          if not os.path.exists(db_path):
+              raise FileNotFoundError("pork_us.db was not created!")
+          con = sqlite3.connect(db_path)
+          nq = con.execute("SELECT COUNT(*) FROM quarterly").fetchone()[0]
+          nw = con.execute("SELECT COUNT(*) FROM weekly").fetchone()[0]
+          latest = con.execute(
+              "SELECT quarter, spread_integrated, spread_non_integrated, updated_at "
+              "FROM quarterly ORDER BY year_q DESC LIMIT 1"
+          ).fetchone()
+          con.close()
+          print(f"pork_us.db OK: {nq} quarters, {nw} weekly rows")
+          print(f"Latest: {latest[0]} | spread_int={latest[1]:.3f} | spread_nint={latest[2]:.3f}")
+          if nq < 20:
+              raise ValueError(f"Suspiciously few quarterly rows: {nq}")
+          EOF
+
+      - name: Commit updated pork_us.db
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name  "github-actions[bot]"
+          git add "Pork/U.S. Tracker/pork_us.db"
+          if git diff --staged --quiet; then
+            echo "No changes to pork_us.db — skipping commit."
+          else
+            TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M UTC')
+            git commit -m "auto: refresh pork_us.db — ${TIMESTAMP}"
+            git push
+            echo "pork_us.db committed and pushed."
+          fi
