@@ -239,7 +239,7 @@ def aba_cervejas():
         <div style="height:320px;margin-bottom:1rem"><canvas id="chart-Cervejas"></canvas></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
           <span class="section-title" style="font-size:12px">Price comparison — most recent day in period</span>
-          <button class="btn btn-green" style="font-size:11px;padding:5px 10px" onclick="exportarComparacao('Cervejas')">⬇ Excel</button>
+          <button class="btn btn-green btn-excel" style="font-size:11px;padding:5px 10px" onclick="exportarComparacao('Cervejas')">⬇ Excel</button>
         </div>
         <div id="tabela-comp-Cervejas"></div>
       </div>
@@ -309,7 +309,7 @@ def aba_grupo(grupo_nome, cats):
         <div style="height:320px;margin-bottom:1rem"><canvas id="chart-{gid}"></canvas></div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
           <span class="section-title" style="font-size:12px">Price comparison — most recent day in period</span>
-          <button class="btn btn-green" style="font-size:11px;padding:5px 10px" onclick="exportarComparacao('{gid}')">⬇ Excel</button>
+          <button class="btn btn-green btn-excel" style="font-size:11px;padding:5px 10px" onclick="exportarComparacao('{gid}')">⬇ Excel</button>
         </div>
         <div id="tabela-comp-{gid}"></div>
       </div>
@@ -450,7 +450,7 @@ tr:hover td{{background:#fafafa}}
       <div class="section">
         <div class="section-head">
           <span class="section-title">Data — collection of {ultima_data}</span>
-          <button class="btn btn-green" onclick="exportarExcel()">⬇ Excel</button>
+          <button class="btn btn-green btn-excel" onclick="exportarExcel()">⬇ Excel</button>
         </div>
         <div class="filters">
           <label>Supermarket:</label>
@@ -492,7 +492,7 @@ tr:hover td{{background:#fafafa}}
       <div class="section">
         <div class="section-head">
           <span class="section-title">Errors by collection date</span>
-          <button class="btn btn-green" onclick="exportarErrosExcel()">⬇ Excel</button>
+          <button class="btn btn-green btn-excel" onclick="exportarErrosExcel()">⬇ Excel</button>
         </div>
         <div class="filters">
           <label>Date:</label><select id="fe-dia" onchange="filtrarErros()"><option value="">All</option></select>
@@ -573,6 +573,17 @@ function showTab(id,btn){{
   document.getElementById("page-"+id)?.classList.add("active"); btn.classList.add("active");
 }}
 function init(){{
+  // Admin check via parent STATE
+  try {{
+    var isAdmin = window.parent && window.parent.STATE && 
+                  window.parent.STATE.currentUser && 
+                  window.parent.STATE.currentUser.is_admin;
+    if (!isAdmin) {{
+      document.querySelectorAll('.btn-excel').forEach(function(b){{ b.style.display='none'; }});
+    }}
+  }} catch(e) {{ /* standalone mode — hide excel buttons */ 
+    document.querySelectorAll('.btn-excel').forEach(function(b){{ b.style.display='none'; }});
+  }}
   // Mostra Beers por default
   const firstBtn = document.querySelector('.tab-bar .tab-btn');
   if(firstBtn) firstBtn.click();
