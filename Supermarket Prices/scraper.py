@@ -1054,7 +1054,7 @@ def preencher_gaps(con, hoje):
                embalagem, cidade, uf, regiao, url
         FROM precos
         WHERE preco_atual IS NOT NULL
-          AND data_coleta >= date(?, '-7 days') AND data_coleta < ?
+          AND data_coleta >= date(?, '-20 days') AND data_coleta < ?
         UNION
         SELECT DISTINCT supermercado, categoria, grupo, marca, nome_produto,
                embalagem, cidade, uf, regiao, url
