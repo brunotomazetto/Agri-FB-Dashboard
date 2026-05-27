@@ -854,6 +854,7 @@ def parse_consolidated_pdf(
     rows: list[dict] = []
 
     with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+        last_grupo_code = None   # persiste entre páginas do mesmo grupo
         for page in pdf.pages:
             ws = page.extract_words(x_tolerance=3, y_tolerance=3)
             if not ws:
@@ -864,6 +865,11 @@ def parse_consolidated_pdf(
             # porque o label pode estar fragmentado em múltiplas linhas (ex: "Direto"+"ria")
             # IMPORTANTE: ordenar por (top, x0) e verificar mesma linha para evitar
             # que palavras de linhas diferentes quebrem a detecção do padrão '( X )'
+            #
+            # Páginas de continuação (mesmo grupo, muitos diretores) não têm checkbox →
+            # mantemos o grupo da página anterior (last_grupo_code).
+            # Se aparecer um checkbox novo, ele sobrescreve last_grupo_code.
+            # Uma página sem checkbox E sem last_grupo_code é ignorada.
             grupo_code = None
             checkbox_words = sorted(
                 [w for w in ws if 140 <= w["top"] <= 220],
@@ -884,11 +890,22 @@ def parse_consolidated_pdf(
                                 break
                         break
 
-            if not grupo_code:
+            if grupo_code:
+                # Nova página com checkbox — atualizar grupo vigente
+                last_grupo_code = grupo_code
+            elif last_grupo_code:
+                # Página de continuação sem checkbox — usar grupo anterior
+                grupo_code = last_grupo_code
+                log.debug("  parse_consolidated: página continuação → grupo=%s", grupo_code)
+            else:
+                # Sem checkbox e sem grupo anterior — ignorar
                 log.debug("  parse_consolidated: página sem grupo, skip")
                 continue
 
             grupo_label = GRUPO_LABELS.get(grupo_code, grupo_code)
+            is_continuation = (grupo_code == last_grupo_code and not any(
+                w["text"] in ("X", "x") for w in checkbox_words
+            ))
 
             # ── Parse da tabela (idêntico ao Individual) ─────────────────────
             lines_map: dict[int, list] = defaultdict(list)
@@ -897,7 +914,9 @@ def parse_consolidated_pdf(
                 lines_map[y_key].append(w)
             sorted_ys = sorted(lines_map.keys())
 
-            section = None
+            # Páginas de continuação não têm cabeçalho Saldo Inicial →
+            # começar já em movimentacoes para não perder linhas
+            section = "movimentacoes" if is_continuation else None
             op_buffer: list[list] = []
 
             def make_row(tipo_mov, tipo_ativo, caract, intermediario, dia,
