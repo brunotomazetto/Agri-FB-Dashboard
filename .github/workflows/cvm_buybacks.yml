@@ -1,8 +1,8 @@
 name: Update CVM Buybacks DB (v2 — IPE Individual)
 
 on:
-  # schedule:          ← TEMPORARIAMENTE DESATIVADO
-  #   - cron: "0 10 * * 1,4"
+  schedule:
+    - cron: "0 10 * * 1,4"
   workflow_dispatch:
     inputs:
       bootstrap:
