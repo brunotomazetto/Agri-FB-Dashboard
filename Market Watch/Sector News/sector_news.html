@@ -338,8 +338,8 @@ select.filter-input { padding-right: 28px !important; min-width: 80px; }
         <option value="score">Relevance</option>
       </select>
     </div>
-    <button class="btn btn-sm filter-btn" onclick="applyFilters()">
-      <i class="bi bi-funnel-fill me-1"></i>Refresh
+    <button class="btn btn-sm filter-btn" onclick="smartRefresh()" id="btn-refresh-bar">
+      <i class="bi bi-arrow-clockwise me-1"></i>Refresh
     </button>
   </div>
 </div>
@@ -997,15 +997,15 @@ function updateSelectedCount() {
 
 // ── Fetch News ────────────────────────────────────────────────────────────────
 async function fetchNews() {
-  const btn = document.getElementById("btn-refresh");
+  const btn = document.getElementById("btn-refresh-bar") || document.getElementById("btn-refresh");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px"></span> Fetching...';
-  showToast("Fetching news... this may take a few minutes.", "info");
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px"></span> Buscando...';
+  showToast("Buscando notícias... isso pode levar alguns minutos.", "info");
   try {
     const res = await fetch(API_BASE + "/api/news/fetch", { method: "POST" });
     const data = await res.json();
     if (data.success) {
-      showToast(`${data.saved} new items added (${data.fetched} found)`, "success");
+      showToast(`${data.saved} novas notícias adicionadas (${data.fetched} encontradas)`, "success");
       document.getElementById("last-refresh").textContent =
         "Updated " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
       document.getElementById("last-refresh").classList.remove("d-none");
@@ -1017,7 +1017,7 @@ async function fetchNews() {
     showToast("Connection error", "danger");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span class="d-none d-md-inline ms-1">Refresh</span>';
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i><span class="ms-1">Buscar notícias</span>';
   }
 }
 
@@ -1321,6 +1321,20 @@ async function copyExport() {
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function applyFilters() { loadNews(); }
+
+function smartRefresh() {
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const dateFrom = document.getElementById("date-from").value;
+  const dateTo = document.getElementById("date-to").value;
+  const minScore = parseFloat(document.getElementById("relevance-slider").value);
+  const hasFilters = minScore > 0 || dateFrom !== yesterday || dateTo !== today;
+  if (hasFilters) {
+    loadNews();
+  } else {
+    fetchNews();
+  }
+}
 
 function applySortMode() {
   sortMode = document.getElementById("sort-mode").value;
