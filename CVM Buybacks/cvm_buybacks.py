@@ -962,6 +962,11 @@ def parse_consolidated_pdf(
             def _norm_consolidated_op(raw: str) -> str:
                 """Normaliza fragmentos de operação quebrada no Formulário Consolidado."""
                 r = re.sub(r"\s+", " ", raw).strip()
+                # Remover números soltos 1-31 que são dias vazados da coluna C_DIA
+                # ex: "Venda à vista 12" → "Venda à vista"
+                # ex: "EMPRÉSTIM 19 O" → "EMPRÉSTIM O"
+                r = re.sub(r"(?<![\d])\b([1-9]|[12]\d|3[01])\b(?![\d])", " ", r)
+                r = re.sub(r"\s+", " ", r).strip()
                 # Fragmentos de "Compra à vista" / "Venda à vista"
                 r = re.sub(r"^vista\b", "Compra à vista", r)
                 r = re.sub(r"\bCompra\s+à$", "Compra à vista", r)
@@ -1008,6 +1013,32 @@ def parse_consolidated_pdf(
                 r = re.sub(r"Desligamento/$", "Desligamento/saída", r)
                 # Posse com dia anexado
                 r = re.sub(r"Posse\s+\d{1,2}$", "Posse", r)
+                # Duplicação de "Entrega de"
+                r = re.sub(r"(Entrega de ){2,}ações restritas", "Entrega de ações restritas", r, flags=re.I)
+                # Operações coladas: manter primeira
+                for _pat, _canon in [
+                    (r"^Venda\s+à\s+vista\b.*", "Venda à vista"),
+                    (r"^Compra\s+à\s+vista\b.*", "Compra à vista"),
+                    (r"^Entrega\s+de\s+ações\s+restritas\b.*", "Entrega de ações restritas"),
+                    (r"^Exercício\s+de\s+opção\b.*", "Exercício de opção de compra"),
+                ]:
+                    if re.match(_pat, r, re.I):
+                        r = _canon; break
+                # Outras normalizações
+                r = re.sub(r"^DO\s+OPCOES\s+ENTREGA", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"^CALL\s+STOCK$", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"^STOCKOPTI\s+ON$", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"^STOCK$", "Exercício de opção de compra", r, flags=re.I)
+                r = re.sub(r"^ACOES\s+DIFERIDAS$", "Ações de plano de remuneração", r, flags=re.I)
+                r = re.sub(r"^DIRETA\s+OUTORGA$", "Outorga de ações", r, flags=re.I)
+                r = re.sub(r"^RENUNCIA\b", "RENÚNCIA", r)
+                r = re.sub(r"RENÚNCIA\s+ENTREGA", "RENÚNCIA", r, flags=re.I)
+                r = re.sub(r"^ELEICAO\b", "Eleição", r)
+                r = re.sub(r"^Ações\s+de\b\s*$", "Ações de plano de remuneração", r, flags=re.I)
+                r = re.sub(r"^o/bonificação$", "Desdobramento/bonificação", r, flags=re.I)
+                r = re.sub(r"^saída$", "Desligamento/saída", r)
+                r = re.sub(r"^ENTRE\s+\w+\s+FUNDOS\s+CONTROLA.*", "Transferência entre fundos controladores", r, flags=re.I)
+                r = re.sub(r"^ENTIDADES\s+DO\s+CONTROLA.*", "Transferência entre entidades controlador", r, flags=re.I)
                 # Limpar DIA no início da string (artefato do parser)
                 r = re.sub(r"^\d{1,2}\s+", "", r).strip()
                 return r.strip()
@@ -1024,9 +1055,13 @@ def parse_consolidated_pdf(
                         if in_c(x, C_ATIVO):   ativo_w.append(t)
                         if in_c(x, C_CARACT):  caract_w.append(t)
                         if in_c(x, C_INTERM):  interm_w.append(t)
-                        if in_c(x, C_OP):      op_w.append(t)
+                        # Coletar dia ANTES de op_w para poder excluir o token do campo op
                         if in_c(x, C_DIA) and re.match(r"^\d{1,2}$", t):
                             dia_w.append(t)
+                        # Excluir da coluna OP: tokens numéricos 1-31 que já foram capturados
+                        # como dia (overlap entre C_OP e C_DIA em x≈305-322)
+                        if in_c(x, C_OP) and not (re.match(r"^\d{1,2}$", t) and in_c(x, C_DIA)):
+                            op_w.append(t)
                         if in_c(x, C_QTY):     qty_w.append(t)
                         if in_c(x, C_PRECO):   preco_w.append(t)
                         if in_c(x, C_VOL):     vol_w.append(t)
@@ -1401,6 +1436,12 @@ def _classify_op(op: str | None) -> str | None:
     if not op:
         return None
     o = op.lower()
+    # Eventos corporativos sem direção de mercado → ignorar no dashboard
+    if any(x in o for x in ["renúncia", "renuncia", "reeleição", "eleicao", "eleição",
+                              "não reeleição", "reorganizaç", "transferê", "transfere",
+                              "intercompany", "listagem", "acordo de acionista",
+                              "signatári", "inclusão de acionista"]):
+        return None
     if any(x in o for x in ["venda", "desligamento", "saída", "saida", "doador",
                               "liquidaç", "contratação de empréstimo",
                               "contratacao de emprestimo"]):
@@ -1408,7 +1449,9 @@ def _classify_op(op: str | None) -> str | None:
     if any(x in o for x in ["compra", "subscri", "exercí", "exerci", "restritas",
                               "bonificac", "bonificaç", "desdobr", "plano", "posse",
                               "ilp", "incorpora", "devolução de empréstimo",
-                              "devolucao de emprestimo", "vista", "termo"]):
+                              "devolucao de emprestimo", "vista", "termo",
+                              "option", "opções", "opção", "donatário", "donatario",
+                              "de opções", "vesting"]):
         return "buy"
     return None
 
@@ -1452,6 +1495,7 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
                e.quantidade, e.preco_unitario, e.volume, e.intermediario
         FROM ipe_entries e JOIN companies c ON c.cnpj_digits=e.cnpj_digits
         WHERE e.tipo_ativo='Ações'
+          AND e.qualificacao='treasury'
           AND e.tipo_movimentacao IN ('Compra à vista','Compra à termo','Compra')
           AND (e.preco_unitario IS NULL OR e.preco_unitario > 0)
         ORDER BY c.ticker, e.data_movimentacao
@@ -1488,6 +1532,7 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         SELECT c.ticker, e.data_referencia, SUM(e.quantidade) qty
         FROM ipe_entries e JOIN companies c ON c.cnpj_digits=e.cnpj_digits
         WHERE e.tipo_movimentacao='Saldo Final' AND e.tipo_ativo='Ações'
+          AND e.qualificacao='treasury'
           AND e.quantidade IS NOT NULL
         GROUP BY c.ticker, e.data_referencia
     """):
@@ -1597,6 +1642,7 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         bought     = conn.execute("""
             SELECT SUM(e.quantidade) total FROM ipe_entries e
             WHERE e.cnpj_digits=? AND e.tipo_ativo='Ações'
+              AND e.qualificacao='treasury'
               AND e.tipo_movimentacao IN ('Compra à vista','Compra à termo','Compra')
               AND (e.preco_unitario IS NULL OR e.preco_unitario > 0)
               AND e.data_movimentacao >= ?
