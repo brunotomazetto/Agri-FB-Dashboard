@@ -344,7 +344,8 @@ async function loadDB() {
     loadEl.style.display = 'none';
     document.getElementById('note-bar').style.display = 'block';
     // latest quarter
-    const latestQ = DB_ROWS.filter(r => r.ppc_us_gm !== null).slice(-1)[0];
+    // Show latest quarter with spread data (not just where GM is reported)
+    const latestQ = DB_ROWS.filter(r => r.breast !== null).slice(-1)[0];
     if (latestQ) document.getElementById('latest-q').textContent = latestQ.quarter;
     // init sliders
     initSliders();
@@ -562,12 +563,15 @@ function render() {
 // ─── CHART 1: QoQ Delta ──────────────────────────────────────────────────────
 // FIX R² BUG: allSeries used for correlation; visible for chart display
 function renderDeltaChart(data, allSeries) {
-  const valid   = data.filter(r => r.dSpread != null && r.dGm != null);
-  const labels  = valid.map(r => r.quarter);
-  const spread  = valid.map(r => +(r.dSpread * 100).toFixed(3));
-  const gm      = valid.map(r => +(r.dGm     * 100).toFixed(3));
+  // Spread: plot all quarters with dSpread (even without GM)
+  // GM: only plot quarters where dGm exists (uses spanGaps:false so no line to null)
+  const spreadValid = data.filter(r => r.dSpread != null);
+  const labels  = spreadValid.map(r => r.quarter);
+  const spread  = spreadValid.map(r => +(r.dSpread * 100).toFixed(3));
+  // Map GM onto same labels — null where not reported
+  const gm = spreadValid.map(r => r.dGm != null ? +(r.dGm * 100).toFixed(3) : null);
 
-  // FIX: Compute correlation over ALL data with valid pairs (not view-filtered)
+  // Correlation only over quarters where both exist
   const allValid  = (allSeries || data).filter(r => r.dSpread != null && r.dGm != null);
   const corrAll   = pearson(
     allValid.map(r => r.dSpread),
@@ -617,10 +621,12 @@ function renderDeltaChart(data, allSeries) {
 
 // ─── CHART 2: Level comparison (dual axis) ───────────────────────────────────
 function renderLevelChart(data) {
-  const valid   = data.filter(r => r.spread != null || r.gm != null);
+  // Spread: include all quarters with spread data (even without GM)
+  const valid   = data.filter(r => r.spread != null);
   const labels  = valid.map(r => r.quarter);
-  const spreadL = valid.map(r => r.spread != null ? +(r.spread * 100).toFixed(2) : null);
-  const gmL     = valid.map(r => r.gm     != null ? +(r.gm     * 100).toFixed(2) : null);
+  const spreadL = valid.map(r => +(r.spread * 100).toFixed(2));
+  // GM mapped onto same labels — null where not yet reported
+  const gmL     = valid.map(r => r.gm != null ? +(r.gm * 100).toFixed(2) : null);
 
   const ctx = document.getElementById('levelChart').getContext('2d');
   if (charts.level) charts.level.destroy();
