@@ -123,7 +123,7 @@ HARD_PPC = {
     "3Q25": (0.17040,  None),
     "4Q25": (0.10540,  None),
     # ── 2026 (update as released) ──
-    # "1Q26": (None, None),
+    "1Q26": (0.07460, None),  # PPC US Chicken GM 1Q26 reported
 }
 
 # ─── Quarter helpers ─────────────────────────────────────────────────────────
