@@ -328,7 +328,7 @@ function dualOpts(){
 
 /* ── KPIs ── */
 function renderKPIs(){
-  const el=document.getElementById('kpi-row');el.innerHTML='';
+  const el=document.getElementById('kpi-row');if(!el)return;
   ACTIVE.forEach(c=>{
     const L=lastOk(c);const col=CULT_COL[c];
     const rbv=L?rb(L):null;
