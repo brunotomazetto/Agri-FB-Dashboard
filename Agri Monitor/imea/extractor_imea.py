@@ -80,8 +80,8 @@ JSON_PATH = Path(__file__).parent / "dash_data.json"
 
 # ── Credenciais IMEA ──────────────────────────────────────────────────────────
 IMEA_API  = "https://api1.imea.com.br"
-IMEA_USER = os.getenv("IMEA_USER", "ryu.matsuyama@itaubba.com")
-IMEA_PASS = os.getenv("IMEA_PASS", "falabrod")
+IMEA_USER = os.getenv("IMEA_USER", "ryumatsuyama03@hotmail.com")
+IMEA_PASS = os.getenv("IMEA_PASS", "fbagri123")
 
 # ── CONAB — arquivos bulk TXT (mesmo método do extractor_conab.py) ─────────────
 CONAB_BASE       = "https://portaldeinformacoes.conab.gov.br/downloads/arquivos"
