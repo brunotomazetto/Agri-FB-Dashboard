@@ -1255,9 +1255,10 @@ def materialise(conn):
         monthly_out.append((period, yr, mo, price_usd_kg, fx, secex_brl_kg,
                             cepea_r_kg, spread, now))
 
+    conn.execute("DELETE FROM monthly")
     conn.executemany(
         """
-        INSERT OR REPLACE INTO monthly
+        INSERT INTO monthly
           (period, year, month, secex_usd_kg, fx, secex_brl_kg,
            cepea_r_kg, spread, updated_at)
         VALUES (?,?,?,?,?,?,?,?,?)
@@ -1330,9 +1331,10 @@ def materialise(conn):
         weekly_out.append((start_date, end_date, price_usd_kg, fx, secex_brl_kg,
                            cepea_r_kg, spread, inc_vol, biz_d, vol_daily, now))
 
+    conn.execute("DELETE FROM weekly")
     conn.executemany(
         """
-        INSERT OR REPLACE INTO weekly
+        INSERT INTO weekly
           (start_date, end_date, secex_usd_kg, fx, secex_brl_kg,
            cepea_r_kg, spread, vol_tons, biz_days, vol_tons_daily, updated_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)

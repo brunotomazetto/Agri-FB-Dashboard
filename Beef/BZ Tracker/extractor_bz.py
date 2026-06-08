@@ -1610,8 +1610,9 @@ def materialise(conn):
             round(sp,   6) if sp else None,
             now_iso,
         ))
+    conn.execute("DELETE FROM monthly")
     conn.executemany(
-        "INSERT OR REPLACE INTO monthly"
+        "INSERT INTO monthly"
         "(period,year,month,secex_usd_kg,fx,secex_brl_kg,cepea_r_kg,spread,updated_at)"
         " VALUES(?,?,?,?,?,?,?,?,?)",
         monthly_rows
