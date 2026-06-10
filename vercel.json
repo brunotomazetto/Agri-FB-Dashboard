@@ -6,7 +6,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; font-src 'self' fonts.gstatic.com cdn.jsdelivr.net; img-src 'self' data: blob: *; connect-src 'self' https://*.supabase.co cdn.jsdelivr.net cdnjs.cloudflare.com; frame-src 'self'; worker-src 'self' blob: cdn.jsdelivr.net cdnjs.cloudflare.com; object-src 'none';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com; font-src 'self' fonts.gstatic.com cdn.jsdelivr.net; img-src 'self' data: blob: *; connect-src 'self' https://*.supabase.co cdn.jsdelivr.net cdnjs.cloudflare.com; frame-src 'self'; worker-src 'self' blob: cdn.jsdelivr.net cdnjs.cloudflare.com; object-src 'none';"
         }
       ]
     },
