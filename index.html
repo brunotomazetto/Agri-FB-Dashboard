@@ -385,7 +385,6 @@ const initials = n => (n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]
 const todayStr = () => new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 const greetWord = () => { const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; };
 function showToast(msg,dur=2800){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
-function openModal(title,html){ document.getElementById('modal-title').textContent=title; document.getElementById('modal-body').innerHTML=html; document.getElementById('modal').classList.add('open'); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }
 function setLoading(show, msg='Loading...'){
   const el=document.getElementById('loading-overlay');
@@ -748,8 +747,9 @@ function renderSidebar(){
   const analysts=Array.isArray(t.analysts)?t.analysts:[];
   // Semicolon-separated for Outlook compatibility (comma causes issues)
   const mailAll=analysts.map(a=>a.email).filter(Boolean).join(';');
+  const safePromoUrl = /^https?:\/\//i.test(t.promo_link_url||'') ? t.promo_link_url : '#';
   const promoHtml=(t.promo_image_url)
-    ?`<a class="sidebar-promo" href="${esc(t.promo_link_url||'#')}" target="_blank" rel="noopener"><img src="${esc(t.promo_image_url)}" alt="Banner"/></a>`:'';
+    ?`<a class="sidebar-promo" href="${esc(safePromoUrl)}" target="_blank" rel="noopener"><img src="${esc(t.promo_image_url)}" alt="Banner"/></a>`:'';
   const teamBanner=`
     <a class="sidebar-team-banner" href="mailto:${esc(mailAll)}" title="Email the team">
       <div class="sidebar-team-banner-inner">
