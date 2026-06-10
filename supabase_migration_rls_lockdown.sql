@@ -72,8 +72,11 @@ drop policy if exists "select_admin"         on public.access_logs;
 -- ── 4. New strict policies ─────────────────────────────────────────
 
 -- portal_users
-create policy "select_authenticated" on public.portal_users
-  for select using (auth.uid() is not null);
+-- Users see only their own row; admins see all rows.
+create policy "select_own" on public.portal_users
+  for select using (lower(email) = lower(auth.jwt()->>'email'));
+create policy "select_admin" on public.portal_users
+  for select using (public.is_current_user_admin());
 create policy "modify_admin" on public.portal_users
   for all using (public.is_current_user_admin())
   with check (public.is_current_user_admin());
