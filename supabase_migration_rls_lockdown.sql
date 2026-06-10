@@ -86,8 +86,9 @@ create policy "update_self" on public.portal_users
   with check (lower(email) = lower(auth.jwt()->>'email'));
 
 -- dashboards
-create policy "select_authenticated" on public.dashboards
-  for select using (auth.uid() is not null);
+-- Regular users see only published dashboards; admins see all.
+create policy "select_visible" on public.dashboards
+  for select using (visible_to_all = true or public.is_current_user_admin());
 create policy "modify_admin" on public.dashboards
   for all using (public.is_current_user_admin())
   with check (public.is_current_user_admin());
