@@ -199,7 +199,7 @@ PRODUTOS = {
         {"marca":"Sadia",       "nome":"Nuggets de Frango 300g Sadia",     "embalagem":"300g"},
         {"marca":"Sadia",       "nome":"Lasanha Bolonhesa 600g Sadia",     "embalagem":"600g"},
         {"marca":"Perdigão",    "nome":"Lasanha Bolonhesa 600g Perdigão",  "embalagem":"600g"},
-        {"marca":"Seara",       "nome":"Lasanha Bolonhesa 600g Seara",     "embalagem":"600g"},
+        {"marca":"Seara",       "nome":"Lasanha Calabresa 600g Seara",     "embalagem":"600g"},
         {"marca":"Sadia",       "nome":"Peito de Frango 1kg Sadia",        "embalagem":"1kg"},
         {"marca":"Swift",       "nome":"Peito de Frango 1kg Swift",        "embalagem":"1kg"},
         {"marca":"Seara",       "nome":"Peito de Frango 1kg Seara",        "embalagem":"1kg"},
@@ -216,12 +216,10 @@ PRODUTOS = {
     ],
     "Biscoitos": [
         {"marca":"Marilan",  "nome":"Água e Sal 300g Marilan",           "embalagem":"300g"},
-        {"marca":"Mabel",    "nome":"Água e Sal 300g Mabel",             "embalagem":"300g"},
         {"marca":"Vitarella","nome":"Água e Sal 350g Vitarella",         "embalagem":"350g"},
         {"marca":"Adria",    "nome":"Água e Sal 170g Adria",             "embalagem":"170g"},
         {"marca":"Piraquê",  "nome":"Água e Sal 184g Piraque",           "embalagem":"184g"},
         {"marca":"Marilan",  "nome":"Cream Cracker 300g Marilan",        "embalagem":"300g"},
-        {"marca":"Mabel",    "nome":"Cream Cracker 300g Mabel",          "embalagem":"300g"},
         {"marca":"Vitarella","nome":"Cream Cracker 350g Vitarella",      "embalagem":"350g"},
         {"marca":"Piraquê",  "nome":"Cream Cracker 184g Piraque",        "embalagem":"184g"},
         {"marca":"Marilan",  "nome":"Cream Cracker 140g Marilan",        "embalagem":"140g"},
@@ -288,8 +286,7 @@ LINKS = {
             "Nuggets de Frango 300g Sadia_300g":    "https://www.paodeacucar.com/produto/142969/empanado-de-frango-peito-crocante-sadia-nuggets-pacote-300g",
             "Lasanha Bolonhesa 600g Sadia_600g":    "https://www.paodeacucar.com/produto/344410/lasanha-bolonhesa-sadia-pacote-600g",
             "Lasanha Bolonhesa 600g Perdigão_600g": "https://www.paodeacucar.com/produto/391814/lasanha-bolonhesa-perdigao-nosso-menu-pacote-600g",
-            "Lasanha Bolonhesa 600g Seara_600g":    "https://www.paodeacucar.com/produto/113511/lasanha-bolonhesa-seara-600g",
-            "Peito de Frango 1kg Sadia_1kg":        "https://www.paodeacucar.com/produto/65885/file-de-peito-de-frango-congelado-sem-pele-sem-osso-sadia-1kg",
+            "Lasanha Calabresa 600g Seara_600g":    "https://www.paodeacucar.com/produto/80632/lasanha-de-calabresa-seara-600g",
             "Peito de Frango 1kg Swift_1kg":        "https://www.paodeacucar.com/produto/445611/file-de-peito-de-frango-swift-do-campo-1kg",
             "Peito de Frango 1kg Seara_1kg":        "https://www.paodeacucar.com/produto/217037/coxa-de-frango-congelada-seara-1kg",
             "Coxa de Frango 1kg Swift_1kg":         "https://www.paodeacucar.com/produto/445594/coxa-de-frango-swift-1kg",
@@ -302,12 +299,10 @@ LINKS = {
         },
         "Biscoitos": {
             "Água e Sal 300g Marilan_300g":          "https://www.paodeacucar.com/produto/1639482/biscoito-agua-e-sal-marilan-300g",
-            "Água e Sal 300g Mabel_300g":            "https://www.paodeacucar.com/produto/1616940/biscoito-agua-e-sal-mabel-pacote-300g",
             "Água e Sal 350g Vitarella_350g":        "https://www.paodeacucar.com/produto/1286774/biscoito-agua-e-sal-tradicional-vitarella-pacote-350g",
             "Cream Cracker 300g Marilan_300g":       "https://www.paodeacucar.com/produto/1639385/biscoito-cream-cracker-marilan-300g",
-            "Cream Cracker 300g Mabel_300g":         "https://www.paodeacucar.com/produto/1616942/biscoito-cream-cracker-mabel-300g",
             "Cream Cracker 184g Piraque_184g":       "https://www.paodeacucar.com/produto/1606433/biscoito-cream-cracker-piraque-pacote-184g",
-            "Cream Cracker 140g Marilan_140g":       "https://www.paodeacucar.com/produto/1448576/biscoito-cream-cracker-marilan-pacote-170g",
+            "Cream Cracker 140g Marilan_140g":       "https://www.paodeacucar.com/produto/1639389/biscoito-cream-cracker-marilan-pacote-140g",
             "Cream Cracker 165g Bauducco_165g":      "https://www.paodeacucar.com/produto/1629268/biscoito-cream-cracker-tradicional-bauducco-pacote-165g",
             "Cream Cracker 170g Adria_170g":         "https://www.paodeacucar.com/produto/1602912/biscoito-cream-cracker-folhado-manteiga-adria-folhata-pacote-170g",
             "Oreo 90g Mondelez_90g":                 "https://www.paodeacucar.com/produto/301575/biscoito-original-oreo-pacote-90g",
@@ -322,7 +317,7 @@ LINKS = {
         "Mercearia": {
             "Arroz Branco 5kg Tio João_5kg":                    "https://www.paodeacucar.com/produto/138068/arroz-agulhinha-tipo-1-tio-joao-pacote-5kg",
             "Arroz Branco 5kg Camil_5kg":                       "https://www.paodeacucar.com/produto/41329/arroz-agulhinha-tipo-1-camil-pacote-5kg",
-            "Feijão Carioca 1kg Camil_1kg":                     "https://www.paodeacucar.com/produto/9461/feijao-carioca-tipo-1-camil-pacote-1kg",
+            "Feijão Carioca 1kg Camil_1kg":            "https://www.paodeacucar.com/produto/9461/feijao-carioca-tipo-1-camil-pacote-1kg",
             "Feijão Carioca 1kg Kicaldo_1kg":                   "https://www.paodeacucar.com/produto/109209/feijao-carioca-tipo-1-kicaldo-pacote-1kg",
             "Açúcar Refinado 1kg União_1kg":                    "https://www.paodeacucar.com/produto/74215/acucar-refinado-uniao-pacote-1kg",
             "Açúcar Refinado 1kg Caravelas_1kg":                "https://www.paodeacucar.com/produto/61474/acucar-refinado-caravelas-pacote-1kg",
@@ -330,7 +325,7 @@ LINKS = {
             "Farinha de Trigo 1kg Dona Benta_1kg":              "https://www.paodeacucar.com/produto/43619/farinha-de-trigo-tradicional-dona-benta-pacote-1kg",
             "Café Torrado e Moído 500g Pilão_500g":             "https://www.paodeacucar.com/produto/152052/cafe-torrado-e-moido-tradicional-pilao-pacote-500g",
             "Café Torrado e Moído 500g Café Brasileiro_500g":   "https://www.paodeacucar.com/produto/62071/cafe-torrado-e-moido-tradicional-cafe-brasileiro-pacote-500g",
-            "Café Torrado e Moído 500g União_500g":             "https://www.paodeacucar.com/produto/1376191/cafe-torrado-e-moido-tradicional-uniao-pacote-500g",
+            "Café Torrado e Moído 500g União_500g":             "https://www.paodeacucar.com/produto/1376192/cafe-torrado-e-moido-extraforte-uniao-pacote-500g",
         },
     },
     "Extra": {
@@ -367,11 +362,9 @@ LINKS = {
             "Lasanha Bolonhesa 600g Sadia_600g":    "https://www.extramercado.com.br/produto/374206/lasanha-bolonhesa-sadia-pacote-600g",
             "Lasanha Bolonhesa 600g Perdigão_600g": "https://www.extramercado.com.br/produto/392502/lasanha-bolonhesa-perdigao-nosso-menu-pacote-600g",
             "Lasanha Bolonhesa 600g Seara_600g":    "https://www.extramercado.com.br/produto/113511/lasanha-bolonhesa-seara-600g",
-            "Peito de Frango 1kg Sadia_1kg":        "https://www.extramercado.com.br/produto/65885/file-de-peito-de-frango-congelado-sem-pele-sem-osso-sadia-1kg",
             "Peito de Frango 1kg Swift_1kg":        "https://www.extramercado.com.br/produto/422487/file-de-peito-de-frango-swift-do-campo-1kg",
             "Coxa de Frango 1kg Sadia_1kg":         "https://www.extramercado.com.br/produto/66810/coxa-de-frango-congelada-sadia-1kg",
             "Coxa de Frango 1kg Swift_1kg":         "https://www.extramercado.com.br/produto/422468/coxa-de-frango-swift-1kg",
-            "Coxa de Frango 1kg Seara_1kg":         "https://www.extramercado.com.br/produto/217037/coxa-de-frango-congelada-seara-1kg",
             "Asa de Frango 1kg Swift_1kg":          "https://www.extramercado.com.br/produto/463439/asa-de-frango-swift-bandeja-1kg",
             "Fraldinha 1kg Bassi_1kg":              "https://www.extramercado.com.br/produto/114843/fraldinha-extra-limpa-bovina-bassi-1,2kg",
             "Picanha 1kg Bassi_1kg":                "https://www.extramercado.com.br/produto/115631/picanha-bovina-extra-limpa-pedaco-bassi-a%C2%A0vacuo-1,4kg",
@@ -419,8 +412,8 @@ LINKS = {
             "Amstel Lata_269ml":             "https://www.atacadao.com.br/cerveja-amstel-54353-11244/p",
             "Amstel Lata_350ml":             "https://www.atacadao.com.br/cerveja-amstel-sleek-86708-11276/p",
             "Antarctica Lata_350ml":         "https://www.atacadao.com.br/cerveja-antarctica-9218-11292/p",
-            "Brahma Duplo Malte_269ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-lata-com-269ml-74794-11647/p",
-            "Brahma Duplo Malte_350ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-lata-com-350ml-67653-11651/p",
+            "Brahma Duplo Malte_269ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-74794-11647/p",
+            "Brahma Duplo Malte_350ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-67653-11651/p",
             "Budweiser Lata_269ml":          "https://www.atacadao.com.br/cerveja-budweiser-51187-11765/p",
             "Budweiser Lata_350ml":          "https://www.atacadao.com.br/cerveja-budweiser-sleek-lata-com-350ml-80258-11811/p",
             "Corona Extra Long Neck_330ml":  "https://www.atacadao.com.br/cerveja-corona-long-neck-com-330ml-66884-12000/p",
@@ -430,7 +423,7 @@ LINKS = {
             "Itaipava Lata_350ml":           "https://www.atacadao.com.br/cerveja-itaipava-9850-12669/p",
             "Original Lata_269ml":           "https://www.atacadao.com.br/cerveja-original-lata-com-269ml-71793-12854/p",
             "Original Lata_350ml":           "https://www.atacadao.com.br/cerveja-original-lata-com-350ml-65159-12864/p",
-            "Skol Lata_269ml":               "https://www.atacadao.com.br/cerveja-skol-redondinha-6183-13325/p",
+            "Skol Lata_269ml":               "https://www.atacadao.com.br/cerveja-skol-pilsen-6183-13325/p",
             "Skol Lata_350ml":               "https://www.atacadao.com.br/cerveja-skol-pilsen-18650-13267/p",
             "Spaten Puro Malte Lata_269ml":  "https://www.atacadao.com.br/cerveja-puro-malte-spaten-lata-com-269ml-83458-13164/p",
             "Spaten Puro Malte Lata_350ml":  "https://www.atacadao.com.br/cerveja-spaten-puro-malte-lata-com-350ml-74632-13351/p",
@@ -449,7 +442,7 @@ LINKS = {
             "Lasanha Bolonhesa 600g Seara_600g":    "https://www.atacadao.com.br/lasanha-seara-congelada-bolonhesa-32549-29633/p",
             "Peito de Frango 1kg Sadia_1kg":        "https://www.atacadao.com.br/file-de-peito-de-frango-sadia-congelado-bifes-3499-56449/p",
             "Peito de Frango 1kg Seara_1kg":        "https://www.atacadao.com.br/file-de-peito-de-frango-seara-congelado-37849-12021/p",
-            "Coxa de Frango 1kg Sadia_1kg":         "https://www.atacadao.com.br/coxas-de-frango-sadia-congelado-assa-facil-47388-26263/p",
+            "Coxa de Frango 1kg Sadia_1kg":         "https://www.atacadao.com.br/coxa-de-frango-sadia-iqf-congelada-15063-26014/p",
             "Asa de Frango 1kg Sadia_1kg":          "https://www.atacadao.com.br/asa-de-frango-sadia-congelada-15062-15376/p",
         },
         "Biscoitos": {
@@ -594,19 +587,32 @@ def inserir(con, r):
             WHERE supermercado=? AND nome_produto=? AND embalagem=?
               AND preco_atual IS NOT NULL AND erro IS NULL
               AND rota_css != 99
-              AND data_coleta >= date(?, '-14 days') AND data_coleta < ?
+              AND data_coleta >= date(?, '-21 days') AND data_coleta < ?
             ORDER BY data_coleta DESC LIMIT 1
         """, (sm, nome, emb, data, data)).fetchone()
         if ultimo and ultimo[0]:
             variacao = abs(novo_preco - ultimo[0]) / ultimo[0]
-            if variacao > 0.50:
-                # Variação >50% vs histórico recente — provável captura errada
-                r = dict(r)
-                r["erro"] = f"preco_suspeito_{novo_preco:.2f}_vs_{ultimo[0]:.2f}"
-                r["preco_atual"] = None
-                r["rota_css"]    = None
-                novo_preco = None
-                nova_rota  = None
+            if variacao > 0.70:
+                # Verificar se já rejeitamos esse mesmo preço 3+ vezes seguidas
+                # Se sim, o preço novo É o real — resetar referência e aceitar
+                rejeicoes_seguidas = con.execute("""
+                    SELECT COUNT(*) FROM precos
+                    WHERE supermercado=? AND nome_produto=? AND embalagem=?
+                      AND erro LIKE 'preco_suspeito_%'
+                      AND data_coleta >= date(?, '-10 days') AND data_coleta < ?
+                    ORDER BY data_coleta DESC
+                """, (sm, nome, emb, data, data)).fetchone()[0]
+                if rejeicoes_seguidas >= 3:
+                    # Aceitar o preço novo como legítimo — promoção ou reajuste real
+                    pass  # novo_preco permanece válido
+                else:
+                    # Variação >70% vs histórico recente — provável captura errada
+                    r = dict(r)
+                    r["erro"] = f"preco_suspeito_{novo_preco:.2f}_vs_{ultimo[0]:.2f}"
+                    r["preco_atual"] = None
+                    r["rota_css"]    = None
+                    novo_preco = None
+                    nova_rota  = None
 
     # ── Verificar o que já existe hoje para esse SKU ──────────────────────────
     existente = con.execute("""
