@@ -214,28 +214,24 @@ def tier2_curl(url: str) -> Optional[str]:
     return None
 
 
-# ── Tier 3: curl-impersonate ──────────────────────────────────────────────────
+# ── Tier 3: curl-cffi (TLS fingerprinting — resolve Cloudflare) ──────────────
+# Pure Python implementation of Chrome TLS fingerprinting.
+# Resolves Cloudflare-protected sites like Canal Rural and Globo Rural.
+# Install: pip install curl-cffi
 
-def tier3_impersonate(url: str) -> Optional[str]:
-    """
-    curl-impersonate Chrome 124 — matches real TLS fingerprint.
-    Resolves Cloudflare and similar fingerprint-based blocks.
-
-    Install: https://github.com/lwthiker/curl-impersonate
-    On Render/Railway, add to your Dockerfile:
-      RUN curl -sSL https://github.com/lwthiker/curl-impersonate/releases/download/v0.6.1/curl-impersonate-chrome.x86_64-linux-gnu.tar.gz | tar -xz -C /usr/local/bin
-    """
-    cmd = [
-        "curl_chrome124", "-sL", "--max-time", str(TIMEOUT_TIER3),
-        "--compressed", url,
-    ]
+def tier3_cffi(url: str) -> Optional[str]:
+    """Chrome TLS fingerprinting via curl-cffi. Resolves Cloudflare."""
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_TIER3 + 2)
-        if result.returncode == 0 and len(result.stdout) > 300:
-            return result.stdout
-    except FileNotFoundError:
-        # curl-impersonate not installed — skip this tier
-        pass
+        from curl_cffi import requests as cffi_requests
+        resp = cffi_requests.get(
+            url,
+            impersonate="chrome124",
+            timeout=TIMEOUT_TIER3,
+        )
+        if resp.status_code == 200 and len(resp.text) > 300:
+            return resp.text
+    except ImportError:
+        pass  # curl-cffi not installed
     except Exception:
         pass
     return None
@@ -303,33 +299,57 @@ def wayback_fetch(url: str) -> Optional[str]:
 # ── RSS fetch ─────────────────────────────────────────────────────────────────
 
 def rss_fetch(url: str, feed_url: str) -> Optional[str]:
-    """Fetch article body from RSS feed by matching URL."""
+    """Fetch article body from RSS feed by matching URL.
+    Tries exact path match first, then partial slug match."""
     try:
         import feedparser
         feed = feedparser.parse(feed_url)
-        host = get_hostname(url)
-        path = urllib.parse.urlparse(url).path.rstrip("/")
+        if not feed.entries:
+            return None
 
+        target_path = urllib.parse.urlparse(url).path.rstrip("/")
+        # Extract slug (last path segment) for fuzzy matching
+        target_slug = target_path.split("/")[-1] if target_path else ""
+
+        best_entry = None
         for entry in feed.entries:
-            entry_path = urllib.parse.urlparse(entry.get("link", "")).path.rstrip("/")
-            if entry_path == path:
-                # Prefer content:encoded, fall back to summary
-                content = ""
-                if hasattr(entry, "content") and entry.content:
-                    content = entry.content[0].get("value", "")
-                elif hasattr(entry, "summary"):
-                    content = entry.summary
-                if content:
-                    soup = BeautifulSoup(content, "html.parser")
-                    paras = [p.get_text(separator=" ", strip=True)
-                             for p in soup.find_all("p")
-                             if len(p.get_text(strip=True)) > 60]
-                    if paras:
-                        return "\n\n".join(paras)
-                    # No <p> tags — return plain text
-                    text = re.sub(r"<[^>]+>", " ", content)
-                    text = re.sub(r"\s+", " ", text).strip()
-                    return text if len(text) > 60 else None
+            entry_link = entry.get("link", "")
+            entry_path = urllib.parse.urlparse(entry_link).path.rstrip("/")
+            # Exact path match
+            if entry_path == target_path:
+                best_entry = entry
+                break
+            # Slug match (handles trailing slash differences, www vs non-www)
+            if target_slug and entry_path.endswith(target_slug):
+                best_entry = entry
+                break
+
+        if not best_entry:
+            return None
+
+        # Extract content: prefer content:encoded > summary
+        def _parse_content(raw_html):
+            soup = BeautifulSoup(raw_html, "html.parser")
+            paras = [p.get_text(separator=" ", strip=True)
+                     for p in soup.find_all("p")
+                     if len(p.get_text(strip=True)) > 60]
+            if paras:
+                return "\n\n".join(paras)
+            text = re.sub(r"<[^>]+>", " ", raw_html)
+            text = re.sub(r"\s+", " ", text).strip()
+            return text if len(text) > 60 else None
+
+        # feedparser maps content:encoded to entry.content[0]
+        if hasattr(best_entry, "content") and best_entry.content:
+            result = _parse_content(best_entry.content[0].get("value", ""))
+            if result:
+                return result
+
+        if hasattr(best_entry, "summary") and best_entry.summary:
+            result = _parse_content(best_entry.summary)
+            if result:
+                return result
+
     except Exception:
         pass
     return None
@@ -354,15 +374,21 @@ def scrape_one(item: dict) -> dict:
                 return {"id": item_id, "url": url, "body": body, "tier": "rss", "ok": True}
             break  # RSS failed, continue to tiers
 
-    # Globo Rural — blocked everywhere, go straight to Wayback
-    if "globorural.globo.com" in host:
+    # Globo Rural and Beef Point — Cloudflare protected, skip straight to cffi
+    if "globorural.globo.com" in host or "beefpoint.com.br" in host:
+        html = tier3_cffi(url)
+        if html:
+            body = extract_text(html, url)
+            if body:
+                return {"id": item_id, "url": url, "body": body, "tier": 3, "ok": True}
+        # Wayback as last resort
         html = wayback_fetch(url)
         if html:
             body = extract_text(html, url)
             if body:
                 return {"id": item_id, "url": url, "body": body, "tier": "wayback", "ok": True}
         return {"id": item_id, "url": url, "body": "", "tier": None, "ok": False,
-                "error": "globo rural blocked — no wayback snapshot available"}
+                "error": f"{host} blocked — cffi and wayback failed"}
 
     # Tier 1
     html = tier1_fetch(url)
@@ -378,8 +404,8 @@ def scrape_one(item: dict) -> dict:
         if body:
             return {"id": item_id, "url": url, "body": body, "tier": 2, "ok": True}
 
-    # Tier 3
-    html = tier3_impersonate(url)
+    # Tier 3 — curl-cffi Chrome TLS fingerprinting (resolves Cloudflare)
+    html = tier3_cffi(url)
     if html:
         body = extract_text(html, url)
         if body:
