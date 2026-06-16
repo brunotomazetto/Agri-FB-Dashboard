@@ -54,17 +54,6 @@ _ensure("beautifulsoup4", "bs4")
 _ensure("feedparser")
 _ensure("lxml")
 
-# Playwright needs an extra step to install the browser binary
-try:
-    from playwright.sync_api import sync_playwright  # noqa: F401
-except ImportError:
-    _ensure("playwright")
-    print("[scraper] Installing Playwright Chromium browser...")
-    subprocess.run(
-        [sys.executable, "-m", "playwright", "install", "chromium", "--quiet"],
-        check=False,
-    )
-
 
 # ── Imports ───────────────────────────────────────────────────────────────────
 import asyncio
@@ -288,16 +277,11 @@ def tier3_impersonate(url: str) -> Optional[str]:
         pass
     return None
 
-
 # ── Tier 4: Playwright headless ───────────────────────────────────────────────
+# Funciona quando rodando via Dockerfile (Chromium já instalado na imagem).
 
 async def tier4_playwright(url: str) -> Optional[str]:
-    """
-    Headless Chromium with stealth. Full JS rendering.
-    Resolves SPAs (Canal Rural, Globo Rural) and JS challenges.
-
-    Install: pip install playwright && playwright install chromium
-    """
+    """Headless Chromium com stealth. Resolve JS challenges e SPAs."""
     try:
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
@@ -314,14 +298,13 @@ async def tier4_playwright(url: str) -> Optional[str]:
                 locale="pt-BR",
                 extra_http_headers={"Accept-Language": "pt-BR,pt;q=0.9"},
             )
-            # Stealth: hide webdriver flag
             await context.add_init_script("""
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                 window.chrome = { runtime: {} };
             """)
             page = await context.new_page()
             await page.goto(url, wait_until="domcontentloaded", timeout=TIMEOUT_TIER4 * 1000)
-            await page.wait_for_timeout(2000)  # let JS settle
+            await page.wait_for_timeout(2000)
             html = await page.content()
             await browser.close()
             return html if len(html) > 300 else None
@@ -330,7 +313,7 @@ async def tier4_playwright(url: str) -> Optional[str]:
 
 
 def tier4_sync(url: str) -> Optional[str]:
-    """Sync wrapper for Playwright."""
+    """Sync wrapper para Playwright."""
     try:
         return asyncio.run(tier4_playwright(url))
     except Exception:
