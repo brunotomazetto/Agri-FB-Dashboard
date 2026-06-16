@@ -538,6 +538,55 @@ def api_scrape():
         return jsonify({"error": str(e), "traceback": tb}), 500
 
 
+# ── Diagnostic endpoint — testa acesso ao Globo/G1 direto do Render ──────────
+# Acesse: GET /api/scrape-test para ver se o Render consegue acessar o Globo.
+# Remova este endpoint depois do teste.
+
+@app.route("/api/scrape-test")
+def api_scrape_test():
+    import traceback
+    results = {}
+    test_urls = {
+        "globo_rural": "https://globorural.globo.com/pecuaria/",
+        "g1_agro":     "https://g1.globo.com/economia/agronegocios/",
+        "canal_rural": "https://www.canalrural.com.br/",
+    }
+
+    # Test 1: simple requests
+    try:
+        import requests as req
+        for name, url in test_urls.items():
+            try:
+                r = req.get(url, headers={"User-Agent": "Mozilla/5.0 Chrome/124"}, timeout=8)
+                results[f"tier1_{name}"] = {"status": r.status_code, "size": len(r.content)}
+            except Exception as e:
+                results[f"tier1_{name}"] = {"error": str(e)}
+    except Exception as e:
+        results["tier1_import"] = {"error": str(e)}
+
+    # Test 2: curl-cffi
+    try:
+        from curl_cffi import requests as cffi_req
+        for name, url in test_urls.items():
+            try:
+                r = cffi_req.get(url, impersonate="chrome124", timeout=10)
+                body_preview = r.content.decode("utf-8", errors="replace")[:200]
+                results[f"cffi_{name}"] = {
+                    "status": r.status_code,
+                    "size": len(r.content),
+                    "preview": body_preview,
+                }
+            except Exception as e:
+                results[f"cffi_{name}"] = {"error": str(e)}
+    except ImportError:
+        results["cffi_import"] = {"error": "curl_cffi not installed"}
+    except Exception as e:
+        results["cffi_error"] = {"error": str(e)}
+
+    print(f"[scrape-test] {results}", flush=True)
+    return jsonify(results)
+
+
 # ── Startup ───────────────────────────────────────────────────────────────────
 
 def _start_scheduler():
