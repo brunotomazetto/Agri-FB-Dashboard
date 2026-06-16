@@ -14,7 +14,7 @@ Melhorias vs versão anterior:
 - Commit incremental a cada cidade (não perde dados se o job cair)
 """
 
-import sqlite3, json, re, time, random, csv, hashlib, urllib.request, urllib.error
+import sqlite3, json, re, time, random, hashlib, urllib.request, urllib.error
 from datetime import date, datetime
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
@@ -1213,15 +1213,7 @@ def main(categorias_filtro=None):
 
     con.close()
 
-    # CSV diário
-    csv_path = _ROOT / f"coleta_{hoje}.csv"
-    con2 = sqlite3.connect(DB_PATH); con2.row_factory = sqlite3.Row
-    rows = con2.execute("SELECT * FROM precos WHERE data_coleta=?", (hoje,)).fetchall()
-    if rows:
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=rows[0].keys())
-            w.writeheader(); w.writerows([dict(r) for r in rows])
-    con2.close()
+
 
     with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(f"\n=== {hoje} | OK:{total_ok} ERRO:{total_erro} ===\n")
