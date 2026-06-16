@@ -132,9 +132,26 @@ SOURCE_SELECTORS = {
 
 NOISE_PATTERN = re.compile(
     r"login|cadastr|newsletter|publicidade|cookie|compartilh|related|"
-    r"leia mais|assine|clique aqui|publicado em|leia também|tags:|palavras.chave",
+    r"leia mais|assine|clique aqui|publicado em|leia também|tags:|palavras.chave|"
+    r"indique a um amigo|preencha o formulário|remeter a página|"
+    r"<!--\s*-->|^\s*//\s*$",
     re.IGNORECASE,
 )
+
+# Extra noise: very short nav-like fragments that pass the length filter
+NAV_PATTERN = re.compile(
+    r"^(negócios|economia|agtech|finanças|esg|vídeos|sobre nós|anuncie|"
+    r"agrolinkfito|culturas|aviação|fertilizantes|carbono|biológicos|"
+    r"home|quem somos|revista|aquicultura|avicultura|bovinocultura|eventos|"
+    r"selecione o país|login|idioma|español|português)\b",
+    re.IGNORECASE,
+)
+
+
+def _decode_html_entities(text: str) -> str:
+    """Decode common HTML entities that BeautifulSoup may leave encoded."""
+    import html
+    return html.unescape(text)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -161,14 +178,15 @@ def extract_text(html: str, url: str) -> str:
     if not html or len(html) < 300:
         return ""
 
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
 
     # Remove noise elements
     for tag in soup.find_all(["script", "style", "nav", "header", "footer",
                                "aside", "figure", "figcaption", "noscript"]):
         tag.decompose()
     for tag in soup.find_all(class_=re.compile(
-            r"ad-|banner|related|share|social|comment|newsletter|publicidade|paywall")):
+            r"ad-|banner|related|share|social|comment|newsletter|publicidade|paywall|"
+            r"sidebar|menu|nav|breadcrumb|tag|categoria|author|date|meta")):
         tag.decompose()
 
     selectors = [s.strip() for s in get_selectors(url).split(",") if s.strip()]
@@ -187,9 +205,19 @@ def extract_text(html: str, url: str) -> str:
     paras = []
     for p in scope.find_all("p"):
         text = p.get_text(separator=" ", strip=True)
+        text = _decode_html_entities(text)
         text = re.sub(r"\s+", " ", text).strip()
-        if len(text) > 60 and not NOISE_PATTERN.search(text):
-            paras.append(text)
+        # Skip short, noisy, or nav-like paragraphs
+        if len(text) < 60:
+            continue
+        if NOISE_PATTERN.search(text):
+            continue
+        if NAV_PATTERN.match(text):
+            continue
+        # Skip if it looks like a JS comment block
+        if text.startswith("//") or text.startswith("/*"):
+            continue
+        paras.append(text)
 
     return "\n\n".join(paras)
 
