@@ -5,8 +5,6 @@ python-dateutil==2.9.0
 apscheduler==3.10.4
 pg8000==1.31.2
 gunicorn==22.0.0
-
-# Clipping scraper (adicionado)
 beautifulsoup4==4.12.3
-playwright==1.44.0
 lxml==5.2.2
+playwright==1.44.0
