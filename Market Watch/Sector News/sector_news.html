@@ -2222,11 +2222,8 @@ const SOURCE_SELECTORS = {
     mode: "p"
   },
 
-  // The Agribiz (theagribiz.com) — WordPress + Seox theme + paywall.
-  // Confirmed: .entry-content exists in static HTML and contains article text
-  // (HTML entities encoded). p-extraction gives 23+ paras.
   "theagribiz.com": {
-    sel: ".entry-content, .post-content, .container-post",
+    sel: ".feed-body, .post-hat-content, .entry-content, .post-content, .container-post",
     mode: "p"
   },
 
@@ -2271,6 +2268,12 @@ const SOURCE_SELECTORS = {
   // p-tag extraction gives 23 paras (after filtering noise). Best approach.
   "braziljournal.com": {
     sel: ".post-content, .entry-content, .boxarticle-infos-text, article",
+    mode: "p"
+  },
+
+  // Beef Point (beefpoint.com.br) — WordPress.
+  "beefpoint.com.br": {
+    sel: ".td-post-content, .entry-content, .post-content, article",
     mode: "p"
   },
 
@@ -2596,10 +2599,12 @@ function buildClippingFullExport(sections, buckets) {
   const today    = new Date();
   const dateLong = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  // Short solid line matching the email photo
+  // Solid line using <hr> — survives Outlook email rendering (span borders get stripped)
   const divider =
-    `<p style="margin:0;padding:0;line-height:0;font-size:0;">` +
-    `<span style="display:block;width:280px;border-top:1px solid #333;font-size:0;line-height:0;">&nbsp;</span></p>`;
+    `<p style="margin:0;padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;">` +
+    `<table border="0" cellpadding="0" cellspacing="0" width="280" style="border-collapse:collapse;">` +
+    `<tr><td style="border-top:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr>` +
+    `</table></p>`;
 
   // One blank line between blocks (same as pressing Enter once in Outlook)
   const br = `<p style="margin:0;padding:0;line-height:1;font-size:11pt;font-family:Calibri,Arial,sans-serif;">&nbsp;</p>`;
