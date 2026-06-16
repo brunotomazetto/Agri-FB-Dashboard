@@ -2336,11 +2336,25 @@ async function fetchBodyFromRSS(item, feedUrl) {
     if (!raw) throw new Error("no content in rss item");
 
     // Strip HTML tags and clean up
-    const text = raw
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
-      .replace(/&nbsp;/g, " ").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(n))
-      .replace(/\s+/g, " ").trim();
+    // RSS content:encoded may contain <p> tags — extract them as paragraphs
+    let text = "";
+    const rssParas = [...raw.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map(m =>
+      m[1].replace(/<[^>]+>/g, " ")
+          .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
+          .replace(/&nbsp;/g," ").replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
+          .replace(/\s+/g," ").trim()
+    ).filter(t => t.length > 60);
+
+    if (rssParas.length) {
+      text = rssParas.join("\n\n");
+    } else {
+      // No <p> tags — plain text, use as-is
+      text = raw
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">")
+        .replace(/&nbsp;/g," ").replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(n))
+        .replace(/\s+/g," ").trim();
+    }
 
     if (text.length < 80) throw new Error("rss content too short");
     return { ok: true, body: text, source: "rss" };
@@ -2391,8 +2405,10 @@ async function fetchBodyFromWayback(item) {
     const scope = container || doc.body;
     const paras = Array.from(scope.querySelectorAll("p"))
       .map(p => (p.innerText || p.textContent || "").replace(/\s+/g, " ").trim())
-      .filter(t => t.length > 80 && !/(login|cadastr|newsletter|publicidade|cookie|compartilh)/i.test(t));
-
+      .filter(t =>
+        t.length > 60 &&
+        !/(login|cadastr|newsletter|publicidade|cookie|compartilh|assine|clique aqui|leia também)/i.test(t)
+      );
     if (!paras.length) throw new Error("no paragraphs in wayback page");
     return { ok: true, body: paras.join("\n\n"), source: "wayback" };
   } catch (e) {
@@ -2458,7 +2474,11 @@ async function scrapeArticleBody(item) {
       const scope = container || doc.body;
       const paras = Array.from(scope.querySelectorAll("p"))
         .map(p => (p.innerText || p.textContent || "").replace(/\s+/g, " ").trim())
-        .filter(t => t.length > 80 && !/(login|cadastr|newsletter|publicidade|cookie|compartilh|related|leia mais)/i.test(t));
+        .filter(t =>
+          t.length > 60 &&
+          !/(login|cadastr|newsletter|publicidade|cookie|compartilh|related|leia mais|assine|clique aqui|publicado em|leia também|tags:|palavras.chave)/i.test(t)
+        );
+      // Join paragraphs with double newline so buildClippingFullExport can split them back
       text = paras.join("\n\n");
     }
 
@@ -2561,49 +2581,59 @@ function renderClippingExportPreview() {
 }
 
 function buildClippingFullExport(sections, buckets) {
-  const orange  = EXPORT_ORANGE;
-  const today   = new Date();
+  const orange   = EXPORT_ORANGE;
+  const linkBlue = "#0563C1"; // standard hyperlink blue (matches Outlook default)
+  const today    = new Date();
   const dateLong = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  const dashed = `<p style="margin:14px 0 0 0;padding:0;border:none;border-top:1px dashed #888;line-height:0;font-size:1px;">&nbsp;</p>`;
+  const dashed = `<p style="margin:12px 0 0 0;padding:0;border:none;border-top:1px dashed #888;line-height:0;font-size:1px;">&nbsp;</p>`;
+
+  // Section header: orange, bold, left-aligned, with blank line above
   const orangeSection = txt =>
-    `<p style="margin:14px 0 2px 0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};"><font color="${orange}"><b>${txt}</b></font></p>`;
+    `<p style="margin:16px 0 2px 0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};text-align:left;"><font color="${orange}"><b>${txt}</b></font></p>`;
+
+  // "Top of the Agri" — blue hyperlink, left-aligned
   const topLink =
-    `<p style="margin:10px 0 0 0;font-size:10pt;"><a href="#top" style="color:${orange};text-decoration:none;font-style:italic;">Top of the Agri, F&amp;B Daily News</a></p>`;
+    `<p style="margin:10px 0 2px 0;font-size:10pt;text-align:left;font-family:Calibri,Arial,sans-serif;">` +
+    `<a href="#top" style="color:${linkBlue};text-decoration:underline;">Top of the Agri, F&amp;B Daily News</a></p>`;
 
-  let html = ``;
+  let html = `<a name="top"></a>`;
 
-  // ── 1. Header ─────────────────────────────────────────────────────────────
-  html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0 0 20px 0;font-family:Calibri,Arial,sans-serif;">` +
+  // ── 1. Header — centrado conforme email original ──────────────────────────
+  html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0 0 16px 0;font-family:Calibri,Arial,sans-serif;">` +
           `<b>*** Itaú BBA | Agribusiness, Food &amp; Beverage – Daily News ***</b></p>`;
 
-  // ── 2. Index (TOC) — one section per category ────────────────────────────
-  sections.forEach(sec => {
+  // ── 2. Index (TOC) — left-aligned, one blank line between sections ────────
+  sections.forEach((sec, i) => {
+    // blank line before each section header (except first which has header above)
+    if (i > 0) html += `<p style="margin:0;line-height:1;">&nbsp;</p>`;
     html += orangeSection(escHtml(sec));
-    html += `<ul style="margin:4px 0 10px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;">`;
+    html += `<ul style="margin:4px 0 4px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">`;
     buckets[sec].forEach(item => {
       html += `<li style="margin-bottom:3px;">${escHtml(item.title)}</li>`;
     });
     html += `</ul>`;
   });
 
-  // ── 3. "What to Watch" placeholder (user fills manually) ─────────────────
+  // ── 3. What to Watch — blank line before ─────────────────────────────────
+  html += `<p style="margin:0;line-height:1;">&nbsp;</p>`;
   html += orangeSection("What to Watch | IBBA Agribusiness, Food &amp; Beverage Latest Reports");
-  html += `<ul style="margin:4px 0 10px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;">` +
+  html += `<ul style="margin:4px 0 4px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">` +
           `<li style="color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li>` +
           `</ul>`;
 
-  // ── 4. Team signature block ───────────────────────────────────────────────
-  html += `<p style="margin:16px 0 4px 0;font-size:10pt;font-weight:bold;color:${orange};letter-spacing:0.5px;font-family:Calibri,Arial,sans-serif;">` +
+  // ── 4. Team signature — blank line before ────────────────────────────────
+  html += `<p style="margin:0;line-height:1;">&nbsp;</p>`;
+  html += `<p style="margin:4px 0 2px 0;font-size:10pt;font-weight:bold;color:${orange};letter-spacing:0.5px;font-family:Calibri,Arial,sans-serif;text-align:left;">` +
           `<b><font color="${orange}">AGRIBUSINESS, FOOD &amp; BEVERAGE TEAM</font></b></p>`;
-  html += `<p style="margin:0 0 16px 0;font-size:10pt;color:#374151;font-family:Calibri,Arial,sans-serif;">` +
+  html += `<p style="margin:0 0 16px 0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.6;">` +
           `Gustavo Troyano, CNPI<br>+55-11-3073-3269<br>` +
-          `<a href="mailto:gustavo.troyano@itaubba.com" style="color:${orange};">gustavo.troyano@itaubba.com</a><br><br>` +
+          `<a href="mailto:gustavo.troyano@itaubba.com" style="color:${linkBlue};">gustavo.troyano@itaubba.com</a><br><br>` +
           `Bruno Tomazetto, CNPI<br>+55-11-3073-3035<br>` +
-          `<a href="mailto:bruno.tomazetto@itaubba.com" style="color:${orange};">bruno.tomazetto@itaubba.com</a><br><br>` +
+          `<a href="mailto:bruno.tomazetto@itaubba.com" style="color:${linkBlue};">bruno.tomazetto@itaubba.com</a><br><br>` +
           `Ryu Matsuyama, CNPI<br>+55-11-3073-3047<br>` +
-          `<a href="mailto:ryu.matsuyama@itaubba.com" style="color:${orange};">ryu.matsuyama@itaubba.com</a>` +
+          `<a href="mailto:ryu.matsuyama@itaubba.com" style="color:${linkBlue};">ryu.matsuyama@itaubba.com</a>` +
           `</p>`;
 
   // ── 5. Main Headlines sections ────────────────────────────────────────────
@@ -2612,25 +2642,31 @@ function buildClippingFullExport(sections, buckets) {
     html += orangeSection(`Main Headlines – ${escHtml(sec)}`);
     html += dashed;
 
-    buckets[sec].forEach((item, idx) => {
+    buckets[sec].forEach(item => {
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
-      const body    = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
 
-      // Title bold
-      html += `<p style="margin:14px 0 2px 0;font-weight:bold;font-size:11pt;font-family:Calibri,Arial,sans-serif;"><b>${escHtml(item.title)}</b></p>`;
-      // Source link
-      html += `<p style="margin:0 0 6px 0;font-size:10pt;font-family:Calibri,Arial,sans-serif;">` +
-              `Source: <a href="${escHtml(item.url)}" target="_blank" style="color:${orange};">${escHtml(srcName)}</a></p>`;
-      // Body paragraphs — split on newlines so each paragraph renders as its own <p>
-      if (body) {
-        const paras = body.split(/\n+/).map(p => p.trim()).filter(p => p.length > 0);
+      // Get body — split on double newlines (paragraphs) or single newlines
+      const rawBody = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
+      const paras   = rawBody.split(/\n\n+|\n/).map(p => p.trim()).filter(p => p.length > 40);
+
+      // Title — bold, left-aligned
+      html += `<p style="margin:14px 0 1px 0;font-weight:bold;font-size:11pt;font-family:Calibri,Arial,sans-serif;text-align:left;"><b>${escHtml(item.title)}</b></p>`;
+
+      // Source — blue hyperlink
+      html += `<p style="margin:0 0 8px 0;font-size:10pt;font-family:Calibri,Arial,sans-serif;text-align:left;">` +
+              `Source: <a href="${escHtml(item.url)}" target="_blank" style="color:${linkBlue};text-decoration:underline;">${escHtml(srcName)}</a></p>`;
+
+      // Body paragraphs
+      if (paras.length) {
         paras.forEach(para => {
-          html += `<p style="margin:0 0 6px 0;font-size:11pt;line-height:1.5;font-family:Calibri,Arial,sans-serif;">${escHtml(para)}</p>`;
+          html += `<p style="margin:0 0 6px 0;font-size:11pt;line-height:1.5;font-family:Calibri,Arial,sans-serif;text-align:left;">${escHtml(para)}</p>`;
         });
+      } else {
+        // No body — show a placeholder so the admin knows
+        html += `<p style="margin:0 0 6px 0;font-size:10pt;color:#9CA3AF;font-style:italic;font-family:Calibri,Arial,sans-serif;">[Corpo da notícia não extraído — adicione manualmente]</p>`;
       }
-      // "Top of the Agri" back-link after each article
+
       html += topLink;
-      // Dashed separator between articles (not after the last one)
       html += dashed;
     });
   });
@@ -2642,7 +2678,7 @@ function buildClippingFullExport(sections, buckets) {
     buckets[sec].forEach(item => { plain += `  • ${item.title}\n`; });
     plain += `\n`;
   });
-  plain += `What to Watch | IBBA Agribusiness, Food & Beverage Latest Reports\n  [Adicione os relatórios manualmente]\n\n`;
+  plain += `\nWhat to Watch | IBBA Agribusiness, Food & Beverage Latest Reports\n  [Adicione os relatórios manualmente]\n\n`;
   plain += `AGRIBUSINESS, FOOD & BEVERAGE TEAM\n`;
   plain += `Gustavo Troyano, CNPI — gustavo.troyano@itaubba.com\n`;
   plain += `Bruno Tomazetto, CNPI — bruno.tomazetto@itaubba.com\n`;
@@ -2652,14 +2688,14 @@ function buildClippingFullExport(sections, buckets) {
     plain += `Main Headlines – ${sec}\n${"─".repeat(60)}\n\n`;
     buckets[sec].forEach(item => {
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
-      const body    = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
-      plain += `${item.title}\nSource: ${srcName} (${item.url})\n\n${body}\n\nTop of the Agri, F&B Daily News\n${"─".repeat(60)}\n\n`;
+      const rawBody = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
+      plain += `${item.title}\nSource: ${srcName} (${item.url})\n\n${rawBody}\n\nTop of the Agri, F&B Daily News\n${"─".repeat(60)}\n\n`;
     });
   });
 
-  const subject = `Itaú BBA | Agribusiness, Food & Beverage – Daily News, ${dateLong}`;
+  const subject  = `Itaú BBA | Agribusiness, Food & Beverage – Daily News, ${dateLong}`;
   const fullHtml = `<!doctype html><html><head><meta charset="utf-8"></head><body>` +
-    `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;max-width:700px;margin:0 auto;">${html}</div>` +
+    `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;max-width:700px;">${html}</div>` +
     `</body></html>`;
 
   return { html, plain, fullHtml, subject };
