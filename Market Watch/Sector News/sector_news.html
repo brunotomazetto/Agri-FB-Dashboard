@@ -2596,95 +2596,111 @@ function buildClippingFullExport(sections, buckets) {
   const today    = new Date();
   const dateLong = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  // Short solid line — ~280px, 1px solid dark, no extra spacing
+  // Short solid line matching the email photo
   const divider =
-    `<p style="margin:2px 0;padding:0;line-height:0;font-size:0;">` +
-    `<span style="display:block;width:280px;border-top:1px solid #333;font-size:0;">&nbsp;</span></p>`;
+    `<p style="margin:0;padding:0;line-height:0;font-size:0;">` +
+    `<span style="display:block;width:280px;border-top:1px solid #333;font-size:0;line-height:0;">&nbsp;</span></p>`;
+
+  // One blank line between blocks (same as pressing Enter once in Outlook)
+  const br = `<p style="margin:0;padding:0;line-height:1;font-size:11pt;font-family:Calibri,Arial,sans-serif;">&nbsp;</p>`;
 
   const orangeSection = txt =>
-    `<p style="margin:4px 0 0 0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};text-align:left;">` +
+    `<p style="margin:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};text-align:left;">` +
     `<font color="${orange}"><b>${txt}</b></font></p>`;
 
   const topLink =
-    `<p style="margin:2px 0 1px 0;font-size:10pt;text-align:left;font-family:Calibri,Arial,sans-serif;">` +
+    `<p style="margin:0;font-size:10pt;text-align:left;font-family:Calibri,Arial,sans-serif;">` +
     `<a href="#top" style="color:${linkBlue};text-decoration:underline;">Top of the Agri, F&amp;B Daily News</a></p>`;
 
   let html = `<a name="top"></a>`;
 
-  // 1. Header — centrado
-  html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0 0 4px 0;font-family:Calibri,Arial,sans-serif;">` +
+  // 1. Header
+  html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0;font-family:Calibri,Arial,sans-serif;">` +
           `<b>*** Itaú BBA | Agribusiness, Food &amp; Beverage \u2013 Daily News ***</b></p>`;
 
-  // 2. TOC — bullets em negrito
+  // 2. TOC
   sections.forEach(sec => {
+    html += br;
     html += orangeSection(escHtml(sec));
-    html += `<ul style="margin:0 0 2px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">`;
+    html += `<ul style="margin:0 0 0 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">`;
     buckets[sec].forEach(item => {
-      html += `<li style="margin-bottom:1px;font-weight:bold;"><b>${escHtml(item.title)}</b></li>`;
+      html += `<li style="margin:0;font-weight:bold;"><b>${escHtml(item.title)}</b></li>`;
     });
     html += `</ul>`;
   });
 
   // 3. What to Watch
+  html += br;
   html += orangeSection("What to Watch | IBBA Agribusiness, Food &amp; Beverage Latest Reports");
-  html += `<ul style="margin:0 0 2px 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">` +
-          `<li style="color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li>` +
+  html += `<ul style="margin:0 0 0 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">` +
+          `<li style="margin:0;color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li>` +
           `</ul>`;
 
-  // 4. Team
-  html += `<p style="margin:6px 0 1px 0;font-size:10pt;font-weight:bold;color:${orange};font-family:Calibri,Arial,sans-serif;text-align:left;">` +
+  // 4. Team signature
+  html += br;
+  html += `<p style="margin:0;font-size:10pt;font-weight:bold;color:${orange};font-family:Calibri,Arial,sans-serif;text-align:left;">` +
           `<b><font color="${orange}">AGRIBUSINESS, FOOD &amp; BEVERAGE TEAM</font></b></p>`;
-  html += `<p style="margin:0 0 4px 0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
+  html += br;
+  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
           `Gustavo Troyano, CNPI<br>+55-11-3073-3269<br>` +
-          `<a href="mailto:gustavo.troyano@itaubba.com" style="color:${linkBlue};">gustavo.troyano@itaubba.com</a><br><br>` +
+          `<a href="mailto:gustavo.troyano@itaubba.com" style="color:${linkBlue};">gustavo.troyano@itaubba.com</a></p>`;
+  html += br;
+  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
           `Bruno Tomazetto, CNPI<br>+55-11-3073-3035<br>` +
-          `<a href="mailto:bruno.tomazetto@itaubba.com" style="color:${linkBlue};">bruno.tomazetto@itaubba.com</a><br><br>` +
+          `<a href="mailto:bruno.tomazetto@itaubba.com" style="color:${linkBlue};">bruno.tomazetto@itaubba.com</a></p>`;
+  html += br;
+  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
           `Ryu Matsuyama, CNPI<br>+55-11-3073-3047<br>` +
-          `<a href="mailto:ryu.matsuyama@itaubba.com" style="color:${linkBlue};">ryu.matsuyama@itaubba.com</a>` +
-          `</p>`;
+          `<a href="mailto:ryu.matsuyama@itaubba.com" style="color:${linkBlue};">ryu.matsuyama@itaubba.com</a></p>`;
 
   // 5. Main Headlines
   sections.forEach(sec => {
+    html += br;
     html += divider;
+    html += br;
     html += orangeSection(`Main Headlines \u2013 ${escHtml(sec)}`);
+    html += br;
     html += divider;
 
     buckets[sec].forEach(item => {
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
       const rawBody = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
-      const paras   = rawBody.split(/\n\n+|\n/).map(p => p.trim()).filter(p => p.length > 40);
+      const paras   = rawBody.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 40);
 
-      html += `<p style="margin:4px 0 0 0;font-weight:bold;font-size:11pt;font-family:Calibri,Arial,sans-serif;text-align:left;"><b>${escHtml(item.title)}</b></p>`;
-      html += `<p style="margin:0 0 3px 0;font-size:10pt;font-family:Calibri,Arial,sans-serif;text-align:left;">` +
+      html += br;
+      html += `<p style="margin:0;font-weight:bold;font-size:11pt;font-family:Calibri,Arial,sans-serif;text-align:left;"><b>${escHtml(item.title)}</b></p>`;
+      html += `<p style="margin:0;font-size:10pt;font-family:Calibri,Arial,sans-serif;text-align:left;">` +
               `Source: <a href="${escHtml(item.url)}" target="_blank" style="color:${linkBlue};text-decoration:underline;">${escHtml(srcName)}</a></p>`;
-
+      html += br;
       if (paras.length) {
         paras.forEach(para => {
-          html += `<p style="margin:0 0 2px 0;font-size:11pt;line-height:1.4;font-family:Calibri,Arial,sans-serif;text-align:left;">${escHtml(para)}</p>`;
+          html += `<p style="margin:0;font-size:11pt;line-height:1.5;font-family:Calibri,Arial,sans-serif;text-align:left;">${escHtml(para)}</p>`;
         });
       } else {
-        html += `<p style="margin:0 0 4px 0;font-size:10pt;color:#9CA3AF;font-style:italic;font-family:Calibri,Arial,sans-serif;">[Corpo não extraído — adicione manualmente]</p>`;
+        html += `<p style="margin:0;font-size:10pt;color:#9CA3AF;font-style:italic;font-family:Calibri,Arial,sans-serif;">[Corpo não extraído — adicione manualmente]</p>`;
       }
+      html += br;
       html += topLink;
+      html += br;
       html += divider;
     });
   });
 
   // Plain text
-  let plain = `*** Itaú BBA | Agribusiness, Food & Beverage – Daily News ***\n\n`;
+  let plain = `*** Itaú BBA | Agribusiness, Food & Beverage \u2013 Daily News ***\n\n`;
   sections.forEach(sec => {
     plain += `${sec}\n`;
-    buckets[sec].forEach(item => { plain += `  • ${item.title}\n`; });
+    buckets[sec].forEach(item => { plain += `  \u2022 ${item.title}\n`; });
     plain += `\n`;
   });
   plain += `\nWhat to Watch | IBBA Agribusiness, Food & Beverage Latest Reports\n  [Adicione os relatórios manualmente]\n\n`;
   plain += `AGRIBUSINESS, FOOD & BEVERAGE TEAM\n`;
-  plain += `Gustavo Troyano, CNPI — gustavo.troyano@itaubba.com\n`;
-  plain += `Bruno Tomazetto, CNPI — bruno.tomazetto@itaubba.com\n`;
-  plain += `Ryu Matsuyama, CNPI — ryu.matsuyama@itaubba.com\n\n`;
+  plain += `Gustavo Troyano, CNPI \u2014 gustavo.troyano@itaubba.com\n`;
+  plain += `Bruno Tomazetto, CNPI \u2014 bruno.tomazetto@itaubba.com\n`;
+  plain += `Ryu Matsuyama, CNPI \u2014 ryu.matsuyama@itaubba.com\n\n`;
   plain += `${"─".repeat(40)}\n\n`;
   sections.forEach(sec => {
-    plain += `Main Headlines – ${sec}\n${"─".repeat(40)}\n\n`;
+    plain += `Main Headlines \u2013 ${sec}\n${"─".repeat(40)}\n\n`;
     buckets[sec].forEach(item => {
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
       const rawBody = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
@@ -2692,13 +2708,14 @@ function buildClippingFullExport(sections, buckets) {
     });
   });
 
-  const subject  = `Itaú BBA | Agribusiness, Food & Beverage – Daily News, ${dateLong}`;
+  const subject  = `Itaú BBA | Agribusiness, Food & Beverage \u2013 Daily News, ${dateLong}`;
   const fullHtml = `<!doctype html><html><head><meta charset="utf-8"></head><body>` +
     `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;max-width:700px;">${html}</div>` +
     `</body></html>`;
 
   return { html, plain, fullHtml, subject };
 }
+
 
 function openClippingInOutlook() { openInOutlook(); }
 async function copyClippingExport() { await copyExport(); }
