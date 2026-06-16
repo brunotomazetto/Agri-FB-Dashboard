@@ -383,7 +383,7 @@ const SUBSECTORS = {
 const esc = s => s==null?'':String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const initials = n => (n||'?').split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');
 const todayStr = () => new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-const greetWord = () => { const h=new Date().getHours(); return (h<12?'Good morning':h<18?'Good afternoon':'Good evening').toUpperCase(); };
+const greetWord = () => { const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; };
 function showToast(msg,dur=2800){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur); }
 function closeModal(){ document.getElementById('modal').classList.remove('open'); }
 function setLoading(show, msg='Loading...'){
