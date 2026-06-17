@@ -17,44 +17,6 @@ if platform.system() == "Windows":
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsReader/1.0"}
 
 
-def _resolve_google_news_url(url: str) -> str:
-    """
-    Google News RSS entries have URLs like:
-      https://news.google.com/rss/articles/CBMixwFBVV95...
-    These redirect to the real article. Follow the redirect to get the real URL.
-    Falls back to the original URL if resolution fails.
-    """
-    if "news.google.com" not in url:
-        return url
-    try:
-        import requests as _req
-        resp = _req.head(
-            url,
-            headers={"User-Agent": HEADERS["User-Agent"]},
-            allow_redirects=True,
-            timeout=6,
-        )
-        final = resp.url
-        # Sanity check: must be a different domain
-        if "news.google.com" not in final and final.startswith("http"):
-            return final
-        # HEAD didn't redirect — try GET with stream
-        resp2 = _req.get(
-            url,
-            headers={"User-Agent": HEADERS["User-Agent"]},
-            allow_redirects=True,
-            timeout=8,
-            stream=True,
-        )
-        resp2.close()
-        final2 = resp2.url
-        if "news.google.com" not in final2 and final2.startswith("http"):
-            return final2
-    except Exception:
-        pass
-    return url
-
-
 class NewsFetcher:
     GOOGLE_PT = "https://news.google.com/rss/search?q={query}&hl=pt-BR&gl=BR&ceid=BR:pt"
     GOOGLE_EN = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
@@ -95,14 +57,16 @@ class NewsFetcher:
     def _fetch_feed(self, url: str, group_id: int) -> list:
         items = []
         try:
-            feed = feedparser.parse(url, request_headers=HEADERS)
+            import requests as _req
+            resp = _req.get(url, headers=HEADERS, timeout=12, allow_redirects=True)
+            if not resp.ok:
+                return []
+            feed = feedparser.parse(resp.content)
             for entry in feed.entries[:40]:
                 title = getattr(entry, "title", "").strip()
                 url_item = getattr(entry, "link", "").strip()
                 if not title or not url_item:
                     continue
-                # Resolve Google News redirect URLs to the real source URL
-                url_item = _resolve_google_news_url(url_item)
                 summary = ""
                 if hasattr(entry, "summary") and entry.summary:
                     # Strip HTML tags from summary
@@ -157,12 +121,20 @@ class NewsFetcher:
         items = []
         filter_kws = [kw.lower() for kw in topical_filter] if topical_filter else []
         try:
-            feed = feedparser.parse(url, request_headers=HEADERS)
+            # Fetch with explicit timeout to avoid hanging on slow/broken feeds
+            import requests as _req
+            resp = _req.get(url, headers=HEADERS, timeout=12, allow_redirects=True)
+            if not resp.ok:
+                print(f"    [WARN] Feed returned {resp.status_code}: {url[:60]}")
+                return []
+            feed = feedparser.parse(resp.content)
             for entry in feed.entries[:30]:
                 title = getattr(entry, "title", "").strip()
                 url_item = getattr(entry, "link", "").strip()
                 if not title or not url_item:
                     continue
+                # Resolve Google News URLs to real source URL
+                url_item = _resolve_google_news_url(url_item)
                 summary = ""
                 if hasattr(entry, "summary") and entry.summary:
                     import re
