@@ -99,7 +99,11 @@
         "CONSECANA preço cana açúcar",
         "site:globorural.globo.com pecuária",
         "site:globorural.globo.com safra grãos",
-        "site:globorural.globo.com mercado preço"
+        "site:globorural.globo.com mercado preço",
+        "site:noticiasagricolas.com.br soja milho",
+        "site:noticiasagricolas.com.br pecuária",
+        "site:bloomberglinea.com.br agro",
+        "site:bloomberglinea.com.br soja milho cana"
       ],
       "search_queries_en": [
         "USDA crop report supply demand grains oilseeds",
@@ -393,6 +397,95 @@
       "url": "https://www.abiec.com.br/feed/",
       "group_id": 4,
       "source_name": "ABIEC"
+    },
+    {
+      "url": "https://feedfood.com.br/feed/",
+      "group_id": 2,
+      "source_name": "Feed & Food"
+    },
+    {
+      "url": "https://www.moneytimes.com.br/feed/",
+      "group_id": 2,
+      "source_name": "Money Times",
+      "topical_filter": [
+        "soja",
+        "milho",
+        "cana",
+        "etanol",
+        "açúcar",
+        "boi",
+        "arroba",
+        "frango",
+        "suíno",
+        "agro",
+        "fertilizante",
+        "defensivo",
+        "safra",
+        "frigorífico",
+        "jbs",
+        "marfrig",
+        "ambev",
+        "camil",
+        "minerva",
+        "slc",
+        "brasilagro",
+        "3tentos",
+        "boa safra",
+        "vittia",
+        "são martinho",
+        "adecoagro",
+        "jalles",
+        "adubos",
+        "diesel",
+        "exportação"
+      ]
+    },
+    {
+      "url": "https://neofeed.com.br/feed/",
+      "group_id": 3,
+      "source_name": "NeoFeed",
+      "topical_filter": [
+        "soja",
+        "milho",
+        "cana",
+        "etanol",
+        "açúcar",
+        "boi",
+        "arroba",
+        "frango",
+        "suíno",
+        "agro",
+        "fertilizante",
+        "defensivo",
+        "safra",
+        "frigorífico",
+        "jbs",
+        "marfrig",
+        "ambev",
+        "camil",
+        "minerva",
+        "slc",
+        "brasilagro",
+        "3tentos",
+        "boa safra",
+        "vittia",
+        "são martinho",
+        "adecoagro",
+        "jalles",
+        "tyson",
+        "pilgrim",
+        "heineken"
+      ]
+    },
+    {
+      "url": "https://www.agrolink.com.br/rss/noticias.xml",
+      "group_id": 2,
+      "source_name": "AgroLink"
+    },
+    {
+      "url": "https://www.beefmagazine.com/rss.xml",
+      "group_id": 4,
+      "source_name": "Beef Magazine"
     }
   ],
   "relevance": {
