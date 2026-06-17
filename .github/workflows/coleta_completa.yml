@@ -33,8 +33,8 @@ jobs:
         run: python "Supermarket Prices/gerar_dashboard.py"
       - name: Commit e push
         run: |
-          git config user.name "Monitor Bot"
-          git config user.email "bot@monitor-precos.local"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           cp "Supermarket Prices/precos.db" /tmp/precos_local.db
           cp "Supermarket Prices/supermarket_prices.html" /tmp/html_local.html
           git fetch origin main
