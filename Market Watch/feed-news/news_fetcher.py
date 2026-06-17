@@ -127,11 +127,11 @@ class NewsFetcher:
         for query in en_queries:
             all_urls.append((self._build_url([query], "en"), gid))
 
-        # Fetch in parallel (max 5 concurrent) with overall timeout
+        # Fetch in parallel (max 10 concurrent) with overall timeout
         from concurrent.futures import ThreadPoolExecutor, as_completed
-        with ThreadPoolExecutor(max_workers=5) as pool:
+        with ThreadPoolExecutor(max_workers=10) as pool:
             futures = {pool.submit(self._fetch_feed, url, gid): url for url, gid in all_urls}
-            for future in as_completed(futures, timeout=120):
+            for future in as_completed(futures, timeout=90):
                 try:
                     for item in future.result(timeout=15):
                         if item["url"] not in seen:
@@ -193,16 +193,30 @@ class NewsFetcher:
             existing_urls = {item["url"] for item in all_items}
             direct_items = []
             seen = set()
-            for feed_cfg in direct_feeds:
+            print(f"  > Buscando {len(direct_feeds)} feeds diretos em paralelo...")
+
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            def fetch_one(feed_cfg):
                 url = feed_cfg.get("url", "")
                 if not url:
-                    continue
-                print(f"  > Feed direto: {feed_cfg.get('source_name', url)}...")
-                raw = self._fetch_direct_feed(url, feed_cfg.get("group_id", 1), feed_cfg.get("source_name", ""), feed_cfg.get("topical_filter"))
-                new = [i for i in raw if i["url"] not in existing_urls and i["url"] not in seen]
-                seen.update(i["url"] for i in new)
-                direct_items.extend(new)
-                time.sleep(0.3)
+                    return []
+                return self._fetch_direct_feed(
+                    url, feed_cfg.get("group_id", 1),
+                    feed_cfg.get("source_name", ""),
+                    feed_cfg.get("topical_filter"))
+
+            with ThreadPoolExecutor(max_workers=10) as pool:
+                futures = [pool.submit(fetch_one, fc) for fc in direct_feeds]
+                for future in as_completed(futures, timeout=90):
+                    try:
+                        raw = future.result(timeout=15)
+                        for i in raw:
+                            if i["url"] not in existing_urls and i["url"] not in seen:
+                                seen.add(i["url"])
+                                direct_items.append(i)
+                    except Exception:
+                        pass
+
             all_items.extend(direct_items)
             print(f"    {len(direct_items)} itens de feeds diretos")
 
