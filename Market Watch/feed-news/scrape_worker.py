@@ -128,63 +128,81 @@ def resolve_url(url: str) -> str:
     """Resolve Google News redirect URLs to the real source URL."""
     if "news.google.com" not in url:
         return url
-    print(f"  resolving google news: {url[:80]}")
+    print(f"  resolving google news: {url[:60]}")
+
+    # Google News uses a JS redirect. The real URL must be fetched via their
+    # internal batchexecute API. Extract the article ID and request the redirect.
     try:
-        # Use GET with stream — follows redirects and gives final URL
-        r = requests.get(url, headers=BROWSER_HEADERS, allow_redirects=True, timeout=10, stream=True)
-        r.close()
-        if "news.google.com" not in r.url and r.url.startswith("http"):
-            print(f"  resolved: {r.url[:80]}")
-            return r.url
-        print(f"  could not resolve google news url")
+        m = re.search(r'/articles/([A-Za-z0-9_\-]+)', url)
+        if not m:
+            return url
+        article_id = m.group(1)
+
+        # Fetch the article page to get the data-n-au attribute or signature
+        r = requests.get(url, headers=BROWSER_HEADERS, timeout=10)
+        html = r.text
+
+        # Look for the redirect URL in the page (data-n-au or c-wiz)
+        au = re.search(r'data-n-au="(https?://[^"]+)"', html)
+        if au:
+            real = au.group(1)
+            if "google" not in real:
+                print(f"  resolved via data-n-au: {real[:70]}")
+                return real
+
+        # Try to find any external URL in the page
+        ext = re.findall(r'"(https?://(?![^"]*google)[^"]+)"', html)
+        for u in ext:
+            if any(d in u for d in ["globo.com", "canalrural", "agfeed", "noticiasagricolas",
+                                     "agrolink", "moneytimes", "braziljournal", "beefpoint",
+                                     "neofeed", "bloomberglinea", "theagribiz", "feedfood"]):
+                print(f"  resolved via page scan: {u[:70]}")
+                return u
     except Exception as e:
         print(f"  resolve error: {e}")
+
+    print(f"  could not resolve")
     return url
 
 
 def extract_globo(html_str, url):
-    """Extract article body from Globo/G1 pages using __NEXT_DATA__ JSON."""
-    import html as html_mod, json as json_mod
-    # Try __NEXT_DATA__ first — Globo embeds article JSON here
-    try:
-        match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', html_str, re.DOTALL)
-        if match:
-            data = json_mod.loads(match.group(1))
-            # Navigate the Next.js page props to find article content
-            def find_content(obj, depth=0):
-                if depth > 10: return []
-                if isinstance(obj, str) and len(obj) > 100:
-                    return [obj]
-                if isinstance(obj, list):
-                    results = []
-                    for item in obj:
-                        results.extend(find_content(item, depth+1))
-                    return results
-                if isinstance(obj, dict):
-                    # Look for common Globo content keys
-                    for key in ["content", "text", "body", "paragraphs", "children"]:
-                        if key in obj and obj[key]:
-                            results = find_content(obj[key], depth+1)
-                            if results: return results
-                    results = []
-                    for v in obj.values():
-                        results.extend(find_content(v, depth+1))
-                    return results
-                return []
+    """Extract article body from Globo/G1 pages.
+    Globo CMS uses <p class="content-text__container"> for article paragraphs."""
+    import html as html_mod
+    soup = BeautifulSoup(html_str, PARSER)
 
-            texts = find_content(data)
-            paras = []
-            for t in texts:
-                t = html_mod.unescape(re.sub(r'<[^>]+>', ' ', t))
-                t = re.sub(r'\s+', ' ', t).strip()
-                if len(t) > 80 and not NOISE.search(t) and not CAPTION.match(t):
+    # Globo's article paragraphs have class "content-text__container"
+    paras = []
+    for p in soup.find_all("p", class_=re.compile(r"content-text")):
+        t = html_mod.unescape(p.get_text(" ", strip=True))
+        t = re.sub(r"\s+", " ", t).strip()
+        if len(t) > 40 and not NOISE.search(t) and not CAPTION.match(t):
+            paras.append(t)
+
+    if paras:
+        return "\n\n".join(paras)
+
+    # Fallback: try mc-article-body / mc-column containers
+    for sel in [".mc-article-body", ".mc-column", "[itemprop='articleBody']", ".wall-body"]:
+        container = soup.select_one(sel)
+        if container:
+            for p in container.find_all("p"):
+                t = html_mod.unescape(p.get_text(" ", strip=True))
+                t = re.sub(r"\s+", " ", t).strip()
+                if len(t) > 40 and not NOISE.search(t) and not CAPTION.match(t):
                     paras.append(t)
             if paras:
-                return "\n\n".join(paras[:20])
-    except Exception:
-        pass
-    # Fall back to regular extraction
-    return extract(html_str, url)
+                return "\n\n".join(paras)
+
+    # Diagnostic: log what classes exist
+    classes = set()
+    for el in soup.find_all(class_=True):
+        for c in (el.get("class") or []):
+            if any(k in c.lower() for k in ["content", "article", "body", "text", "materia", "corpo"]):
+                classes.add(c)
+    print(f"  globo classes found: {sorted(classes)[:15]}")
+
+    return ""
 
 
 def hostname(url):
@@ -360,15 +378,22 @@ def scrape_one(item):
         print(f"  ✗ unresolved google news url")
         return {"id": item_id, "url": url, "body": "", "tier": None, "ok": False, "error": "unresolved google news url"}
 
-    # Canal Rural — RSS first (Cloudflare blocks direct access)
-    for domain, feed_url in RSS_FEEDS.items():
-        if domain in host and feed_url:
-            body = rss_fetch(url, feed_url)
+    # Canal Rural — Cloudflare protected. Try cffi (tier3) first, then RSS
+    if "canalrural.com.br" in host:
+        html = tier3(url)
+        if html:
+            body = extract(html, url)
             if body:
-                print(f"  ✓ rss   {url[:70]}")
-                return {"id": item_id, "url": url, "body": body, "tier": "rss", "ok": True}
-            print(f"  rss failed for {host}, trying tiers")
-            break
+                print(f"  ✓ tier3-cffi {url[:60]}")
+                return {"id": item_id, "url": url, "body": body, "tier": 3, "ok": True}
+        for domain, feed_url in RSS_FEEDS.items():
+            if domain in host and feed_url:
+                body = rss_fetch(url, feed_url)
+                if body:
+                    print(f"  ✓ rss {url[:60]}")
+                    return {"id": item_id, "url": url, "body": body, "tier": "rss", "ok": True}
+                break
+        print(f"  canal rural: cffi and rss both failed")
 
     # G1/Globo — try to extract from __NEXT_DATA__ JSON first
     if "globo.com" in host or "g1.globo.com" in host:
