@@ -1,0 +1,33 @@
+name: Clipping Scrape
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'Unique job ID for correlation'
+        required: true
+      items:
+        description: 'JSON array of items to scrape'
+        required: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run scraper
+        env:
+          SCRAPE_JOB_ID: ${{ inputs.job_id }}
+          SCRAPE_ITEMS: ${{ inputs.items }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+          BACKEND_SECRET: ${{ secrets.BACKEND_SECRET }}
+        run: python "Market Watch/feed-news/scrape_worker.py"
