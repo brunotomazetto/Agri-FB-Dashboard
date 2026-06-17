@@ -80,6 +80,8 @@ MAX_WORKERS = 4
 MAX_WALL_TIME = 120
 
 RSS_FEEDS = {
+    # Only Canal Rural benefits from RSS — Cloudflare blocks Tier 1 for it
+    # Other WordPress sites truncate RSS summaries, so we prefer Tier 1 for them
     "canalrural.com.br": "https://www.canalrural.com.br/feed/",
 }
 
@@ -155,9 +157,14 @@ def extract(html_str, url):
     scope = container or soup.body or soup
     paras = []
     for p in scope.find_all("p"):
-        t = html_mod.unescape(p.get_text(" ", strip=True))
+        t = p.get_text(" ", strip=True)
+        # Double-decode HTML entities (e.g. &amp;#8230; → … )
+        t = html_mod.unescape(html_mod.unescape(t))
         t = re.sub(r"\s+", " ", t).strip()
         if len(t) < 60 or NOISE.search(t) or NAV.match(t) or t.startswith("//") or t.startswith("/*"):
+            continue
+        # Skip RSS trailer lines like "O post X apareceu primeiro em Y"
+        if re.search(r"apareceu primeiro em|posted first on|the post .+ appeared first", t, re.I):
             continue
         paras.append(t)
     return "\n\n".join(paras)
@@ -252,10 +259,12 @@ def rss_fetch(url, feed_url):
             soup = BeautifulSoup(raw, "lxml")
             paras = []
             for p in soup.find_all("p"):
-                t = html_mod.unescape(p.get_text(" ", strip=True))
+                t = p.get_text(" ", strip=True)
+                t = html_mod.unescape(html_mod.unescape(t))  # double-decode
                 t = re.sub(r"\s+", " ", t).strip()
                 if len(t) > 60 and not NOISE.search(t):
-                    paras.append(t)
+                    if not re.search(r"apareceu primeiro em|posted first on", t, re.I):
+                        paras.append(t)
             return "\n\n".join(paras) if paras else None
 
         if hasattr(best, "content") and best.content:
