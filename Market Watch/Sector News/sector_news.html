@@ -418,6 +418,24 @@ select.filter-input { padding-right: 28px !important; min-width: 80px; }
 .export-item-title { font-weight: 500; line-height: 1.4; }
 .export-item-link a { color: var(--orange); font-size: 12px; }
 .export-item-date { font-size: 11px; color: var(--text-muted); }
+/* What to Watch reports */
+.wtw-report-row {
+  display: flex; align-items: center; gap: 6px; padding: 5px 0;
+  border-bottom: 1px solid #F3F4F6; font-size: 12px;
+}
+.wtw-report-row .wtw-label { font-weight: 600; color: #111827; min-width: 140px; flex-shrink: 0; }
+.wtw-report-row .wtw-title { color: #0563C1; text-decoration: underline; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.wtw-report-row .wtw-remove { border: none; background: none; color: #9CA3AF; font-size: 15px; cursor: pointer; flex-shrink: 0; padding: 0 4px; }
+.wtw-report-row .wtw-remove:hover { color: #B91C1C; }
+.wtw-add-row { display: flex; gap: 6px; margin-top: 8px; }
+.wtw-add-row input { font-size: 12px; border: 1px solid #E5E7EB; border-radius: 5px; padding: 4px 8px; outline: none; }
+.wtw-add-row input:focus { border-color: var(--orange); }
+.wtw-add-row .wtw-name { width: 150px; flex-shrink: 0; }
+.wtw-add-row .wtw-rtitle { flex: 1; }
+.wtw-add-row .wtw-url { width: 200px; flex-shrink: 0; }
+.wtw-section { background: #FAFAFA; border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; }
+.wtw-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #FF5500; margin-bottom: 8px; }
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 3px; }
@@ -566,6 +584,17 @@ select.filter-input { padding-right: 28px !important; min-width: 80px; }
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-3">
+        <!-- What to Watch reports manager -->
+        <div class="wtw-section" id="wtw-section">
+          <div class="wtw-section-title">📋 What to Watch — Relatórios (últimos 7)</div>
+          <div id="wtw-list"></div>
+          <div class="wtw-add-row">
+            <input class="wtw-name" id="wtw-input-name" placeholder="Empresa/Série (ex: JBS)" onkeydown="if(event.key==='Enter') wtwAdd()">
+            <input class="wtw-rtitle" id="wtw-input-title" placeholder="Título do relatório" onkeydown="if(event.key==='Enter') wtwAdd()">
+            <input class="wtw-url" id="wtw-input-url" placeholder="https://..." onkeydown="if(event.key==='Enter') wtwAdd()">
+            <button onclick="wtwAdd()" style="background:var(--orange);color:white;border:none;border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;flex-shrink:0;">+ Adicionar</button>
+          </div>
+        </div>
         <p class="small text-muted mb-2">
           Aguarde a extração do corpo das notícias. Depois clique em
           <strong>Open in Outlook</strong> para baixar o rascunho (.eml) ou
@@ -2567,6 +2596,7 @@ function buildClippingExportModal(items, scrapeResults) {
 
   exportState = { sections, buckets, subject, dateLong };
   renderClippingExportPreview();
+  wtwRender();
   closeClippingPanel();
   new bootstrap.Modal(document.getElementById("clippingExportModal")).show();
 }
@@ -2719,12 +2749,10 @@ function buildClippingFullExport(sections, buckets) {
     html += `</ul>`;
   });
 
-  // 3. What to Watch
+  // 3. What to Watch — dynamic from localStorage
   html += br;
   html += orangeSection("What to Watch | IBBA Agribusiness, Food &amp; Beverage Latest Reports");
-  html += `<ul style="margin:0 0 0 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">` +
-          `<li style="margin:0;color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li>` +
-          `</ul>`;
+  html += wtwBuildHtml();
 
   // 4. Team signature — all names in grey, not bold
   html += br;
@@ -2795,7 +2823,19 @@ function buildClippingFullExport(sections, buckets) {
     buckets[sec].forEach(item => { plain += `  \u2022 ${item.title}\n`; });
     plain += `\n`;
   });
-  plain += `\nWhat to Watch | IBBA Agribusiness, Food & Beverage Latest Reports\n  [Adicione os relatórios manualmente]\n\n`;
+  plain += `\nWhat to Watch | IBBA Agribusiness, Food & Beverage Latest Reports\n`;
+  const wtwReports = wtwLoad();
+  const wtwMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  if (wtwReports.length) {
+    wtwReports.forEach(r => {
+      const d = r.date ? new Date(r.date) : new Date();
+      const ds = `${wtwMonths[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+      plain += `  • ${r.name} (${ds}): ${r.title} (${r.url})\n`;
+    });
+  } else {
+    plain += `  [Adicione os relatórios manualmente]\n`;
+  }
+  plain += `\n`;
   plain += `AGRIBUSINESS, FOOD & BEVERAGE TEAM\n`;
   plain += `Gustavo Troyano, CNPI \u2014 gustavo.troyano@itaubba.com\n`;
   plain += `Bruno Tomazetto, CNPI \u2014 bruno.tomazetto@itaubba.com\n`;
@@ -2818,6 +2858,103 @@ function buildClippingFullExport(sections, buckets) {
   return { html, plain, fullHtml, subject };
 }
 
+
+// ── What to Watch Reports ─────────────────────────────────────────────────────
+const WTW_KEY = "ibba_wtw_reports_v1";
+const WTW_MAX = 7;
+
+function wtwLoad() {
+  try { return JSON.parse(localStorage.getItem(WTW_KEY) || "[]"); }
+  catch { return []; }
+}
+
+function wtwSave(reports) {
+  localStorage.setItem(WTW_KEY, JSON.stringify(reports));
+}
+
+function wtwRender() {
+  const reports = wtwLoad();
+  const container = document.getElementById("wtw-list");
+  if (!container) return;
+  if (!reports.length) {
+    container.innerHTML = `<div style="font-size:11px;color:#9CA3AF;padding:4px 0;">Nenhum relatório ainda. Adicione abaixo.</div>`;
+    return;
+  }
+  const today = new Date();
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  container.innerHTML = reports.map((r, i) => {
+    const dateStr = r.date
+      ? (() => { const d = new Date(r.date); return `${monthNames[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`; })()
+      : `${monthNames[today.getMonth()]} ${String(today.getFullYear()).slice(2)}`;
+    return `<div class="wtw-report-row">
+      <span class="wtw-label">${escHtml(r.name)} (${dateStr}):</span>
+      <a class="wtw-title" href="${escHtml(r.url)}" target="_blank" title="${escHtml(r.title)}">${escHtml(r.title)}</a>
+      <button class="wtw-remove" onclick="wtwRemove(${i})" title="Remover">×</button>
+    </div>`;
+  }).join("");
+}
+
+function wtwAdd() {
+  const nameEl  = document.getElementById("wtw-input-name");
+  const titleEl = document.getElementById("wtw-input-title");
+  const urlEl   = document.getElementById("wtw-input-url");
+  const name  = (nameEl?.value  || "").trim();
+  const title = (titleEl?.value || "").trim();
+  const url   = (urlEl?.value   || "").trim();
+  if (!name || !title || !url) { showToast("Preencha nome, título e URL", "warning"); return; }
+  const reports = wtwLoad();
+  reports.unshift({ name, title, url, date: new Date().toISOString() });
+  if (reports.length > WTW_MAX) reports.splice(WTW_MAX);
+  wtwSave(reports);
+  wtwRender();
+  // Rebuild export HTML with updated reports
+  if (exportState) renderClippingExportPreview();
+  if (nameEl) nameEl.value = "";
+  if (titleEl) titleEl.value = "";
+  if (urlEl) urlEl.value = "";
+  nameEl?.focus();
+}
+
+function wtwRemove(idx) {
+  const reports = wtwLoad();
+  reports.splice(idx, 1);
+  wtwSave(reports);
+  wtwRender();
+  if (exportState) renderClippingExportPreview();
+}
+
+function wtwBuildHtml() {
+  const reports = wtwLoad();
+  const linkBlue = "#0563C1";
+  const orange = "#FF5500";
+  const today = new Date();
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  if (!reports.length) {
+    return `<ul style="margin:0 0 0 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">` +
+           `<li style="margin:0;color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li></ul>`;
+  }
+
+  let html = `<ul style="margin:0 0 0 18px;padding:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;text-align:left;">`;
+  reports.forEach(r => {
+    const dateStr = r.date
+      ? (() => { const d = new Date(r.date); return `${monthNames[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`; })()
+      : `${monthNames[today.getMonth()]} ${String(today.getFullYear()).slice(2)}`;
+    html += `<li style="margin:0 0 4px 0;">` +
+            `<b>${escHtml(r.name)} (${dateStr}):</b> ` +
+            `<a href="${escHtml(r.url)}" style="color:${linkBlue};text-decoration:underline;">${escHtml(r.title)}</a>` +
+            `</li>`;
+  });
+  html += `</ul>`;
+  return html;
+}
+
+// Hook into modal open to render reports
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("exportModal")?.addEventListener("show.bs.modal", () => {
+    wtwRender();
+  });
+});
 
 function openClippingInOutlook() { openInOutlook(); }
 async function copyClippingExport() { await copyExport(); }
