@@ -2558,9 +2558,7 @@ function buildClippingExportModal(items, scrapeResults) {
     item._scrapeResult = scrapeResults.get(item.id);
     buckets[exportSupergroup(item)].push(item);
   });
-  Object.values(buckets).forEach(arr =>
-    arr.sort((a, b) => (b.published_at||"").localeCompare(a.published_at||""))
-  );
+  // Preserve the order the user selected — no sorting
 
   const today   = new Date();
   const dateLong = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -2752,11 +2750,9 @@ function buildClippingFullExport(sections, buckets) {
 
   // 5. Main Headlines sections
   sections.forEach((sec, secIdx) => {
-    // Structure: br → divider → br → "Main Headlines – X" → br → divider
-    // This gives equal vertical space above and below the title (visually centred).
-    // Between the last article of a section and the next section header,
-    // the last article already ends with: br → topLink → br → divider.
-    // So we add only br → mainHeadline → br → divider (no extra divider before).
+    // First section: signature above has no divider → add one.
+    // Subsequent sections: last article ends with divider, so skip the top divider.
+    if (secIdx === 0) html += divider;
     html += br;
     html += mainHeadline(`Main Headlines \u2013 ${escHtml(sec)}`);
     html += br;
