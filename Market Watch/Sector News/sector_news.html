@@ -2572,47 +2572,136 @@ function buildClippingExportModal(items, scrapeResults) {
 function renderClippingExportPreview() {
   if (!exportState) return;
   const { sections, buckets } = exportState;
-  const orange = EXPORT_ORANGE;
+  const orange = "#FF5500";
 
-  // ── Build the canonical HTML (used both for preview and for export) ──────
-  const { html, plain, fullHtml } = buildClippingFullExport(sections, buckets);
-
-  // ── Preview: write into the Export modal's preview div ───────────────────
+  // ── Edit panel: reorder ↑↓, move Agri↔F&B, remove × ─────────────────────
   const previewEl = document.getElementById("export-preview");
-  if (previewEl) previewEl.innerHTML =
-    `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;max-width:700px;">${html}</div>`;
+  if (previewEl) {
+    let editHtml = `<div style="margin-bottom:16px;">`;
+    sections.forEach(sec => {
+      const otherSec = sec === "Agribusiness" ? "Food & Beverage" : "Agribusiness";
+      const otherLabel = sec === "Agribusiness" ? "→ F&B" : "→ Agri";
+      editHtml += `<div style="margin-bottom:8px;">`;
+      editHtml += `<div style="font-weight:bold;font-size:11px;text-transform:uppercase;color:${orange};margin-bottom:4px;">${escHtml(sec)}</div>`;
+      buckets[sec].forEach((item, idx) => {
+        const isFirst = idx === 0, isLast = idx === buckets[sec].length - 1;
+        const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
+        editHtml += `
+          <div style="display:flex;align-items:center;gap:4px;padding:4px 0;border-bottom:1px solid #F3F4F6;">
+            <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+              <button type="button" onclick="clippingMoveItem('${escJs(sec)}',${idx},-1)"
+                style="border:1px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:3px;padding:0 4px;font-size:10px;line-height:14px;cursor:pointer;${isFirst?'opacity:.25;pointer-events:none;':''}"
+                title="Mover para cima">▲</button>
+              <button type="button" onclick="clippingMoveItem('${escJs(sec)}',${idx},1)"
+                style="border:1px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:3px;padding:0 4px;font-size:10px;line-height:14px;cursor:pointer;${isLast?'opacity:.25;pointer-events:none;':''}"
+                title="Mover para baixo">▼</button>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:500;line-height:1.3;color:#111827;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">${escHtml(item.title)}</div>
+              <div style="font-size:10px;color:#9CA3AF;">${escHtml(srcName)}</div>
+            </div>
+            <button type="button" onclick="clippingChangeSec('${escJs(sec)}',${idx},'${escJs(otherSec)}')"
+              style="border:1px solid #E5E7EB;background:#fff;color:#6B7280;border-radius:3px;padding:1px 6px;font-size:10px;cursor:pointer;white-space:nowrap;flex-shrink:0;"
+              title="Mover para outra secção">${escHtml(otherLabel)}</button>
+            <button type="button" onclick="clippingRemoveItem('${escJs(sec)}',${idx})"
+              style="border:none;background:none;color:#9CA3AF;font-size:16px;padding:2px 4px;cursor:pointer;flex-shrink:0;"
+              title="Remover">×</button>
+          </div>`;
+      });
+      editHtml += `</div>`;
+    });
+    editHtml += `</div><hr style="margin:12px 0;border-color:#E5E7EB;">`;
 
+    // ── Email preview below the edit panel ─────────────────────────────────
+    const { html, plain, fullHtml } = buildClippingFullExport(sections, buckets);
+    editHtml += `<div style="font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#000;max-width:700px;">${html}</div>`;
+    previewEl.innerHTML = editHtml;
+
+    window._exportHtml      = fullHtml;
+    window._exportPlainText = plain;
+    window._exportSubject   = exportState ? exportState.subject : "Daily News Clipping";
+    window._exportHtmlInner = html;
+    return;
+  }
+
+  // ── Fallback: build canonical HTML only ──────────────────────────────────
+  const { html, plain, fullHtml } = buildClippingFullExport(sections, buckets);
   window._exportHtml      = fullHtml;
   window._exportPlainText = plain;
   window._exportSubject   = exportState ? exportState.subject : "Daily News Clipping";
   window._exportHtmlInner = html;
 }
 
+function clippingMoveItem(sec, idx, delta) {
+  if (!exportState) return;
+  const arr = exportState.buckets[sec];
+  if (!arr) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  const [moved] = arr.splice(idx, 1);
+  arr.splice(newIdx, 0, moved);
+  renderClippingExportPreview();
+}
+
+function clippingRemoveItem(sec, idx) {
+  if (!exportState) return;
+  const arr = exportState.buckets[sec];
+  if (!arr) return;
+  arr.splice(idx, 1);
+  if (arr.length === 0) exportState.sections = exportState.sections.filter(s => s !== sec);
+  const total = exportState.sections.reduce((n,s) => n + (exportState.buckets[s]?.length||0), 0);
+  if (total === 0) {
+    bootstrap.Modal.getInstance(document.getElementById("clippingExportModal"))?.hide();
+    showToast("Nenhuma notícia restante", "info");
+    return;
+  }
+  renderClippingExportPreview();
+}
+
+function clippingChangeSec(fromSec, idx, toSec) {
+  if (!exportState) return;
+  const arr = exportState.buckets[fromSec];
+  if (!arr || !exportState.buckets[toSec]) return;
+  const [item] = arr.splice(idx, 1);
+  exportState.buckets[toSec].push(item);
+  // Rebuild sections list preserving order, adding toSec if newly populated
+  const order = ["Agribusiness", "Food & Beverage"];
+  exportState.sections = order.filter(s => exportState.buckets[s]?.length > 0);
+  if (arr.length === 0) exportState.sections = exportState.sections.filter(s => s !== fromSec);
+  renderClippingExportPreview();
+}
+
 function buildClippingFullExport(sections, buckets) {
-  const orange   = EXPORT_ORANGE;
+  const orange   = "#FF5500";           // ← updated to 255,85,0
   const linkBlue = "#0563C1";
   const today    = new Date();
   const dateLong = today.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 
-  // Solid line using <hr> — survives Outlook email rendering (span borders get stripped)
+  // Solid line using table — survives Outlook rendering
   const divider =
     `<p style="margin:0;padding:0;line-height:0;font-size:0;mso-line-height-rule:exactly;">` +
     `<table border="0" cellpadding="0" cellspacing="0" width="280" style="border-collapse:collapse;">` +
     `<tr><td style="border-top:1px solid #333333;font-size:0;line-height:0;">&nbsp;</td></tr>` +
     `</table></p>`;
 
-  // One blank line between blocks (same as pressing Enter once in Outlook)
+  // One blank line
   const br = `<p style="margin:0;padding:0;line-height:1;font-size:11pt;font-family:Calibri,Arial,sans-serif;">&nbsp;</p>`;
 
   const orangeSection = txt =>
     `<p style="margin:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};text-align:left;">` +
     `<font color="${orange}"><b>${txt}</b></font></p>`;
 
+  // "Main Headlines – X" centered between dividers above and below
+  const mainHeadline = txt =>
+    `<p style="margin:0;font-family:Calibri,Arial,sans-serif;font-size:11pt;font-weight:bold;color:${orange};text-align:center;">` +
+    `<font color="${orange}"><b>${txt}</b></font></p>`;
+
+  // "Top of the Agri…" links to the <a name="top"> anchor at the very top
   const topLink =
     `<p style="margin:0;font-size:10pt;text-align:left;font-family:Calibri,Arial,sans-serif;">` +
     `<a href="#top" style="color:${linkBlue};text-decoration:underline;">Top of the Agri, F&amp;B Daily News</a></p>`;
 
-  let html = `<a name="top"></a>`;
+  let html = `<a name="top" id="top"></a>`;
 
   // 1. Header
   html += `<p style="text-align:center;font-weight:bold;font-size:12pt;margin:0;font-family:Calibri,Arial,sans-serif;">` +
@@ -2636,45 +2725,50 @@ function buildClippingFullExport(sections, buckets) {
           `<li style="margin:0;color:#9CA3AF;font-style:italic;">[Adicione os relatórios manualmente]</li>` +
           `</ul>`;
 
-  // 4. Team signature
+  // 4. Team signature — "Gustavo Troyano, CNPI" bold; phone+name in dark grey
   html += br;
   html += `<p style="margin:0;font-size:10pt;font-weight:bold;color:${orange};font-family:Calibri,Arial,sans-serif;text-align:left;">` +
           `<b><font color="${orange}">AGRIBUSINESS, FOOD &amp; BEVERAGE TEAM</font></b></p>`;
   html += br;
-  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
-          `Gustavo Troyano, CNPI<br>+55-11-3073-3269<br>` +
-          `<a href="mailto:gustavo.troyano@itaubba.com" style="color:${linkBlue};">gustavo.troyano@itaubba.com</a></p>`;
+  const analyst = (name, phone, email) =>
+    `<p style="margin:0;font-size:10pt;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
+    `<b>${escHtml(name)}</b><br>` +
+    `<span style="color:#374151;">${escHtml(phone)}</span><br>` +
+    `<a href="mailto:${escHtml(email)}" style="color:${linkBlue};">${escHtml(email)}</a></p>`;
+  html += analyst("Gustavo Troyano, CNPI", "+55-11-3073-3269", "gustavo.troyano@itaubba.com");
   html += br;
-  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
-          `Bruno Tomazetto, CNPI<br>+55-11-3073-3035<br>` +
-          `<a href="mailto:bruno.tomazetto@itaubba.com" style="color:${linkBlue};">bruno.tomazetto@itaubba.com</a></p>`;
+  html += analyst("Bruno Tomazetto, CNPI", "+55-11-3073-3035", "bruno.tomazetto@itaubba.com");
   html += br;
-  html += `<p style="margin:0;font-size:10pt;color:#000;font-family:Calibri,Arial,sans-serif;text-align:left;line-height:1.5;">` +
-          `Ryu Matsuyama, CNPI<br>+55-11-3073-3047<br>` +
-          `<a href="mailto:ryu.matsuyama@itaubba.com" style="color:${linkBlue};">ryu.matsuyama@itaubba.com</a></p>`;
+  html += analyst("Ryu Matsuyama, CNPI", "+55-11-3073-3047", "ryu.matsuyama@itaubba.com");
 
-  // 5. Main Headlines
-  sections.forEach(sec => {
+  // 5. Main Headlines sections
+  sections.forEach((sec, secIdx) => {
+    // Between the last TOC section / signature block and the first Main Headlines:
+    // use single divider → centered headline → divider (no extra br between them).
     html += br;
     html += divider;
     html += br;
-    html += orangeSection(`Main Headlines \u2013 ${escHtml(sec)}`);
+    html += mainHeadline(`Main Headlines \u2013 ${escHtml(sec)}`);
     html += br;
     html += divider;
 
     buckets[sec].forEach(item => {
       const srcName = item.source && item.source.trim() ? item.source : sourceFromUrl(item.url);
       const rawBody = (item._scrapeResult && item._scrapeResult.body) ? item._scrapeResult.body : (item.summary || "");
+      // Split into paragraphs and add a blank line between each
       const paras   = rawBody.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 40);
 
       html += br;
       html += `<p style="margin:0;font-weight:bold;font-size:11pt;font-family:Calibri,Arial,sans-serif;text-align:left;"><b>${escHtml(item.title)}</b></p>`;
+      // "Source:" in bold
       html += `<p style="margin:0;font-size:10pt;font-family:Calibri,Arial,sans-serif;text-align:left;">` +
-              `Source: <a href="${escHtml(item.url)}" target="_blank" style="color:${linkBlue};text-decoration:underline;">${escHtml(srcName)}</a></p>`;
+              `<b>Source:</b> <a href="${escHtml(item.url)}" target="_blank" style="color:${linkBlue};text-decoration:underline;">${escHtml(srcName)}</a></p>`;
       html += br;
       if (paras.length) {
-        paras.forEach(para => {
+        paras.forEach((para, i) => {
           html += `<p style="margin:0;font-size:11pt;line-height:1.5;font-family:Calibri,Arial,sans-serif;text-align:left;">${escHtml(para)}</p>`;
+          // Blank line between paragraphs (but not after the last one)
+          if (i < paras.length - 1) html += br;
         });
       } else {
         html += `<p style="margin:0;font-size:10pt;color:#9CA3AF;font-style:italic;font-family:Calibri,Arial,sans-serif;">[Corpo não extraído — adicione manualmente]</p>`;
