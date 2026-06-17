@@ -41,8 +41,14 @@ except ImportError:
 
 try:
     import lxml
+    PARSER = "lxml"
 except ImportError:
     _pip("lxml")
+    try:
+        import lxml
+        PARSER = "lxml"
+    except:
+        PARSER = "html.parser"
 
 try:
     import feedparser
@@ -155,7 +161,7 @@ def extract(html_str, url):
     import html as html_mod
     if not html_str or len(html_str) < 300:
         return ""
-    soup = BeautifulSoup(html_str, "lxml")
+    soup = BeautifulSoup(html_str, PARSER)
     for t in soup.find_all(["script","style","nav","header","footer","aside","noscript","figure","figcaption"]):
         t.decompose()
     for t in soup.find_all(class_=re.compile(r"ad-|banner|related|share|social|comment|newsletter|publicidade|paywall|sidebar|menu|breadcrumb|author")):
@@ -274,7 +280,7 @@ def rss_fetch(url, feed_url):
 
         import html as html_mod
         def parse_html(raw):
-            soup = BeautifulSoup(raw, "lxml")
+            soup = BeautifulSoup(raw, PARSER)
             paras = []
             for p in soup.find_all("p"):
                 t = p.get_text(" ", strip=True)
