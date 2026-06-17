@@ -304,6 +304,7 @@ def scrape_one(item):
     # Resolve Google News redirect URLs to the real source URL
     url = resolve_url(url)
     host = hostname(url)
+    print(f"  scrape_one: id={item_id} host={host} url={url[:80]}")
 
     # RSS shortcut
     for domain, feed_url in RSS_FEEDS.items():
