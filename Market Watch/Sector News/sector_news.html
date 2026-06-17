@@ -1273,7 +1273,11 @@ async function fetchNews() {
     btn.innerHTML = '<i class="bi bi-arrow-clockwise me-1"></i>Refresh';
   };
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px"></span> Buscando...';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:12px;height:12px;border-width:2px"></span> Atualizando…';
+
+  // Show the currently-saved news immediately so the user never sees an empty
+  // screen while the background fetch runs. The fetch only *adds* new items.
+  await loadNews();
 
   // /api/news/fetch is asynchronous: it only *starts* a background job (Render's
   // proxy would time out on the multi-minute fetch) and returns immediately with
@@ -1284,17 +1288,17 @@ async function fetchNews() {
     const res = await fetch(API_BASE + "/api/news/fetch", { method: "POST" });
     data = await res.json();
   } catch (e) {
-    showToast("Connection error", "danger");
+    showToast("Erro de conexão", "danger");
     restoreBtn();
     return;
   }
   if (!data.success) {
-    showToast("Error: " + (data.error || "unknown"), "danger");
+    showToast("Erro: " + (data.error || "desconhecido"), "danger");
     restoreBtn();
     return;
   }
 
-  showToast("Busca iniciada — isso pode levar alguns minutos. Aguarde…", "info");
+  showToast("Buscando novas notícias em segundo plano. As notícias atuais já estão visíveis — novas aparecerão ao concluir.", "info");
 
   // Poll status. Cold start + full fetch can take a few minutes; cap the wait.
   const POLL_MS = 5000, MAX_POLLS = 72; // ~6 min
