@@ -2421,96 +2421,59 @@ async function fetchBodyFromWayback(item) {
 
 // Attempts to fetch article body via a CORS proxy + source-specific extraction.
 // mode="css"  → finds the selector, grabs its innerText directly
-// mode="p"    → finds the selector area, then extracts all <p> tags within it;
-//               if no selector matches, falls back to all <p> tags on the page.
-// Falls back to the DB snippet if everything fails.
-async function scrapeArticleBody(item) {
-  const cfg = getScraperConfig(item.url);
-  const hostname = (() => { try { return new URL(item.url).hostname.replace(/^www\./, ""); } catch { return ""; } })();
+// ── Scrape via GitHub Actions (async polling) ─────────────────────────────────
+// 1. POST /api/scrape-trigger com todos os items de uma vez
+// 2. Recebe job_id
+// 3. Faz polling em /api/scrape-status?job_id=xxx até status=done
+// 4. Retorna resultados
 
-  // ── Strategy 1: RSS (Canal Rural — handled server-side too, but try here first) ──
-  const rssFeed = Object.entries(RSS_FEEDS).find(([domain]) => hostname.includes(domain));
-  if (rssFeed) {
-    const rssResult = await fetchBodyFromRSS(item, rssFeed[1]);
-    if (rssResult.ok) return rssResult;
+async function scrapeAllViaGHA(items) {
+  // Step 1: trigger
+  const triggerRes = await fetch(API_BASE + "/api/scrape-trigger", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items: items.map(i => ({ id: i.id, url: i.url, source: i.source || "" })) }),
+    signal: AbortSignal.timeout(30000),
+  });
+
+  if (!triggerRes.ok) {
+    const err = await triggerRes.json().catch(() => ({}));
+    // If local mode returned results directly
+    if (err.results) return { mode: "local", results: err.results };
+    throw new Error(err.error || `trigger failed: ${triggerRes.status}`);
   }
 
-  // ── Strategy 2: Backend scrape endpoint (/api/scrape) ────────────────────
-  // The backend runs the full 4-tier cascade (requests → curl → curl-impersonate
-  // → Playwright) server-side, without CORS or proxy issues.
-  try {
-    const res = await fetch(API_BASE + "/api/scrape", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ items: [{ id: item.id, url: item.url, source: item.source || "" }] }),
-      signal: AbortSignal.timeout(60000),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      const result = (data.results || [])[0];
-      if (result && result.ok && result.body && result.body.length > 80) {
-        return { ok: true, body: result.body, source: `tier${result.tier}` };
-      }
-    }
-  } catch (e) {
-    // Backend unavailable — fall through to browser fallbacks
-    console.warn("Backend scrape failed:", e.message);
+  const triggerData = await triggerRes.json();
+
+  // Local fallback mode — results returned immediately
+  if (triggerData.mode === "local" && triggerData.results) {
+    return { mode: "local", results: triggerData.results };
   }
 
-  // ── Strategy 3: Browser-side proxy cascade (fallback when backend is down) ──
-  // Less reliable than backend but better than nothing.
-  const PROXY_CHAIN = [
-    u => ({ url: `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, json: true,  key: "contents" }),
-    u => ({ url: `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,  json: false, key: null }),
-    u => ({ url: `https://corsproxy.io/?${encodeURIComponent(u)}`,               json: false, key: null }),
-    u => ({ url: `https://thingproxy.freeboard.io/fetch/${u}`,                   json: false, key: null }),
-  ];
+  const jobId = triggerData.job_id;
+  if (!jobId) throw new Error("No job_id returned");
 
-  const extractTextFromHtml = (rawHtml) => {
-    if (!rawHtml || rawHtml.length < 300) return "";
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(rawHtml, "text/html");
-    ["script","style","nav","header","footer","aside","figure","figcaption",
-     "[class*='ad-']","[class*='banner']","[class*='related']","[class*='share']",
-     "[class*='social']","[class*='comment']","[class*='newsletter']",
-     "[class*='publicidade']","[class*='paywall-widget']","noscript"
-    ].forEach(s => { try { doc.querySelectorAll(s).forEach(n => n.remove()); } catch {} });
-    const selectors = cfg.sel.split(",").map(s => s.trim()).filter(Boolean);
-    let container = null;
-    for (const s of selectors) {
-      try { const el = doc.querySelector(s); if (el) { container = el; break; } } catch {}
-    }
-    const scope = container || doc.body;
-    const paras = Array.from(scope.querySelectorAll("p"))
-      .map(p => (p.innerText || p.textContent || "").replace(/\s+/g, " ").trim())
-      .filter(t => t.length > 60 &&
-        !/(login|cadastr|newsletter|publicidade|cookie|compartilh|related|leia mais|assine|clique aqui|publicado em|leia também|tags:|palavras.chave)/i.test(t));
-    return paras.join("\n\n");
-  };
+  // Step 2: poll until done (max 3 minutes)
+  const maxWait = 180000;
+  const pollInterval = 3000;
+  const start = Date.now();
 
-  let lastErr = "all proxies failed";
-  for (const proxyFn of PROXY_CHAIN) {
+  while (Date.now() - start < maxWait) {
+    await new Promise(r => setTimeout(r, pollInterval));
     try {
-      const { url: proxyUrl, json: isJson, key } = proxyFn(item.url);
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(12000) });
-      if (!res.ok) { lastErr = "proxy " + res.status; continue; }
-      const rawHtml = isJson ? ((await res.json())[key] || "") : await res.text();
-      const text = extractTextFromHtml(rawHtml);
-      if (text && text.length > 80) return { ok: true, body: text, source: "proxy" };
-      lastErr = "no content";
-    } catch (e) { lastErr = e.message; }
+      const statusRes = await fetch(API_BASE + `/api/scrape-status?job_id=${jobId}`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!statusRes.ok) continue;
+      const statusData = await statusRes.json();
+      if (statusData.status === "done") {
+        return { mode: "gha", results: statusData.results || [] };
+      }
+    } catch (e) {
+      // continue polling
+    }
   }
-
-  // ── Strategy 4: Wayback Machine ──────────────────────────────────────────
-  const jsBlocked = ["globorural.globo.com", "canalrural.com.br"].some(d => hostname.includes(d));
-  if (jsBlocked) {
-    const wb = await fetchBodyFromWayback(item);
-    if (wb.ok) return wb;
-  }
-
-  // ── Strategy 5: DB snippet fallback ─────────────────────────────────────
-  const fallback = item.summary || item.snippet || "";
-  return { ok: false, body: fallback, error: lastErr };
+  throw new Error("Scraping timed out after 3 minutes");
 }
 
 // ── Generate Clipping ─────────────────────────────────────────────────────────
@@ -2522,31 +2485,44 @@ async function generateClipping() {
   const statusEl = document.getElementById("clipping-scrape-status");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm" style="width:14px;height:14px;border-width:2px"></span> Extraindo textos...';
+
+  // Show pending pills
   statusEl.innerHTML = items.map(item =>
     `<span class="scrape-pill wait" id="spill-${item.id}">${escHtml(sourceFromUrl(item.url))}</span>`
   ).join("");
 
-  // Scrape all articles (in parallel, capped at 3)
-  const results = new Map();
-  const chunks = [];
-  for (let i = 0; i < items.length; i += 3) chunks.push(items.slice(i, i+3));
+  try {
+    // Dispatch all items at once to GitHub Actions
+    const { mode, results } = await scrapeAllViaGHA(items);
 
-  for (const chunk of chunks) {
-    await Promise.all(chunk.map(async item => {
-      const r = await scrapeArticleBody(item);
-      results.set(item.id, r);
+    // Map results by id
+    const resultMap = new Map();
+    (results || []).forEach(r => resultMap.set(r.id, r));
+
+    // Update pills
+    items.forEach(item => {
+      const r = resultMap.get(item.id) || { ok: false, error: "no result" };
       const pill = document.getElementById(`spill-${item.id}`);
       if (pill) {
-        const label = r.source === "rss" ? "RSS ✓" : r.source === "wayback" ? "Wayback ✓" : r.source === "scrape" ? "Web ✓" : "snippet";
+        const tier = r.tier;
+        const label = tier === "rss" ? "RSS ✓"
+                    : tier === "wayback" ? "Wayback ✓"
+                    : r.ok ? `Web ✓ (tier${tier})`
+                    : "snippet";
         pill.className = `scrape-pill ${r.ok ? "ok" : "fail"}`;
         pill.textContent = sourceFromUrl(item.url) + " — " + label;
-        pill.title = r.ok ? `Extraído via ${r.source}` : ("Fallback: " + r.error);
+        pill.title = r.ok ? `Extraído via tier${tier}` : (r.error || "falhou");
       }
-    }));
-  }
+      item._scrapeResult = r.ok ? r : { ok: false, body: item.summary || "", error: r.error };
+    });
 
-  // Build the clipping export using existing export logic + article bodies
-  buildClippingExportModal(items, results);
+    // Build export
+    buildClippingExportModal(items, new Map(items.map(i => [i.id, i._scrapeResult])));
+
+  } catch (e) {
+    statusEl.innerHTML = `<span class="scrape-pill fail">Erro: ${escHtml(e.message)}</span>`;
+    console.error("generateClipping error:", e);
+  }
 
   btn.disabled = false;
   btn.innerHTML = '<i class="bi bi-envelope-paper"></i> Gerar template do clipping';
