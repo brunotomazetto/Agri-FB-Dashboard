@@ -362,7 +362,7 @@ if __name__ == "__main__":
         print("ERROR: SCRAPE_JOB_ID and BACKEND_URL are required")
         sys.exit(1)
 
-    print(f"[scrape_worker] job={job_id}")
+    print(f"[scrape_worker] VERSION=2024-FINAL job={job_id}")
     items = json.loads(items_json)
     print(f"[scrape_worker] {len(items)} items to scrape")
     for item in items:
