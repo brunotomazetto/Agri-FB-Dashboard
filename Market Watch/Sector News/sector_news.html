@@ -2750,9 +2750,14 @@ function buildClippingFullExport(sections, buckets) {
 
   // 5. Main Headlines sections
   sections.forEach((sec, secIdx) => {
-    // First section: signature above has no divider → add one.
-    // Subsequent sections: last article ends with divider, so skip the top divider.
-    if (secIdx === 0) html += divider;
+    // Structure: br → divider → br → title → br → divider
+    // For the first section, add the top br+divider explicitly.
+    // For subsequent sections, the previous article already ends with br+divider,
+    // so only add the br before the title.
+    if (secIdx === 0) {
+      html += br;
+      html += divider;
+    }
     html += br;
     html += mainHeadline(`Main Headlines \u2013 ${escHtml(sec)}`);
     html += br;
