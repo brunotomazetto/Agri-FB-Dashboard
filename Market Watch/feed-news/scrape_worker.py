@@ -344,6 +344,8 @@ if __name__ == "__main__":
     print(f"[scrape_worker] job={job_id}")
     items = json.loads(items_json)
     print(f"[scrape_worker] {len(items)} items to scrape")
+    for item in items:
+        print(f"[scrape_worker]   → id={item.get('id')} url={item.get('url','')[:80]}")
 
     results = scrape_batch(items)
     ok_count = sum(1 for r in results if r.get("ok"))
