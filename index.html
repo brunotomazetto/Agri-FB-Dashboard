@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Equity Research — Agribusiness, Food & Beverage</title>
+<title>Agribusiness, F&B DataHouse — Equity Research</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -51,7 +51,12 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 #screen-app.active{display:flex;}
 /* TOP NAV */
 .top-nav{background:#1A1A1A;display:flex;align-items:center;padding:0 20px;height:50px;flex-shrink:0;border-bottom:1px solid #303030;z-index:100;}
-.top-nav-logo{display:flex;align-items:center;margin-right:20px;cursor:pointer;flex-shrink:0;}
+.top-nav-logo{display:flex;align-items:center;margin-right:14px;cursor:pointer;flex-shrink:0;}
+.top-nav-brand{display:flex;align-items:baseline;gap:6px;margin-right:18px;flex-shrink:0;white-space:nowrap;}
+.top-nav-brand .brand-desc{font-size:13px;color:#9a9a9a;font-weight:500;letter-spacing:.2px;}
+.top-nav-brand .brand-mark{font-size:14px;color:#fff;font-weight:700;letter-spacing:.2px;}
+@media(max-width:700px){.top-nav-brand .brand-desc{display:none;}}
+@media(max-width:480px){.top-nav-brand{display:none;}}
 .top-nav-divider{width:1px;height:22px;background:#333;margin-right:16px;flex-shrink:0;}
 .top-nav-tabs{display:flex;align-items:stretch;height:100%;flex:1;overflow-x:auto;}
 .top-nav-tabs::-webkit-scrollbar{display:none;}
@@ -271,7 +276,7 @@ hr.sep{border:none;border-top:1px solid var(--border);margin:18px 0;}
 <div id="screen-login" class="screen">
   <div class="login-card">
     <div class="login-logo-wrap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" style="height:56px;width:auto;display:block;" aria-label="Logo" role="img"><rect x="6" y="6" width="52" height="52" rx="10" ry="10" fill="none" stroke="#FF5500" stroke-width="2"/></svg></div>
-    <div class="login-title">Agribusiness, Food &amp; Beverage</div>
+    <div class="login-title">Agribusiness, F&amp;B <span style="color:var(--orange);">DataHouse</span></div>
     <div class="login-sub">Equity Research Portal</div>
     <label class="login-label" for="inp-user">Corporate Email</label>
     <input id="inp-user" class="login-input" type="text" placeholder="your.name@corporateemail.com" autocomplete="email"/>
@@ -297,6 +302,7 @@ hr.sep{border:none;border-top:1px solid var(--border);margin:18px 0;}
     <div class="top-nav-logo" onclick="navigateSector('agri')" title="Home">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" style="height:32px;width:auto;display:block;" aria-label="Home" role="img"><rect x="6" y="6" width="52" height="52" rx="10" ry="10" fill="none" stroke="#FF5500" stroke-width="2.5"/></svg>
     </div>
+    <div class="top-nav-brand" onclick="navigateSector('agri')" style="cursor:pointer;"><span class="brand-desc">Agribusiness,&nbsp;F&amp;B</span><span class="brand-mark">DataHouse</span></div>
     <div class="top-nav-divider"></div>
     <div class="top-nav-tabs" id="top-nav-tabs"></div>
     <div class="top-nav-right">
@@ -846,7 +852,7 @@ function renderSidebar(){
     </a>`;
   // Each individual analyst card also emails ALL analysts (TO: all, not just clicked one)
   const analystCards=analysts.map(a=>`
-    <a class="analyst-card" href="mailto:${esc(mailAll)}?subject=Equity Research — Agribusiness, Food & Beverage" onclick="event.stopPropagation()">
+    <a class="analyst-card" href="mailto:${esc(mailAll)}?subject=Agribusiness, F&B DataHouse — Equity Research" onclick="event.stopPropagation()">
       <div class="analyst-avatar">${initials(a.name)}</div>
       <div>
         <div class="analyst-name">${esc(a.name)}</div>
