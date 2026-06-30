@@ -147,25 +147,25 @@ const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','De
 const MODELFILE={nasa:"history.json",era5:"history_era5.json"};
 const MODELLBL={nasa:"NASA POWER",era5:"ERA5"};
 const STATE={vr:SCOPE==="agri"?"p":"t",grp:SCOPE_GROUPS[0],gran:"m",yrs:15,entity:hasW(SCOPE_GROUPS[0])?"wavg":"group",model:"nasa",enso:false,histByModel:{},sortKey:"vs",sortDir:-1,pts:[],hist:null,years:[],curYear:null,chart:null};
-/* ── ONI (Oceanic Niño Index, NOAA CPC) — anomalia trimestral por mês-do-meio (Jan..Dez) ── */
-const ONI={
-2010:[1.5,1.22,0.84,0.35,-0.17,-0.66,-1.05,-1.35,-1.56,-1.64,-1.64,-1.54],
-2011:[-1.31,-1.04,-0.8,-0.62,-0.46,-0.37,-0.43,-0.58,-0.79,-0.96,-1.02,-0.92],
-2012:[-0.72,-0.57,-0.46,-0.36,-0.17,0.06,0.3,0.41,0.41,0.31,0.13,-0.1],
-2013:[-0.29,-0.29,-0.21,-0.19,-0.27,-0.34,-0.35,-0.28,-0.21,-0.13,-0.1,-0.15],
-2014:[-0.28,-0.32,-0.14,0.15,0.31,0.23,0.1,0.11,0.28,0.54,0.71,0.77],
-2015:[0.69,0.61,0.65,0.81,1.02,1.25,1.57,1.91,2.21,2.47,2.64,2.75],
-2016:[2.63,2.28,1.71,1.05,0.49,0.0,-0.31,-0.5,-0.58,-0.64,-0.6,-0.45],
-2017:[-0.19,-0.02,0.18,0.31,0.4,0.39,0.19,-0.07,-0.34,-0.6,-0.77,-0.86],
-2018:[-0.77,-0.71,-0.57,-0.39,-0.13,0.06,0.14,0.27,0.53,0.81,0.97,0.92],
-2019:[0.89,0.86,0.84,0.77,0.64,0.52,0.33,0.19,0.23,0.39,0.58,0.66],
-2020:[0.64,0.63,0.53,0.3,0.01,-0.23,-0.36,-0.53,-0.85,-1.12,-1.2,-1.08],
-2021:[-0.91,-0.79,-0.71,-0.55,-0.39,-0.3,-0.35,-0.45,-0.63,-0.76,-0.91,-0.87],
-2022:[-0.82,-0.79,-0.86,-0.95,-0.9,-0.78,-0.76,-0.87,-0.97,-0.94,-0.85,-0.71],
-2023:[-0.54,-0.29,-0.02,0.27,0.57,0.84,1.12,1.37,1.6,1.83,1.99,2.06],
-2024:[1.92,1.62,1.26,0.82,0.49,0.22,0.08,-0.07,-0.17,-0.21,-0.3,-0.42],
-2025:[-0.45,-0.24,-0.06,0.02,-0.02,-0.04,-0.14,-0.28,-0.4,-0.51,-0.55,-0.54],
-2026:[-0.37,-0.14,0.13,0.48]};
+/* ── RONI (Relative Oceanic Niño Index, NOAA CPC) — anomalia trimestral por mês-do-meio (Jan..Dez); remove a tendência de aquecimento médio do trópico ── */
+const RONI={
+2010:[1.45,1.11,0.64,0.05,-0.53,-0.99,-1.28,-1.51,-1.68,-1.74,-1.72,-1.63],
+2011:[-1.43,-1.19,-0.92,-0.69,-0.48,-0.34,-0.38,-0.51,-0.74,-0.94,-1.05,-0.99],
+2012:[-0.82,-0.65,-0.56,-0.47,-0.27,0.03,0.34,0.43,0.4,0.23,-0.06,-0.38],
+2013:[-0.63,-0.6,-0.5,-0.43,-0.44,-0.43,-0.38,-0.32,-0.28,-0.22,-0.22,-0.33],
+2014:[-0.49,-0.53,-0.33,-0.05,0.07,-0.01,-0.13,-0.09,0.08,0.36,0.52,0.56],
+2015:[0.45,0.38,0.45,0.61,0.82,1.03,1.33,1.64,1.93,2.18,2.34,2.37],
+2016:[2.22,1.84,1.28,0.54,-0.06,-0.56,-0.86,-1.0,-1.07,-1.11,-1.08,-0.99],
+2017:[-0.74,-0.54,-0.27,-0.09,0.05,0.05,-0.17,-0.46,-0.73,-0.99,-1.15,-1.26],
+2018:[-1.12,-1.04,-0.88,-0.67,-0.31,-0.04,0.05,0.16,0.4,0.65,0.77,0.67],
+2019:[0.62,0.62,0.6,0.52,0.34,0.21,0.03,-0.1,-0.03,0.12,0.23,0.2],
+2020:[0.11,0.08,-0.03,-0.28,-0.56,-0.76,-0.81,-0.93,-1.23,-1.47,-1.54,-1.37],
+2021:[-1.18,-1.04,-0.98,-0.79,-0.61,-0.52,-0.59,-0.72,-0.92,-1.06,-1.23,-1.24],
+2022:[-1.22,-1.22,-1.28,-1.34,-1.22,-0.99,-0.91,-1.01,-1.14,-1.12,-1.05,-0.97],
+2023:[-0.83,-0.62,-0.44,-0.21,0.07,0.37,0.62,0.85,1.1,1.35,1.49,1.45],
+2024:[1.2,0.85,0.49,0.05,-0.26,-0.46,-0.51,-0.64,-0.76,-0.82,-0.94,-1.08],
+2025:[-1.13,-0.9,-0.67,-0.52,-0.49,-0.43,-0.47,-0.63,-0.77,-0.87,-0.93,-0.97],
+2026:[-0.88,-0.71,-0.45,-0.06]};
 function ensoColor(oni){
   if(oni==null)return undefined;
   if(oni>0.5){const t=Math.min(1,(oni-0.5)/2);return `rgba(230,${Math.round(135-75*t)},30,${(0.5+0.42*t).toFixed(2)})`;}
@@ -329,7 +329,7 @@ function drawLegend(S){
    ?`<span><i class="ln" style="border-color:rgba(230,75,30,.85)"></i>El Niño</span>
      <span><i class="ln" style="border-color:rgba(120,120,120,.45)"></i>Neutral</span>
      <span><i class="ln" style="border-color:rgba(50,90,210,.85)"></i>La Niña</span>
-     <span style="color:var(--gray-mid)">(ENSO · NOAA ONI by mid-month)</span>`
+     <span style="color:var(--gray-mid)">(ENSO · NOAA RONI by mid-month)</span>`
    :`<span><i class="ln" style="border-color:rgba(70,70,70,.72)"></i>${S.yrs[S.yrs.length-1]}</span>
      <span><i class="ln" style="border-color:rgba(165,165,165,.55)"></i>${S.yrs[S.yrs.length-2]}</span>
      <span><i class="ln" style="border-color:rgba(120,120,120,.45)"></i>Earlier years</span>`;
@@ -353,7 +353,7 @@ function drawChart(S){
   S.yearSeries.forEach((s,i)=>{const yr=S.yrs[i];
     const col=STATE.enso?"rgba(120,120,120,.28)":(yr===lastYr?"rgba(70,70,70,.62)":yr===secYr?"rgba(155,155,155,.3)":"rgba(120,120,120,.3)");
     const d={label:String(yr),data:s,borderColor:col,borderWidth:(!STATE.enso&&yr===lastYr)?1.7:1.1,pointRadius:0,fill:false,order:STATE.enso?20:(yr===lastYr?18:yr===secYr?19:20),_to:6+(lastYr-yr),tension:.3,spanGaps:true};
-    if(STATE.enso)d.segment={borderColor:ctx=>{const a=ONI[yr];return a?ensoColor(a[S.bucketMonth[ctx.p0DataIndex]-1]):undefined;}};
+    if(STATE.enso)d.segment={borderColor:ctx=>{const a=RONI[yr];return a?ensoColor(a[S.bucketMonth[ctx.p0DataIndex]-1]):undefined;}};
     ds.push(d);});
   ds.push({label:"Mean "+yl,data:S.mean,borderColor:"#888",borderWidth:1.6,borderDash:[5,3],pointRadius:0,fill:false,order:5,_to:3,tension:.3,spanGaps:true});
   ds.push({label:"Forecast",data:S.curFc,borderColor:"#FF5500",borderWidth:2.2,borderDash:[3,3],pointRadius:0,fill:false,order:1,_to:2,tension:.25,spanGaps:true});
