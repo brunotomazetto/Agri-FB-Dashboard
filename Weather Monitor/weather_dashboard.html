@@ -98,6 +98,12 @@ tbody tr.grp.sel td{background:#FFE9DC;}
     <button class="view-btn" data-yrs="10" onclick="setYrs(10)">10y</button>
     <button class="view-btn active" data-yrs="15" onclick="setYrs(15)">15y</button>
   </div>
+  <div class="ctrl-sep"></div>
+  <span class="view-label">Model:</span>
+  <div class="view-btns">
+    <button class="view-btn active" data-model="nasa" onclick="setModel('nasa')">NASA POWER</button>
+    <button class="view-btn" data-model="era5" onclick="setModel('era5')">ERA5</button>
+  </div>
 </div>
 
 <div class="main">
@@ -116,7 +122,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 </div>
 
 <div class="note-bar">
-  Source: <em>NASA POWER</em> (historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
+  Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. A multi-point average has a naturally narrow band (spatial cancellation) — select a single point to see the real spread.
 </div>
 
@@ -133,7 +139,9 @@ const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC 
   :"Current year vs. historical distribution — capitals (bars) &amp; farms (SLC · BrasilAgro)";
 const POP={"São Paulo":11451245,"Rio de Janeiro":6211423,"Brasília":2817381,"Fortaleza":2428708,"Salvador":2418005,"Belo Horizonte":2315560,"Manaus":2063547,"Curitiba":1773718,"Recife":1488920,"Goiânia":1437237,"Porto Alegre":1332570,"Belém":1303389,"São Luís":1037775,"Maceió":957916,"Campo Grande":897938,"Teresina":866300,"João Pessoa":833932,"Natal":751300,"Cuiabá":650912,"Aracaju":602757,"Florianópolis":537213,"Porto Velho":460434,"Macapá":442933,"Boa Vista":413486,"Rio Branco":364756,"Vitória":322869,"Palmas":302692};
 const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const STATE={vr:SCOPE==="agri"?"p":"t",grp:SCOPE_GROUPS[0],gran:"m",yrs:15,entity:hasW(SCOPE_GROUPS[0])?"wavg":"group",sortKey:"vs",sortDir:-1,pts:[],hist:null,years:[],curYear:null,chart:null};
+const MODELFILE={nasa:"history.json",era5:"history_era5.json"};
+const MODELLBL={nasa:"NASA POWER",era5:"ERA5"};
+const STATE={vr:SCOPE==="agri"?"p":"t",grp:SCOPE_GROUPS[0],gran:"m",yrs:15,entity:hasW(SCOPE_GROUPS[0])?"wavg":"group",model:"nasa",histByModel:{},sortKey:"vs",sortDir:-1,pts:[],hist:null,years:[],curYear:null,chart:null};
 const TODAY=new Date();TODAY.setHours(0,0,0,0);
 const MD=(()=>{const m={},days=[31,29,31,30,31,30,31,31,30,31,30,31];let i=0;for(let mo=1;mo<=12;mo++)for(let d=1;d<=days[mo-1];d++)m[mo*100+d]=i++;return m;})();
 const IDX2MD=(()=>{const a=new Array(366);for(const k in MD)a[MD[k]]=[Math.floor(+k/100),(+k)%100];return a;})();
@@ -150,10 +158,10 @@ async function boot(){
   applyScope();
   try{
     const cb="?v="+Date.now();
-    const [loc,hist]=await Promise.all([fetch("locations.json"+cb).then(r=>r.json()),fetch("history.json"+cb).then(r=>r.json())]);
-    STATE.hist=hist;STATE.years=hist.years.slice();STATE.curYear=Math.max(...hist.years);
-    STATE.histPts=Object.entries(hist.points).map(([k,v])=>{const[la,lo]=k.split(",").map(Number);return{la,lo,v};});
+    const [loc,hist]=await Promise.all([fetch("locations.json"+cb).then(r=>r.json()),fetch(MODELFILE.nasa+cb).then(r=>r.json())]);
+    STATE.histByModel.nasa=hist;
     STATE.pts=collectPoints(loc);
+    applyHist(hist);
     document.getElementById("load-msg").textContent=`Querying Open-Meteo (${STATE.pts.length} points)…`;
     try{await fetchLive(STATE.pts);}catch(e){console.warn("live fetch failed — using history only:",e);}
     document.getElementById("loading").style.display="none";
@@ -163,7 +171,22 @@ async function boot(){
 function collectPoints(loc){
   const caps=loc.capitais.map(c=>({id:"c|"+c.nome,grp:"cap",nome:c.nome,sub:c.uf,lat:c.lat,lon:c.lon,w:POP[c.nome]||0}));
   const fz=loc.fazendas.map(f=>({id:"f|"+f.fazenda+"|"+f.municipio,grp:f.empresa==="SLC"?"slc":"ba",nome:f.fazenda,sub:f.municipio+"/"+f.uf,empresa:f.empresa,lat:f.lat,lon:f.lon,area:f.area_ha||0,w:f.empresa==="SLC"?(f.area_ha||0):0}));
-  const all=caps.concat(fz);all.forEach(p=>{p.h=matchHist(p.lat,p.lon);});return all;
+  return caps.concat(fz);
+}
+function applyHist(hist){
+  STATE.hist=hist;STATE.years=hist.years.slice();STATE.curYear=Math.max(...hist.years);
+  STATE.histPts=Object.entries(hist.points).map(([k,v])=>{const[la,lo]=k.split(",").map(Number);return{la,lo,v};});
+  STATE.pts.forEach(p=>{p.h=matchHist(p.lat,p.lon);});
+}
+async function setModel(m){
+  if(m===STATE.model)return;
+  if(!STATE.histByModel[m]){
+    const ld=document.getElementById("loading");document.getElementById("load-msg").textContent=`Loading ${MODELLBL[m]} model…`;ld.style.display="flex";
+    try{STATE.histByModel[m]=await fetch(MODELFILE[m]+"?v="+Date.now()).then(r=>{if(!r.ok)throw new Error(r.status);return r.json();});}
+    catch(e){ld.style.display="none";document.getElementById("load-msg").innerHTML='<span class="err">'+MODELLBL[m]+' unavailable</span>';console.error(e);return;}
+    ld.style.display="none";
+  }
+  STATE.model=m;act("model",m);applyHist(STATE.histByModel[m]);render();
 }
 function matchHist(lat,lon){let b=null,bd=1e9;for(const c of STATE.histPts){const d=Math.abs(c.la-lat)+Math.abs(c.lo-lon);if(d<bd){bd=d;b=c;}}return bd<0.02?b.v:null;}
 async function fetchLive(pts){
@@ -266,7 +289,7 @@ function renderChart(){
   const wtd=STATE.entity==="wavg", isGroup=STATE.entity==="group"||wtd;
   const head=wtd?`${GRPLBL[STATE.grp]} — weighted by ${WLBL[STATE.grp]} (${sel.length})`:isGroup?`Average of ${sel.length} points · ${GRPLBL[STATE.grp]}`:sel[0].nome+" · "+sel[0].sub;
   document.getElementById("chart-title").textContent=(STATE.vr==="t"?"Mean temperature":"Rainfall")+" — "+head;
-  document.getElementById("chart-sub").textContent=`Year ${STATE.curYear} · ${STATE.gran==="m"?"monthly":"weekly"} · ${STATE.yrs}-year history`+(isGroup?" · narrow band (spatial average) — click a point":"");
+  document.getElementById("chart-sub").textContent=`Year ${STATE.curYear} · ${STATE.gran==="m"?"monthly":"weekly"} · ${STATE.yrs}-year history · ${MODELLBL[STATE.model]}`+(isGroup?" · narrow band (spatial average) — click a point":"");
   const S=computeSeries(sel,wtd);drawChart(S);drawLegend(S);drawStats(S);
 }
 function drawLegend(S){document.getElementById("chart-legend").innerHTML=
