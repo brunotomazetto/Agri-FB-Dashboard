@@ -374,7 +374,12 @@ function drawChart(S){
   ds.push({label:String(STATE.curYear),data:S.curObs,borderColor:"#FF5500",borderWidth:2.8,pointRadius:STATE.gran==="m"?2.5:0,fill:false,order:1,_to:1,tension:.25,spanGaps:true});
   STATE.chart=new Chart(document.getElementById("chart"),{type:"line",data:{labels:S.labels,datasets:ds},options:{
     responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},animation:false,
-    plugins:{legend:{display:false},tooltip:{filter:it=>!it.dataset._skip&&it.parsed.y!=null,itemSort:(a,b)=>(a.dataset._to||9)-(b.dataset._to||9),callbacks:{label:c=>`${c.dataset.label}: ${fmtV(c.parsed.y)}`}}},
+    plugins:{legend:{display:false},tooltip:{filter:it=>!it.dataset._skip&&it.parsed.y!=null,itemSort:(a,b)=>(a.dataset._to||9)-(b.dataset._to||9),callbacks:{
+      label:c=>`${c.dataset.label}: ${fmtV(c.parsed.y)}`,
+      labelColor:c=>{const ds=c.dataset,bc=ds.borderColor||"#888";
+        if(ensoOn&&/^\d{4}$/.test(ds.label||"")&&(+ds.label)!==STATE.curYear){const col=ensoColor(RONI[+ds.label]&&RONI[+ds.label][S.bucketMonth[c.dataIndex]-1],STATE.enso)||"rgba(120,120,120,.5)";return{borderColor:col,backgroundColor:col,borderWidth:2};}
+        return{borderColor:bc,backgroundColor:bc,borderWidth:2};}
+    }}},
     scales:{x:{ticks:{maxTicksLimit:STATE.gran==="m"?12:14,font:{size:9},color:"#999"},grid:{display:false}},
             y:{title:{display:true,text:STATE.vr==="t"?"°C":"mm",font:{size:10},color:"#888"},ticks:{font:{size:9},color:"#999"},grid:{color:"#f2f2f2"}}}}});
 }
