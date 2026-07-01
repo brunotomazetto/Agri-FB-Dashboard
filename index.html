@@ -360,6 +360,23 @@ function setLoginMode(m){ try{ localStorage.setItem(LOGIN_MODE_KEY, m); }catch(e
 function getLoginMode(){ try{ return localStorage.getItem(LOGIN_MODE_KEY); }catch(e){ return null; } }
 function clearLoginMode(){ try{ localStorage.removeItem(LOGIN_MODE_KEY); }catch(e){} }
 
+/* ══ ACCESS TRACKING — a returning user with a cached Supabase session is
+   auto-logged-in and never hits doAdminLogin/doPasswordlessLogin, so those
+   revisits used to go uncounted. We now log a 'login' event on session restore
+   too, but throttle it to one "visit" per 30-min idle gap (the classic web-
+   analytics session rule) so a plain page refresh doesn't inflate the count. ══ */
+const LAST_ACCESS_KEY = 'agri_last_access';
+const ACCESS_GAP_MS   = 30 * 60 * 1000;
+function markAccess(){ try{ localStorage.setItem(LAST_ACCESS_KEY, String(Date.now())); }catch(e){} }
+function shouldLogAccess(){
+  try{
+    const last  = parseInt(localStorage.getItem(LAST_ACCESS_KEY) || '0', 10);
+    const fresh = (Date.now() - last) > ACCESS_GAP_MS;
+    markAccess();
+    return fresh;
+  }catch(e){ return true; }
+}
+
 /* ══ STATE ══ */
 const STATE = {
   currentUser: null,       // portal_users row
@@ -425,6 +442,8 @@ async function init(){
     STATE.authSession = session;
     setAuthCookie(session);
     await loadUserAndData(session.user.email, { forceStandard: getLoginMode()==='standard' });
+    // Count this restored session as an access (throttled to one visit / 30-min gap)
+    if(shouldLogAccess()) logEvent('login', null);
     return;
   }
   setLoading(false);
@@ -655,6 +674,7 @@ async function doAdminLogin(raw){
   await loadUserAndData(email);
   // Log login event (fire and forget — don't block login)
   logEvent('login', null);
+  markAccess();  // start the visit window so an immediate reload isn't re-counted
 }
 
 /* Non-admin: email only. The /api/login serverless endpoint validates the
@@ -689,6 +709,7 @@ async function doPasswordlessLogin(raw){
     btn.disabled=false; btn.textContent='Sign In';
     await loadUserAndData(out.email || raw, { forceStandard:true });
     logEvent('login', null);
+    markAccess();  // start the visit window so an immediate reload isn't re-counted
   }catch(e){
     btn.disabled=false; btn.textContent='Sign In';
     errEl.textContent = 'Network error. Please try again.';
