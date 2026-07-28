@@ -6,6 +6,10 @@ _clim_cache.json
 **/_hist_cache.json
 **/_hist_era5_cache.json
 **/_clim_cache.json
+_cells_nasa.json
+_cells_era5.json
+**/_cells_nasa.json
+**/_cells_era5.json
 # SQLite transient sidecar files (WAL/shared-memory)
 *.db-wal
 *.db-shm

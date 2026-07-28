@@ -54,7 +54,7 @@ def to_year_matrix(param, nd):
 
 def main():
     data = json.load(open(LOC, encoding="utf-8"))
-    pts = list(data["capitais"]) + list(data["fazendas"])
+    pts = list(data["capitais"]) + list(data["fazendas"])   # regiões: ver build_regions.py
     uniq = {}
     for p in pts:
         uniq.setdefault(f"{round(p['lat'],3)},{round(p['lon'],3)}", (p["lat"], p["lon"]))
