@@ -165,7 +165,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 <div class="note-bar">
   Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. A multi-point average has a naturally narrow band (spatial cancellation) — select a single point to see the real spread.
-  <em>RS</em> and <em>MT</em>: each region row is averaged over <em>every</em> municipality it contains (638 in total) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), RS by the 7 <em>IBGE</em> meso-regions (497/497). The three ▣ rows are the state mean under different municipal weights: simple, 2024 corn output and 2024 soybean output (IBGE/SIDRA 1612) — the crop-weighted ones pull the state average toward where that crop actually is.
+  <em>RS</em> and <em>MT</em>: each region row is averaged over <em>every</em> municipality it contains (638 in total) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), RS by the 7 <em>IBGE</em> meso-regions (497/497). The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is.
 </div>
 
 <script>
@@ -177,8 +177,8 @@ const WLBL={cap:"population",slc:"planted area"};
    ("UF|Região|n"). Não são um filtro global: viram três linhas de média
    estadual no topo da tabela de RS/MT, já que só se aplicam a esses grupos. */
 const WGT={n:{row:"▣ State average (simple)",  chart:"simple mean of all municipalities", fld:"n"},
-           m:{row:"▣ State average — 🌽 corn weighted", chart:"weighted by 2024 corn output", fld:"milho_t"},
-           s:{row:"▣ State average — 🌱 soybean weighted", chart:"weighted by 2024 soybean output", fld:"soja_t"}};
+           m:{row:"▣ State average — 🌽 corn weighted", chart:"weighted by corn output (2022–24 avg)", fld:"milho_t"},
+           s:{row:"▣ State average — 🌱 soybean weighted", chart:"weighted by soybean output (2022–24 avg)", fld:"soja_t"}};
 const hasW=g=>g==="cap"||g==="slc";
 /* Grupos "por região" (RS/MT): cada ponto é uma REGIÃO inteira, cuja série já vem
    agregada sobre TODOS os seus municípios em build_regions.py. A ponderação
@@ -437,7 +437,7 @@ function renderTable(){
       const sel=stateSel(k);if(!sel.length)continue;
       const tot=sel.reduce((s,x)=>s+x.w,0);
       head.push({id:"st|"+k,nome:WGT[k].row,grpRow:true,
-        sub:k==="n"?"all "+nm+" municipalities":(tot/1e6).toFixed(1)+" Mt "+(k==="m"?"corn":"soy")+" · 2024",
+        sub:k==="n"?"all "+nm+" municipalities":(tot/1e6).toFixed(1)+" Mt "+(k==="m"?"corn":"soy")+" · 2022–24 avg",
         ...summary(sel,true)});
     }
   }else{

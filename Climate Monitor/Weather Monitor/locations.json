@@ -5,7 +5,7 @@
   "escopo": "27 capitais (bares) + fazendas SLC e BrasilAgro + regiões produtoras de RS e MT (composição municipal completa, 638 municípios)",
   "fontes_fazendas": "SLC: API oficial slcagricola.com.br/api/map (coord GPS real). BrasilAgro: portfólio oficial ri.brasil-agro.com (coord = sede do município).",
   "fontes_regioes": "MT: 7 macrorregiões do Imea, lista municipal oficial da nota técnica de nov/2017 (imea.com.br/imea-site/view/uploads/metodologia/justificativamapa.pdf) — 141/141 municípios. RS: 7 mesorregiões IBGE — 497/497 municípios. Coordenada = sede do município (IBGE). Campo 'peso': ponderação de cada município na média da sua região (1 = média simples); alterar e rodar 'python3 build_regions.py all --only-aggregate' para recalcular sem baixar nada.",
-  "fontes_pesos": "Produção 2024 (t) de milho e soja por município — SIDRA tabela 1612, Database/IGBE Grains/tabela1612-2.xlsx, aba 'Quantidade produzida (Toneladas)'. Ponderações disponíveis: simples (1 por município), milho_t e soja_t."
+  "fontes_pesos": "Produção média de 2022-2024 (t) de milho e soja por município — SIDRA tabela 1612, Database/IGBE Grains/tabela1612-2.xlsx, aba 'Quantidade produzida (Toneladas)'. Média de 3 anos para diluir anomalia de safra de um ano isolado. Ponderações no dashboard: simples (1 por município), milho_t e soja_t."
  },
  "capitais": [
   {
@@ -658,8 +658,8 @@
    "codigo_ibge": 5101407,
    "lat": -10.1723,
    "lon": -59.4568,
-   "milho_t": 77768,
-   "soja_t": 52500
+   "milho_t": 53378,
+   "soja_t": 36430
   },
   {
    "uf": "MT",
@@ -668,8 +668,8 @@
    "codigo_ibge": 5101902,
    "lat": -12.1474,
    "lon": -57.9833,
-   "milho_t": 1145892,
-   "soja_t": 966817
+   "milho_t": 1088685,
+   "soja_t": 1001446
   },
   {
    "uf": "MT",
@@ -678,8 +678,8 @@
    "codigo_ibge": 5102850,
    "lat": -11.1251,
    "lon": -58.6081,
-   "milho_t": 4653,
-   "soja_t": 11960
+   "milho_t": 2540,
+   "soja_t": 6963
   },
   {
    "uf": "MT",
@@ -688,8 +688,8 @@
    "codigo_ibge": 5103254,
    "lat": -9.4612,
    "lon": -59.2252,
-   "milho_t": 13468,
-   "soja_t": 3600
+   "milho_t": 12645,
+   "soja_t": 1200
   },
   {
    "uf": "MT",
@@ -698,8 +698,8 @@
    "codigo_ibge": 5103379,
    "lat": -9.8566,
    "lon": -58.4192,
-   "milho_t": 30275,
-   "soja_t": 12600
+   "milho_t": 23451,
+   "soja_t": 11070
   },
   {
    "uf": "MT",
@@ -708,8 +708,8 @@
    "codigo_ibge": 5105101,
    "lat": -11.2639,
    "lon": -57.5244,
-   "milho_t": 379500,
-   "soja_t": 384000
+   "milho_t": 318273,
+   "soja_t": 336159
   },
   {
    "uf": "MT",
@@ -718,8 +718,8 @@
    "codigo_ibge": 5105150,
    "lat": -11.3728,
    "lon": -58.7483,
-   "milho_t": 221460,
-   "soja_t": 150150
+   "milho_t": 112737,
+   "soja_t": 109480
   },
   {
    "uf": "MT",
@@ -728,8 +728,8 @@
    "codigo_ibge": 5105176,
    "lat": -10.3178,
    "lon": -58.3592,
-   "milho_t": 16970,
-   "soja_t": 7776
+   "milho_t": 16629,
+   "soja_t": 6042
   },
   {
    "uf": "MT",
@@ -738,8 +738,8 @@
    "codigo_ibge": 5106273,
    "lat": -11.4089,
    "lon": -57.3488,
-   "milho_t": 13000,
-   "soja_t": 31500
+   "milho_t": 13173,
+   "soja_t": 26807
   },
   {
    "uf": "MT",
@@ -748,8 +748,8 @@
    "codigo_ibge": 5106802,
    "lat": -11.533,
    "lon": -57.4132,
-   "milho_t": 1242000,
-   "soja_t": 664200
+   "milho_t": 1031433,
+   "soja_t": 696550
   },
   {
    "uf": "MT",
@@ -759,7 +759,7 @@
    "lat": -10.8376,
    "lon": -61.4697,
    "milho_t": 120,
-   "soja_t": 1590
+   "soja_t": 977
   },
   {
    "uf": "MT",
@@ -768,8 +768,8 @@
    "codigo_ibge": 5107941,
    "lat": -11.3007,
    "lon": -56.8312,
-   "milho_t": 1353000,
-   "soja_t": 821280
+   "milho_t": 1204880,
+   "soja_t": 765633
   },
   {
    "uf": "MT",
@@ -778,8 +778,8 @@
    "codigo_ibge": 5100250,
    "lat": -9.8667,
    "lon": -56.0867,
-   "milho_t": 292880,
-   "soja_t": 278938
+   "milho_t": 257158,
+   "soja_t": 254565
   },
   {
    "uf": "MT",
@@ -788,8 +788,8 @@
    "codigo_ibge": 5100805,
    "lat": -9.5398,
    "lon": -57.4587,
-   "milho_t": 9000,
-   "soja_t": 14025
+   "milho_t": 5805,
+   "soja_t": 7514
   },
   {
    "uf": "MT",
@@ -798,8 +798,8 @@
    "codigo_ibge": 5102793,
    "lat": -9.9491,
    "lon": -55.8417,
-   "milho_t": 93756,
-   "soja_t": 93758
+   "milho_t": 92321,
+   "soja_t": 89360
   },
   {
    "uf": "MT",
@@ -808,8 +808,8 @@
    "codigo_ibge": 5103205,
    "lat": -10.8135,
    "lon": -55.461,
-   "milho_t": 95172,
-   "soja_t": 143150
+   "milho_t": 81822,
+   "soja_t": 123352
   },
   {
    "uf": "MT",
@@ -818,8 +818,8 @@
    "codigo_ibge": 5104104,
    "lat": -9.9622,
    "lon": -54.9121,
-   "milho_t": 85800,
-   "soja_t": 77603
+   "milho_t": 74880,
+   "soja_t": 71382
   },
   {
    "uf": "MT",
@@ -828,8 +828,8 @@
    "codigo_ibge": 5104559,
    "lat": -11.0614,
    "lon": -55.2766,
-   "milho_t": 292400,
-   "soja_t": 260128
+   "milho_t": 263213,
+   "soja_t": 265122
   },
   {
    "uf": "MT",
@@ -838,8 +838,8 @@
    "codigo_ibge": 5105580,
    "lat": -11.0463,
    "lon": -54.4377,
-   "milho_t": 561000,
-   "soja_t": 409200
+   "milho_t": 475140,
+   "soja_t": 389741
   },
   {
    "uf": "MT",
@@ -848,8 +848,8 @@
    "codigo_ibge": 5105606,
    "lat": -10.1821,
    "lon": -54.9467,
-   "milho_t": 365750,
-   "soja_t": 192000
+   "milho_t": 277802,
+   "soja_t": 195600
   },
   {
    "uf": "MT",
@@ -858,8 +858,8 @@
    "codigo_ibge": 5106158,
    "lat": -9.8498,
    "lon": -57.8139,
-   "milho_t": 50400,
-   "soja_t": 62413
+   "milho_t": 35968,
+   "soja_t": 39625
   },
   {
    "uf": "MT",
@@ -868,8 +868,8 @@
    "codigo_ibge": 5106216,
    "lat": -10.558,
    "lon": -55.953,
-   "milho_t": 262056,
-   "soja_t": 263426
+   "milho_t": 207100,
+   "soja_t": 251434
   },
   {
    "uf": "MT",
@@ -878,8 +878,8 @@
    "codigo_ibge": 5108808,
    "lat": -10.312,
    "lon": -55.4061,
-   "milho_t": 81036,
-   "soja_t": 81036
+   "milho_t": 81174,
+   "soja_t": 66589
   },
   {
    "uf": "MT",
@@ -888,8 +888,8 @@
    "codigo_ibge": 5108956,
    "lat": -10.0,
    "lon": -57.5261,
-   "milho_t": 77082,
-   "soja_t": 121582
+   "milho_t": 58378,
+   "soja_t": 90403
   },
   {
    "uf": "MT",
@@ -898,8 +898,8 @@
    "codigo_ibge": 5106190,
    "lat": -10.8651,
    "lon": -55.1872,
-   "milho_t": 217800,
-   "soja_t": 151300
+   "milho_t": 186992,
+   "soja_t": 140809
   },
   {
    "uf": "MT",
@@ -908,8 +908,8 @@
    "codigo_ibge": 5106265,
    "lat": -9.9562,
    "lon": -55.2029,
-   "milho_t": 325000,
-   "soja_t": 279000
+   "milho_t": 280413,
+   "soja_t": 249374
   },
   {
    "uf": "MT",
@@ -918,8 +918,8 @@
    "codigo_ibge": 5106299,
    "lat": -9.6584,
    "lon": -56.4786,
-   "milho_t": 100374,
-   "soja_t": 110505
+   "milho_t": 95152,
+   "soja_t": 95936
   },
   {
    "uf": "MT",
@@ -928,8 +928,8 @@
    "codigo_ibge": 5106422,
    "lat": -10.2262,
    "lon": -54.9794,
-   "milho_t": 325000,
-   "soja_t": 272800
+   "milho_t": 240320,
+   "soja_t": 206370
   },
   {
    "uf": "MT",
@@ -938,8 +938,8 @@
    "codigo_ibge": 5108055,
    "lat": -10.517,
    "lon": -55.231,
-   "milho_t": 118800,
-   "soja_t": 122000
+   "milho_t": 122550,
+   "soja_t": 110400
   },
   {
    "uf": "MT",
@@ -948,8 +948,8 @@
    "codigo_ibge": 5100201,
    "lat": -14.051,
    "lon": -52.1601,
-   "milho_t": 502200,
-   "soja_t": 532800
+   "milho_t": 379400,
+   "soja_t": 655583
   },
   {
    "uf": "MT",
@@ -958,8 +958,8 @@
    "codigo_ibge": 5100359,
    "lat": -11.6732,
    "lon": -51.3883,
-   "milho_t": 155063,
-   "soja_t": 111882
+   "milho_t": 139718,
+   "soja_t": 120039
   },
   {
    "uf": "MT",
@@ -968,8 +968,8 @@
    "codigo_ibge": 5101852,
    "lat": -12.1706,
    "lon": -51.5032,
-   "milho_t": 569933,
-   "soja_t": 525303
+   "milho_t": 473746,
+   "soja_t": 523410
   },
   {
    "uf": "MT",
@@ -978,8 +978,8 @@
    "codigo_ibge": 5102603,
    "lat": -14.5162,
    "lon": -52.893,
-   "milho_t": 66000,
-   "soja_t": 120000
+   "milho_t": 73000,
+   "soja_t": 137806
   },
   {
    "uf": "MT",
@@ -988,8 +988,8 @@
    "codigo_ibge": 5102694,
    "lat": -11.0556,
    "lon": -51.8209,
-   "milho_t": 151800,
-   "soja_t": 127400
+   "milho_t": 127258,
+   "soja_t": 122487
   },
   {
    "uf": "MT",
@@ -998,8 +998,8 @@
    "codigo_ibge": 5102702,
    "lat": -13.5515,
    "lon": -52.2705,
-   "milho_t": 737000,
-   "soja_t": 832000
+   "milho_t": 862767,
+   "soja_t": 1018667
   },
   {
    "uf": "MT",
@@ -1008,8 +1008,8 @@
    "codigo_ibge": 5103106,
    "lat": -14.3903,
    "lon": -51.0001,
-   "milho_t": 15750,
-   "soja_t": 57720
+   "milho_t": 19875,
+   "soja_t": 63683
   },
   {
    "uf": "MT",
@@ -1018,8 +1018,8 @@
    "codigo_ibge": 5103353,
    "lat": -10.6437,
    "lon": -51.5699,
-   "milho_t": 316800,
-   "soja_t": 197080
+   "milho_t": 236716,
+   "soja_t": 199635
   },
   {
    "uf": "MT",
@@ -1028,8 +1028,8 @@
    "codigo_ibge": 5103858,
    "lat": -13.2443,
    "lon": -53.0809,
-   "milho_t": 453750,
-   "soja_t": 589000
+   "milho_t": 518583,
+   "soja_t": 644200
   },
   {
    "uf": "MT",
@@ -1038,8 +1038,8 @@
    "codigo_ibge": 5105309,
    "lat": -11.2219,
    "lon": -50.6676,
-   "milho_t": 360,
-   "soja_t": 25542
+   "milho_t": 278,
+   "soja_t": 19734
   },
   {
    "uf": "MT",
@@ -1048,8 +1048,8 @@
    "codigo_ibge": 5106174,
    "lat": -13.9486,
    "lon": -51.8002,
-   "milho_t": 29500,
-   "soja_t": 60000
+   "milho_t": 23188,
+   "soja_t": 74080
   },
   {
    "uf": "MT",
@@ -1058,8 +1058,8 @@
    "codigo_ibge": 5106257,
    "lat": -14.6771,
    "lon": -52.3502,
-   "milho_t": 98400,
-   "soja_t": 168000
+   "milho_t": 82100,
+   "soja_t": 198850
   },
   {
    "uf": "MT",
@@ -1068,8 +1068,8 @@
    "codigo_ibge": 5106315,
    "lat": -12.2875,
    "lon": -50.9686,
-   "milho_t": 4305,
-   "soja_t": 5886
+   "milho_t": 4700,
+   "soja_t": 5682
   },
   {
    "uf": "MT",
@@ -1078,8 +1078,8 @@
    "codigo_ibge": 5106778,
    "lat": -10.8761,
    "lon": -51.6357,
-   "milho_t": 191400,
-   "soja_t": 198000
+   "milho_t": 190708,
+   "soja_t": 185132
   },
   {
    "uf": "MT",
@@ -1088,8 +1088,8 @@
    "codigo_ibge": 5107065,
    "lat": -12.6093,
    "lon": -52.1821,
-   "milho_t": 1650000,
-   "soja_t": 1230000
+   "milho_t": 1381800,
+   "soja_t": 1286000
   },
   {
    "uf": "MT",
@@ -1098,8 +1098,8 @@
    "codigo_ibge": 5107180,
    "lat": -12.9367,
    "lon": -51.8244,
-   "milho_t": 264000,
-   "soja_t": 314580
+   "milho_t": 203500,
+   "soja_t": 327900
   },
   {
    "uf": "MT",
@@ -1108,8 +1108,8 @@
    "codigo_ibge": 5107743,
    "lat": -10.1532,
    "lon": -52.3953,
-   "milho_t": 237600,
-   "soja_t": 234000
+   "milho_t": 212600,
+   "soja_t": 267504
   },
   {
    "uf": "MT",
@@ -1118,8 +1118,8 @@
    "codigo_ibge": 5107776,
    "lat": -10.4704,
    "lon": -50.514,
-   "milho_t": 118800,
-   "soja_t": 111800
+   "milho_t": 100508,
+   "soja_t": 113267
   },
   {
    "uf": "MT",
@@ -1128,8 +1128,8 @@
    "codigo_ibge": 5107859,
    "lat": -11.615,
    "lon": -50.6706,
-   "milho_t": 1376522,
-   "soja_t": 1164706
+   "milho_t": 1119046,
+   "soja_t": 1108337
   },
   {
    "uf": "MT",
@@ -1138,8 +1138,8 @@
    "codigo_ibge": 5107354,
    "lat": -10.7982,
    "lon": -52.7486,
-   "milho_t": 660000,
-   "soja_t": 434200
+   "milho_t": 519500,
+   "soja_t": 428614
   },
   {
    "uf": "MT",
@@ -1148,8 +1148,8 @@
    "codigo_ibge": 5107883,
    "lat": -12.0896,
    "lon": -51.4025,
-   "milho_t": 82366,
-   "soja_t": 64209
+   "milho_t": 55816,
+   "soja_t": 62471
   },
   {
    "uf": "MT",
@@ -1158,8 +1158,8 @@
    "codigo_ibge": 5108600,
    "lat": -10.0137,
    "lon": -51.1186,
-   "milho_t": 217800,
-   "soja_t": 197600
+   "milho_t": 199680,
+   "soja_t": 191214
   },
   {
    "uf": "MT",
@@ -1168,8 +1168,8 @@
    "codigo_ibge": 5103056,
    "lat": -11.5075,
    "lon": -54.8835,
-   "milho_t": 666900,
-   "soja_t": 469200
+   "milho_t": 594980,
+   "soja_t": 400490
   },
   {
    "uf": "MT",
@@ -1178,8 +1178,8 @@
    "codigo_ibge": 5103700,
    "lat": -12.385,
    "lon": -54.9227,
-   "milho_t": 842400,
-   "soja_t": 477000
+   "milho_t": 782200,
+   "soja_t": 508554
   },
   {
    "uf": "MT",
@@ -1188,8 +1188,8 @@
    "codigo_ibge": 5104526,
    "lat": -12.2408,
    "lon": -56.1531,
-   "milho_t": 1152600,
-   "soja_t": 728280
+   "milho_t": 1165283,
+   "soja_t": 777014
   },
   {
    "uf": "MT",
@@ -1198,8 +1198,8 @@
    "codigo_ibge": 5104542,
    "lat": -12.2259,
    "lon": -56.6463,
-   "milho_t": 420000,
-   "soja_t": 294375
+   "milho_t": 424600,
+   "soja_t": 361245
   },
   {
    "uf": "MT",
@@ -1208,8 +1208,8 @@
    "codigo_ibge": 5105259,
    "lat": -13.0588,
    "lon": -55.9042,
-   "milho_t": 1088100,
-   "soja_t": 744720
+   "milho_t": 1107275,
+   "soja_t": 792023
   },
   {
    "uf": "MT",
@@ -1218,8 +1218,8 @@
    "codigo_ibge": 5108907,
    "lat": -13.0136,
    "lon": -57.0908,
-   "milho_t": 840000,
-   "soja_t": 521212
+   "milho_t": 841000,
+   "soja_t": 644737
   },
   {
    "uf": "MT",
@@ -1228,8 +1228,8 @@
    "codigo_ibge": 5106224,
    "lat": -13.8374,
    "lon": -56.0743,
-   "milho_t": 2117900,
-   "soja_t": 1140000
+   "milho_t": 2125017,
+   "soja_t": 1315351
   },
   {
    "uf": "MT",
@@ -1238,8 +1238,8 @@
    "codigo_ibge": 5106240,
    "lat": -12.9834,
    "lon": -55.2556,
-   "milho_t": 2412000,
-   "soja_t": 1500600
+   "milho_t": 2321360,
+   "soja_t": 1456040
   },
   {
    "uf": "MT",
@@ -1248,8 +1248,8 @@
    "codigo_ibge": 5107248,
    "lat": -11.9125,
    "lon": -55.2263,
-   "milho_t": 786240,
-   "soja_t": 394740
+   "milho_t": 735720,
+   "soja_t": 431813
   },
   {
    "uf": "MT",
@@ -1258,8 +1258,8 @@
    "codigo_ibge": 5107768,
    "lat": -13.8146,
    "lon": -55.2706,
-   "milho_t": 726000,
-   "soja_t": 536640
+   "milho_t": 729300,
+   "soja_t": 573010
   },
   {
    "uf": "MT",
@@ -1268,8 +1268,8 @@
    "codigo_ibge": 5107305,
    "lat": -13.4398,
    "lon": -56.7218,
-   "milho_t": 370500,
-   "soja_t": 354450
+   "milho_t": 454000,
+   "soja_t": 437350
   },
   {
    "uf": "MT",
@@ -1278,8 +1278,8 @@
    "codigo_ibge": 5107909,
    "lat": -11.8604,
    "lon": -55.5091,
-   "milho_t": 1054920,
-   "soja_t": 612480
+   "milho_t": 933773,
+   "soja_t": 614377
   },
   {
    "uf": "MT",
@@ -1288,8 +1288,8 @@
    "codigo_ibge": 5107925,
    "lat": -12.5425,
    "lon": -55.7211,
-   "milho_t": 3660000,
-   "soja_t": 2084520
+   "milho_t": 3755900,
+   "soja_t": 2149195
   },
   {
    "uf": "MT",
@@ -1298,8 +1298,8 @@
    "codigo_ibge": 5108006,
    "lat": -12.695,
    "lon": -56.5178,
-   "milho_t": 870750,
-   "soja_t": 558018
+   "milho_t": 900783,
+   "soja_t": 649173
   },
   {
    "uf": "MT",
@@ -1308,8 +1308,8 @@
    "codigo_ibge": 5108303,
    "lat": -11.5308,
    "lon": -54.3616,
-   "milho_t": 364000,
-   "soja_t": 240000
+   "milho_t": 322793,
+   "soja_t": 242450
   },
   {
    "uf": "MT",
@@ -1318,8 +1318,8 @@
    "codigo_ibge": 5108501,
    "lat": -12.3017,
    "lon": -55.3045,
-   "milho_t": 950400,
-   "soja_t": 528000
+   "milho_t": 919500,
+   "soja_t": 557093
   },
   {
    "uf": "MT",
@@ -1328,8 +1328,8 @@
    "codigo_ibge": 5101258,
    "lat": -15.4641,
    "lon": -58.3425,
-   "milho_t": 11400,
-   "soja_t": 1184
+   "milho_t": 15188,
+   "soja_t": 2350
   },
   {
    "uf": "MT",
@@ -1338,8 +1338,8 @@
    "codigo_ibge": 5102637,
    "lat": -13.6587,
    "lon": -57.8907,
-   "milho_t": 994866,
-   "soja_t": 1141652
+   "milho_t": 1214473,
+   "soja_t": 1369696
   },
   {
    "uf": "MT",
@@ -1348,8 +1348,8 @@
    "codigo_ibge": 5102686,
    "lat": -13.7242,
    "lon": -59.2858,
-   "milho_t": 816050,
-   "soja_t": 705326
+   "milho_t": 875897,
+   "soja_t": 748899
   },
   {
    "uf": "MT",
@@ -1358,8 +1358,8 @@
    "codigo_ibge": 5103304,
    "lat": -13.6614,
    "lon": -59.7848,
-   "milho_t": 391590,
-   "soja_t": 418711
+   "milho_t": 390130,
+   "soja_t": 386580
   },
   {
    "uf": "MT",
@@ -1368,8 +1368,8 @@
    "codigo_ibge": 5103361,
    "lat": -14.5381,
    "lon": -59.5444,
-   "milho_t": 8028,
-   "soja_t": 42314
+   "milho_t": 23394,
+   "soja_t": 42666
   },
   {
    "uf": "MT",
@@ -1378,7 +1378,7 @@
    "codigo_ibge": 5103437,
    "lat": -15.6084,
    "lon": -57.9133,
-   "milho_t": 147,
+   "milho_t": 317,
    "soja_t": 0
   },
   {
@@ -1388,8 +1388,8 @@
    "codigo_ibge": 5103809,
    "lat": -15.4439,
    "lon": -58.7391,
-   "milho_t": 684,
-   "soja_t": 3240
+   "milho_t": 853,
+   "soja_t": 1976
   },
   {
    "uf": "MT",
@@ -1398,7 +1398,7 @@
    "codigo_ibge": 5103957,
    "lat": -15.768,
    "lon": -58.3108,
-   "milho_t": 1500,
+   "milho_t": 1063,
    "soja_t": 0
   },
   {
@@ -1408,8 +1408,8 @@
    "codigo_ibge": 5104500,
    "lat": -15.4921,
    "lon": -58.5802,
-   "milho_t": 1000,
-   "soja_t": 0
+   "milho_t": 1140,
+   "soja_t": 913
   },
   {
    "uf": "MT",
@@ -1418,7 +1418,7 @@
    "codigo_ibge": 5105002,
    "lat": -15.3342,
    "lon": -58.8723,
-   "milho_t": 540,
+   "milho_t": 564,
    "soja_t": 0
   },
   {
@@ -1428,8 +1428,8 @@
    "codigo_ibge": 5105234,
    "lat": -15.3188,
    "lon": -58.0046,
-   "milho_t": 380,
-   "soja_t": 2160
+   "milho_t": 973,
+   "soja_t": 2726
   },
   {
    "uf": "MT",
@@ -1438,8 +1438,8 @@
    "codigo_ibge": 5105622,
    "lat": -15.6759,
    "lon": -58.0951,
-   "milho_t": 600,
-   "soja_t": 684
+   "milho_t": 1519,
+   "soja_t": 972
   },
   {
    "uf": "MT",
@@ -1448,8 +1448,8 @@
    "codigo_ibge": 5106182,
    "lat": -14.4727,
    "lon": -59.6001,
-   "milho_t": 33670,
-   "soja_t": 181612
+   "milho_t": 57360,
+   "soja_t": 166439
   },
   {
    "uf": "MT",
@@ -1458,8 +1458,8 @@
    "codigo_ibge": 5106752,
    "lat": -15.2219,
    "lon": -59.3435,
-   "milho_t": 36780,
-   "soja_t": 191459
+   "milho_t": 70685,
+   "soja_t": 172981
   },
   {
    "uf": "MT",
@@ -1468,8 +1468,8 @@
    "codigo_ibge": 5106828,
    "lat": -15.857,
    "lon": -58.4619,
-   "milho_t": 600,
-   "soja_t": 13160
+   "milho_t": 1429,
+   "soja_t": 18320
   },
   {
    "uf": "MT",
@@ -1478,7 +1478,7 @@
    "codigo_ibge": 5107156,
    "lat": -15.0743,
    "lon": -58.4585,
-   "milho_t": 160,
+   "milho_t": 67,
    "soja_t": 0
   },
   {
@@ -1488,8 +1488,8 @@
    "codigo_ibge": 5107206,
    "lat": -15.2483,
    "lon": -58.1259,
-   "milho_t": 880,
-   "soja_t": 747
+   "milho_t": 1063,
+   "soja_t": 249
   },
   {
    "uf": "MT",
@@ -1498,8 +1498,8 @@
    "codigo_ibge": 5107750,
    "lat": -15.1303,
    "lon": -58.1317,
-   "milho_t": 3015,
-   "soja_t": 7390
+   "milho_t": 5210,
+   "soja_t": 6790
   },
   {
    "uf": "MT",
@@ -1508,8 +1508,8 @@
    "codigo_ibge": 5107107,
    "lat": -15.6276,
    "lon": -58.1772,
-   "milho_t": 1540,
-   "soja_t": 109
+   "milho_t": 2518,
+   "soja_t": 3788
   },
   {
    "uf": "MT",
@@ -1518,8 +1518,8 @@
    "codigo_ibge": 5107875,
    "lat": -12.9892,
    "lon": -58.7645,
-   "milho_t": 674487,
-   "soja_t": 1123911
+   "milho_t": 863977,
+   "soja_t": 1274775
   },
   {
    "uf": "MT",
@@ -1528,8 +1528,8 @@
    "codigo_ibge": 5108352,
    "lat": -15.286,
    "lon": -59.0683,
-   "milho_t": 756,
-   "soja_t": 0
+   "milho_t": 991,
+   "soja_t": 7473
   },
   {
    "uf": "MT",
@@ -1538,8 +1538,8 @@
    "codigo_ibge": 5105507,
    "lat": -15.0068,
    "lon": -59.9504,
-   "milho_t": 77982,
-   "soja_t": 253309
+   "milho_t": 106293,
+   "soja_t": 230205
   },
   {
    "uf": "MT",
@@ -1558,8 +1558,8 @@
    "codigo_ibge": 5100508,
    "lat": -14.5137,
    "lon": -56.4776,
-   "milho_t": 24000,
-   "soja_t": 21861
+   "milho_t": 27400,
+   "soja_t": 24484
   },
   {
    "uf": "MT",
@@ -1568,8 +1568,8 @@
    "codigo_ibge": 5101308,
    "lat": -14.4472,
    "lon": -56.8437,
-   "milho_t": 27000,
-   "soja_t": 17913
+   "milho_t": 26200,
+   "soja_t": 19466
   },
   {
    "uf": "MT",
@@ -1578,7 +1578,7 @@
    "codigo_ibge": 5101605,
    "lat": -16.2067,
    "lon": -55.9623,
-   "milho_t": 285,
+   "milho_t": 238,
    "soja_t": 0
   },
   {
@@ -1588,8 +1588,8 @@
    "codigo_ibge": 5101704,
    "lat": -15.0702,
    "lon": -57.1878,
-   "milho_t": 6320,
-   "soja_t": 4560
+   "milho_t": 5584,
+   "soja_t": 8812
   },
   {
    "uf": "MT",
@@ -1598,8 +1598,8 @@
    "codigo_ibge": 5102504,
    "lat": -16.0764,
    "lon": -57.6818,
-   "milho_t": 13800,
-   "soja_t": 47000
+   "milho_t": 21272,
+   "soja_t": 47543
   },
   {
    "uf": "MT",
@@ -1608,8 +1608,8 @@
    "codigo_ibge": 5103007,
    "lat": -15.4643,
    "lon": -55.7499,
-   "milho_t": 122000,
-   "soja_t": 123651
+   "milho_t": 122307,
+   "soja_t": 137680
   },
   {
    "uf": "MT",
@@ -1618,8 +1618,8 @@
    "codigo_ibge": 5103403,
    "lat": -15.601,
    "lon": -56.0974,
-   "milho_t": 3550,
-   "soja_t": 4257
+   "milho_t": 1895,
+   "soja_t": 2314
   },
   {
    "uf": "MT",
@@ -1628,8 +1628,8 @@
    "codigo_ibge": 5103452,
    "lat": -14.7324,
    "lon": -57.0583,
-   "milho_t": 8201,
-   "soja_t": 16892
+   "milho_t": 3701,
+   "soja_t": 24102
   },
   {
    "uf": "MT",
@@ -1638,8 +1638,8 @@
    "codigo_ibge": 5103502,
    "lat": -14.4037,
    "lon": -56.4366,
-   "milho_t": 1530345,
-   "soja_t": 1014303
+   "milho_t": 1492661,
+   "soja_t": 1325537
   },
   {
    "uf": "MT",
@@ -1648,8 +1648,8 @@
    "codigo_ibge": 5104906,
    "lat": -15.235,
    "lon": -56.4917,
-   "milho_t": 1740,
-   "soja_t": 14123
+   "milho_t": 2069,
+   "soja_t": 12308
   },
   {
    "uf": "MT",
@@ -1658,8 +1658,8 @@
    "codigo_ibge": 5105903,
    "lat": -14.7192,
    "lon": -56.3284,
-   "milho_t": 160253,
-   "soja_t": 172597
+   "milho_t": 157845,
+   "soja_t": 179941
   },
   {
    "uf": "MT",
@@ -1668,8 +1668,8 @@
    "codigo_ibge": 5106000,
    "lat": -14.454,
    "lon": -56.7945,
-   "milho_t": 113994,
-   "soja_t": 103500
+   "milho_t": 124498,
+   "soja_t": 104666
   },
   {
    "uf": "MT",
@@ -1678,8 +1678,8 @@
    "codigo_ibge": 5106109,
    "lat": -15.772,
    "lon": -56.3432,
-   "milho_t": 4314,
-   "soja_t": 21800
+   "milho_t": 7363,
+   "soja_t": 20540
   },
   {
    "uf": "MT",
@@ -1688,8 +1688,8 @@
    "codigo_ibge": 5108857,
    "lat": -14.3568,
    "lon": -56.9696,
-   "milho_t": 21240,
-   "soja_t": 19075
+   "milho_t": 17760,
+   "soja_t": 21485
   },
   {
    "uf": "MT",
@@ -1698,8 +1698,8 @@
    "codigo_ibge": 5106232,
    "lat": -14.7889,
    "lon": -57.2886,
-   "milho_t": 2619,
-   "soja_t": 3888
+   "milho_t": 1399,
+   "soja_t": 9225
   },
   {
    "uf": "MT",
@@ -1708,8 +1708,8 @@
    "codigo_ibge": 5106505,
    "lat": -16.266,
    "lon": -56.6261,
-   "milho_t": 4140,
-   "soja_t": 45164
+   "milho_t": 3347,
+   "soja_t": 43427
   },
   {
    "uf": "MT",
@@ -1718,8 +1718,8 @@
    "codigo_ibge": 5106851,
    "lat": -15.3235,
    "lon": -57.2204,
-   "milho_t": 3276,
-   "soja_t": 0
+   "milho_t": 2674,
+   "soja_t": 181
   },
   {
    "uf": "MT",
@@ -1728,8 +1728,8 @@
    "codigo_ibge": 5107701,
    "lat": -14.8259,
    "lon": -56.4236,
-   "milho_t": 72806,
-   "soja_t": 144768
+   "milho_t": 74753,
+   "soja_t": 141804
   },
   {
    "uf": "MT",
@@ -1738,8 +1738,8 @@
    "codigo_ibge": 5107263,
    "lat": -14.4945,
    "lon": -57.0091,
-   "milho_t": 55469,
-   "soja_t": 50055
+   "milho_t": 53904,
+   "soja_t": 58314
   },
   {
    "uf": "MT",
@@ -1748,8 +1748,8 @@
    "codigo_ibge": 5107800,
    "lat": -15.8632,
    "lon": -56.0788,
-   "milho_t": 201375,
-   "soja_t": 128000
+   "milho_t": 122725,
+   "soja_t": 113960
   },
   {
    "uf": "MT",
@@ -1758,8 +1758,8 @@
    "codigo_ibge": 5107958,
    "lat": -14.6229,
    "lon": -57.4933,
-   "milho_t": 278673,
-   "soja_t": 364048
+   "milho_t": 382101,
+   "soja_t": 395929
   },
   {
    "uf": "MT",
@@ -1778,8 +1778,8 @@
    "codigo_ibge": 5100300,
    "lat": -17.3153,
    "lon": -53.2181,
-   "milho_t": 99000,
-   "soja_t": 149893
+   "milho_t": 81640,
+   "soja_t": 159944
   },
   {
    "uf": "MT",
@@ -1788,8 +1788,8 @@
    "codigo_ibge": 5100409,
    "lat": -16.9462,
    "lon": -53.5272,
-   "milho_t": 414000,
-   "soja_t": 405600
+   "milho_t": 313800,
+   "soja_t": 401520
   },
   {
    "uf": "MT",
@@ -1798,8 +1798,8 @@
    "codigo_ibge": 5100607,
    "lat": -17.8241,
    "lon": -53.2792,
-   "milho_t": 291750,
-   "soja_t": 208800
+   "milho_t": 331261,
+   "soja_t": 242620
   },
   {
    "uf": "MT",
@@ -1808,8 +1808,8 @@
    "codigo_ibge": 5101001,
    "lat": -15.7291,
    "lon": -51.8341,
-   "milho_t": 11765,
-   "soja_t": 40234
+   "milho_t": 19603,
+   "soja_t": 35695
   },
   {
    "uf": "MT",
@@ -1818,8 +1818,8 @@
    "codigo_ibge": 5101209,
    "lat": -16.857,
    "lon": -53.0318,
-   "milho_t": 3300,
-   "soja_t": 6765
+   "milho_t": 2873,
+   "soja_t": 5433
   },
   {
    "uf": "MT",
@@ -1828,8 +1828,8 @@
    "codigo_ibge": 5101803,
    "lat": -15.8804,
    "lon": -52.264,
-   "milho_t": 96900,
-   "soja_t": 185556
+   "milho_t": 99167,
+   "soja_t": 181111
   },
   {
    "uf": "MT",
@@ -1838,8 +1838,8 @@
    "codigo_ibge": 5102678,
    "lat": -15.545,
    "lon": -55.1626,
-   "milho_t": 742800,
-   "soja_t": 780000
+   "milho_t": 733300,
+   "soja_t": 874376
   },
   {
    "uf": "MT",
@@ -1848,8 +1848,8 @@
    "codigo_ibge": 5103601,
    "lat": -15.8099,
    "lon": -54.9223,
-   "milho_t": 112200,
-   "soja_t": 120000
+   "milho_t": 111860,
+   "soja_t": 137141
   },
   {
    "uf": "MT",
@@ -1858,8 +1858,8 @@
    "codigo_ibge": 5103908,
    "lat": -15.7094,
    "lon": -52.7574,
-   "milho_t": 210000,
-   "soja_t": 196416
+   "milho_t": 203000,
+   "soja_t": 228356
   },
   {
    "uf": "MT",
@@ -1868,8 +1868,8 @@
    "codigo_ibge": 5104203,
    "lat": -16.346,
    "lon": -53.7575,
-   "milho_t": 196980,
-   "soja_t": 238582
+   "milho_t": 220293,
+   "soja_t": 247141
   },
   {
    "uf": "MT",
@@ -1878,8 +1878,8 @@
    "codigo_ibge": 5104609,
    "lat": -17.2147,
    "lon": -54.1422,
-   "milho_t": 794880,
-   "soja_t": 810000
+   "milho_t": 789307,
+   "soja_t": 799846
   },
   {
    "uf": "MT",
@@ -1888,8 +1888,8 @@
    "codigo_ibge": 5104807,
    "lat": -15.9548,
    "lon": -54.9733,
-   "milho_t": 189000,
-   "soja_t": 227358
+   "milho_t": 174250,
+   "soja_t": 232071
   },
   {
    "uf": "MT",
@@ -1898,8 +1898,8 @@
    "codigo_ibge": 5105200,
    "lat": -16.0633,
    "lon": -54.8859,
-   "milho_t": 94500,
-   "soja_t": 126216
+   "milho_t": 87140,
+   "soja_t": 132096
   },
   {
    "uf": "MT",
@@ -1908,8 +1908,8 @@
    "codigo_ibge": 5106208,
    "lat": -14.9612,
    "lon": -54.9685,
-   "milho_t": 49800,
-   "soja_t": 56960
+   "milho_t": 40677,
+   "soja_t": 56207
   },
   {
    "uf": "MT",
@@ -1918,8 +1918,8 @@
    "codigo_ibge": 5106281,
    "lat": -14.9054,
    "lon": -53.0194,
-   "milho_t": 249150,
-   "soja_t": 251106
+   "milho_t": 223967,
+   "soja_t": 288998
   },
   {
    "uf": "MT",
@@ -1928,8 +1928,8 @@
    "codigo_ibge": 5106307,
    "lat": -14.4265,
    "lon": -54.0524,
-   "milho_t": 846880,
-   "soja_t": 1120177
+   "milho_t": 755323,
+   "soja_t": 1057192
   },
   {
    "uf": "MT",
@@ -1938,8 +1938,8 @@
    "codigo_ibge": 5106372,
    "lat": -16.6245,
    "lon": -54.4722,
-   "milho_t": 279700,
-   "soja_t": 218817
+   "milho_t": 245273,
+   "soja_t": 241949
   },
   {
    "uf": "MT",
@@ -1948,8 +1948,8 @@
    "codigo_ibge": 5106455,
    "lat": -14.6518,
    "lon": -54.7819,
-   "milho_t": 57750,
-   "soja_t": 138400
+   "milho_t": 50967,
+   "soja_t": 149442
   },
   {
    "uf": "MT",
@@ -1958,8 +1958,8 @@
    "codigo_ibge": 5106653,
    "lat": -15.9274,
    "lon": -52.3273,
-   "milho_t": 5400,
-   "soja_t": 12602
+   "milho_t": 3488,
+   "soja_t": 10727
   },
   {
    "uf": "MT",
@@ -1968,8 +1968,8 @@
    "codigo_ibge": 5106703,
    "lat": -16.7584,
    "lon": -52.8369,
-   "milho_t": 480,
-   "soja_t": 1848
+   "milho_t": 160,
+   "soja_t": 1148
   },
   {
    "uf": "MT",
@@ -1978,8 +1978,8 @@
    "codigo_ibge": 5107008,
    "lat": -15.8299,
    "lon": -54.4208,
-   "milho_t": 264000,
-   "soja_t": 226800
+   "milho_t": 289660,
+   "soja_t": 249950
   },
   {
    "uf": "MT",
@@ -1988,8 +1988,8 @@
    "codigo_ibge": 5107040,
    "lat": -15.544,
    "lon": -54.2811,
-   "milho_t": 1476000,
-   "soja_t": 904800
+   "milho_t": 1437100,
+   "soja_t": 1024800
   },
   {
    "uf": "MT",
@@ -1998,8 +1998,8 @@
    "codigo_ibge": 5107198,
    "lat": -16.4856,
    "lon": -52.6924,
-   "milho_t": 107100,
-   "soja_t": 99000
+   "milho_t": 78167,
+   "soja_t": 95274
   },
   {
    "uf": "MT",
@@ -2008,8 +2008,8 @@
    "codigo_ibge": 5107602,
    "lat": -16.4673,
    "lon": -54.6372,
-   "milho_t": 354200,
-   "soja_t": 316726
+   "milho_t": 338967,
+   "soja_t": 334495
   },
   {
    "uf": "MT",
@@ -2018,8 +2018,8 @@
    "codigo_ibge": 5107792,
    "lat": -14.805,
    "lon": -53.6075,
-   "milho_t": 495000,
-   "soja_t": 421200
+   "milho_t": 494400,
+   "soja_t": 436600
   },
   {
    "uf": "MT",
@@ -2028,8 +2028,8 @@
    "codigo_ibge": 5107297,
    "lat": -16.4549,
    "lon": -54.2487,
-   "milho_t": 540,
-   "soja_t": 220
+   "milho_t": 480,
+   "soja_t": 3669
   },
   {
    "uf": "MT",
@@ -2038,8 +2038,8 @@
    "codigo_ibge": 5107404,
    "lat": -16.0109,
    "lon": -54.9176,
-   "milho_t": 7560,
-   "soja_t": 9000
+   "milho_t": 8526,
+   "soja_t": 10008
   },
   {
    "uf": "MT",
@@ -2048,8 +2048,8 @@
    "codigo_ibge": 5108105,
    "lat": -16.0809,
    "lon": -53.559,
-   "milho_t": 134020,
-   "soja_t": 110603
+   "milho_t": 117807,
+   "soja_t": 114290
   },
   {
    "uf": "MT",
@@ -2058,8 +2058,8 @@
    "codigo_ibge": 5108204,
    "lat": -16.2006,
    "lon": -52.5571,
-   "milho_t": 43800,
-   "soja_t": 81528
+   "milho_t": 37600,
+   "soja_t": 90372
   },
   {
    "uf": "RS",
@@ -2068,8 +2068,8 @@
    "codigo_ibge": 4300109,
    "lat": -29.6447,
    "lon": -53.2515,
-   "milho_t": 10812,
-   "soja_t": 2100
+   "milho_t": 7279,
+   "soja_t": 2200
   },
   {
    "uf": "RS",
@@ -2078,8 +2078,8 @@
    "codigo_ibge": 4302907,
    "lat": -29.8883,
    "lon": -54.822,
-   "milho_t": 801,
-   "soja_t": 64179
+   "milho_t": 614,
+   "soja_t": 56830
   },
   {
    "uf": "RS",
@@ -2088,8 +2088,8 @@
    "codigo_ibge": 4304655,
    "lat": -28.9312,
    "lon": -54.5558,
-   "milho_t": 8244,
-   "soja_t": 179239
+   "milho_t": 6151,
+   "soja_t": 86411
   },
   {
    "uf": "RS",
@@ -2098,8 +2098,8 @@
    "codigo_ibge": 4306379,
    "lat": -29.7054,
    "lon": -54.2122,
-   "milho_t": 1383,
-   "soja_t": 83520
+   "milho_t": 648,
+   "soja_t": 58880
   },
   {
    "uf": "RS",
@@ -2108,8 +2108,8 @@
    "codigo_ibge": 4306700,
    "lat": -29.6195,
    "lon": -53.3617,
-   "milho_t": 930,
-   "soja_t": 1768
+   "milho_t": 892,
+   "soja_t": 1287
   },
   {
    "uf": "RS",
@@ -2118,8 +2118,8 @@
    "codigo_ibge": 4308003,
    "lat": -29.5788,
    "lon": -53.4484,
-   "milho_t": 798,
-   "soja_t": 5444
+   "milho_t": 602,
+   "soja_t": 4181
   },
   {
    "uf": "RS",
@@ -2128,8 +2128,8 @@
    "codigo_ibge": 4308409,
    "lat": -30.0035,
    "lon": -53.4959,
-   "milho_t": 1919,
-   "soja_t": 31388
+   "milho_t": 1126,
+   "soja_t": 20429
   },
   {
    "uf": "RS",
@@ -2138,8 +2138,8 @@
    "codigo_ibge": 4310538,
    "lat": -29.6013,
    "lon": -53.7725,
-   "milho_t": 2060,
-   "soja_t": 9843
+   "milho_t": 1963,
+   "soja_t": 7189
   },
   {
    "uf": "RS",
@@ -2148,8 +2148,8 @@
    "codigo_ibge": 4310553,
    "lat": -28.7913,
    "lon": -55.2447,
-   "milho_t": 11688,
-   "soja_t": 85305
+   "milho_t": 4908,
+   "soja_t": 32114
   },
   {
    "uf": "RS",
@@ -2158,8 +2158,8 @@
    "codigo_ibge": 4310751,
    "lat": -29.5232,
    "lon": -53.5842,
-   "milho_t": 1815,
-   "soja_t": 11600
+   "milho_t": 1475,
+   "soja_t": 9477
   },
   {
    "uf": "RS",
@@ -2168,8 +2168,8 @@
    "codigo_ibge": 4311106,
    "lat": -29.4936,
    "lon": -54.703,
-   "milho_t": 4440,
-   "soja_t": 36450
+   "milho_t": 2650,
+   "soja_t": 19690
   },
   {
    "uf": "RS",
@@ -2178,8 +2178,8 @@
    "codigo_ibge": 4311130,
    "lat": -29.2922,
    "lon": -54.2237,
-   "milho_t": 9270,
-   "soja_t": 116640
+   "milho_t": 8207,
+   "soja_t": 88403
   },
   {
    "uf": "RS",
@@ -2188,8 +2188,8 @@
    "codigo_ibge": 4311205,
    "lat": -29.2299,
    "lon": -53.6772,
-   "milho_t": 22800,
-   "soja_t": 302472
+   "milho_t": 18404,
+   "soja_t": 207436
   },
   {
    "uf": "RS",
@@ -2198,8 +2198,8 @@
    "codigo_ibge": 4312104,
    "lat": -29.5649,
    "lon": -54.4641,
-   "milho_t": 1544,
-   "soja_t": 10500
+   "milho_t": 1131,
+   "soja_t": 5180
   },
   {
    "uf": "RS",
@@ -2208,8 +2208,8 @@
    "codigo_ibge": 4313037,
    "lat": -29.4066,
    "lon": -54.8293,
-   "milho_t": 1560,
-   "soja_t": 13500
+   "milho_t": 1068,
+   "soja_t": 5523
   },
   {
    "uf": "RS",
@@ -2218,8 +2218,8 @@
    "codigo_ibge": 4313102,
    "lat": -29.471,
    "lon": -53.4689,
-   "milho_t": 7140,
-   "soja_t": 30750
+   "milho_t": 4620,
+   "soja_t": 20430
   },
   {
    "uf": "RS",
@@ -2228,8 +2228,8 @@
    "codigo_ibge": 4314472,
    "lat": -29.345,
    "lon": -53.3206,
-   "milho_t": 5913,
-   "soja_t": 83355
+   "milho_t": 6685,
+   "soja_t": 54712
   },
   {
    "uf": "RS",
@@ -2238,8 +2238,8 @@
    "codigo_ibge": 4315321,
    "lat": -29.3504,
    "lon": -54.0789,
-   "milho_t": 2502,
-   "soja_t": 81000
+   "milho_t": 1746,
+   "soja_t": 54600
   },
   {
    "uf": "RS",
@@ -2248,8 +2248,8 @@
    "codigo_ibge": 4315503,
    "lat": -29.8188,
    "lon": -53.3807,
-   "milho_t": 3300,
-   "soja_t": 43518
+   "milho_t": 2804,
+   "soja_t": 42006
   },
   {
    "uf": "RS",
@@ -2258,8 +2258,8 @@
    "codigo_ibge": 4316907,
    "lat": -29.6868,
    "lon": -53.8149,
-   "milho_t": 4788,
-   "soja_t": 114998
+   "milho_t": 2848,
+   "soja_t": 93877
   },
   {
    "uf": "RS",
@@ -2268,8 +2268,8 @@
    "codigo_ibge": 4317400,
    "lat": -29.1897,
    "lon": -54.8666,
-   "milho_t": 15101,
-   "soja_t": 161532
+   "milho_t": 10038,
+   "soja_t": 82207
   },
   {
    "uf": "RS",
@@ -2278,8 +2278,8 @@
    "codigo_ibge": 4320651,
    "lat": -29.6467,
    "lon": -53.591,
-   "milho_t": 2430,
-   "soja_t": 17550
+   "milho_t": 1511,
+   "soja_t": 13950
   },
   {
    "uf": "RS",
@@ -2288,8 +2288,8 @@
    "codigo_ibge": 4318432,
    "lat": -29.6194,
    "lon": -53.4439,
-   "milho_t": 180,
-   "soja_t": 1650
+   "milho_t": 214,
+   "soja_t": 1670
   },
   {
    "uf": "RS",
@@ -2298,8 +2298,8 @@
    "codigo_ibge": 4319125,
    "lat": -29.5397,
    "lon": -53.859,
-   "milho_t": 1920,
-   "soja_t": 106950
+   "milho_t": 1760,
+   "soja_t": 80973
   },
   {
    "uf": "RS",
@@ -2308,8 +2308,8 @@
    "codigo_ibge": 4319406,
    "lat": -29.6202,
    "lon": -54.1855,
-   "milho_t": 8387,
-   "soja_t": 46920
+   "milho_t": 5091,
+   "soja_t": 30785
   },
   {
    "uf": "RS",
@@ -2318,8 +2318,8 @@
    "codigo_ibge": 4319604,
    "lat": -30.1643,
    "lon": -53.5603,
-   "milho_t": 12975,
-   "soja_t": 151020
+   "milho_t": 7248,
+   "soja_t": 101080
   },
   {
    "uf": "RS",
@@ -2328,8 +2328,8 @@
    "codigo_ibge": 4319802,
    "lat": -29.6882,
    "lon": -54.6826,
-   "milho_t": 1992,
-   "soja_t": 67518
+   "milho_t": 1196,
+   "soja_t": 64866
   },
   {
    "uf": "RS",
@@ -2338,8 +2338,8 @@
    "codigo_ibge": 4321493,
    "lat": -29.4782,
    "lon": -54.2244,
-   "milho_t": 1296,
-   "soja_t": 4896
+   "milho_t": 1312,
+   "soja_t": 3277
   },
   {
    "uf": "RS",
@@ -2348,8 +2348,8 @@
    "codigo_ibge": 4322202,
    "lat": -29.0858,
    "lon": -53.8445,
-   "milho_t": 35640,
-   "soja_t": 411622
+   "milho_t": 35104,
+   "soja_t": 251384
   },
   {
    "uf": "RS",
@@ -2358,8 +2358,8 @@
    "codigo_ibge": 4322376,
    "lat": -29.04,
    "lon": -55.1517,
-   "milho_t": 1350,
-   "soja_t": 32400
+   "milho_t": 802,
+   "soja_t": 14040
   },
   {
    "uf": "RS",
@@ -2368,8 +2368,8 @@
    "codigo_ibge": 4323457,
    "lat": -30.3461,
    "lon": -53.876,
-   "milho_t": 3000,
-   "soja_t": 25200
+   "milho_t": 1680,
+   "soja_t": 18340
   },
   {
    "uf": "RS",
@@ -2378,8 +2378,8 @@
    "codigo_ibge": 4301008,
    "lat": -29.4014,
    "lon": -51.9557,
-   "milho_t": 2022,
-   "soja_t": 3211
+   "milho_t": 3282,
+   "soja_t": 2668
   },
   {
    "uf": "RS",
@@ -2388,8 +2388,8 @@
    "codigo_ibge": 4301206,
    "lat": -29.3348,
    "lon": -53.0966,
-   "milho_t": 16422,
-   "soja_t": 31360
+   "milho_t": 12824,
+   "soja_t": 21101
   },
   {
    "uf": "RS",
@@ -2398,8 +2398,8 @@
    "codigo_ibge": 4302402,
    "lat": -29.6071,
    "lon": -51.9456,
-   "milho_t": 850,
-   "soja_t": 538
+   "milho_t": 491,
+   "soja_t": 487
   },
   {
    "uf": "RS",
@@ -2408,8 +2408,8 @@
    "codigo_ibge": 4302451,
    "lat": -29.3046,
    "lon": -52.4284,
-   "milho_t": 5712,
-   "soja_t": 7140
+   "milho_t": 4844,
+   "soja_t": 5340
   },
   {
    "uf": "RS",
@@ -2418,8 +2418,8 @@
    "codigo_ibge": 4303004,
    "lat": -30.033,
    "lon": -52.8928,
-   "milho_t": 34352,
-   "soja_t": 222013
+   "milho_t": 26182,
+   "soja_t": 177840
   },
   {
    "uf": "RS",
@@ -2428,8 +2428,8 @@
    "codigo_ibge": 4304200,
    "lat": -29.6684,
    "lon": -52.7895,
-   "milho_t": 13920,
-   "soja_t": 57024
+   "milho_t": 19185,
+   "soja_t": 53368
   },
   {
    "uf": "RS",
@@ -2438,7 +2438,7 @@
    "codigo_ibge": 4304614,
    "lat": -29.3271,
    "lon": -52.2374,
-   "milho_t": 624,
+   "milho_t": 499,
    "soja_t": 0
   },
   {
@@ -2448,8 +2448,8 @@
    "codigo_ibge": 4304697,
    "lat": -29.2674,
    "lon": -51.9853,
-   "milho_t": 138,
-   "soja_t": 0
+   "milho_t": 103,
+   "soja_t": 9
   },
   {
    "uf": "RS",
@@ -2458,8 +2458,8 @@
    "codigo_ibge": 4305132,
    "lat": -29.657,
    "lon": -52.9406,
-   "milho_t": 1860,
-   "soja_t": 4033
+   "milho_t": 1851,
+   "soja_t": 3304
   },
   {
    "uf": "RS",
@@ -2468,8 +2468,8 @@
    "codigo_ibge": 4305587,
    "lat": -29.3948,
    "lon": -51.8556,
-   "milho_t": 100,
-   "soja_t": 455
+   "milho_t": 367,
+   "soja_t": 755
   },
   {
    "uf": "RS",
@@ -2478,8 +2478,8 @@
    "codigo_ibge": 4305835,
    "lat": -29.1802,
    "lon": -52.0942,
-   "milho_t": 1215,
-   "soja_t": 113
+   "milho_t": 815,
+   "soja_t": 67
   },
   {
    "uf": "RS",
@@ -2488,8 +2488,8 @@
    "codigo_ibge": 4306205,
    "lat": -29.5148,
    "lon": -51.9928,
-   "milho_t": 5280,
-   "soja_t": 11200
+   "milho_t": 5520,
+   "soja_t": 7873
   },
   {
    "uf": "RS",
@@ -2498,8 +2498,8 @@
    "codigo_ibge": 4306759,
    "lat": -29.084,
    "lon": -51.9972,
-   "milho_t": 3000,
-   "soja_t": 640
+   "milho_t": 2228,
+   "soja_t": 505
   },
   {
    "uf": "RS",
@@ -2508,8 +2508,8 @@
    "codigo_ibge": 4306809,
    "lat": -29.2351,
    "lon": -51.8703,
-   "milho_t": 1404,
-   "soja_t": 840
+   "milho_t": 1699,
+   "soja_t": 898
   },
   {
    "uf": "RS",
@@ -2518,8 +2518,8 @@
    "codigo_ibge": 4307807,
    "lat": -29.5002,
    "lon": -51.9495,
-   "milho_t": 5440,
-   "soja_t": 3762
+   "milho_t": 5103,
+   "soja_t": 3462
   },
   {
    "uf": "RS",
@@ -2528,8 +2528,8 @@
    "codigo_ibge": 4307815,
    "lat": -29.1713,
    "lon": -53.1639,
-   "milho_t": 4815,
-   "soja_t": 33138
+   "milho_t": 5315,
+   "soja_t": 19266
   },
   {
    "uf": "RS",
@@ -2538,8 +2538,8 @@
    "codigo_ibge": 4308078,
    "lat": -29.5885,
    "lon": -51.8217,
-   "milho_t": 2750,
-   "soja_t": 1442
+   "milho_t": 1887,
+   "soja_t": 1474
   },
   {
    "uf": "RS",
@@ -2548,8 +2548,8 @@
    "codigo_ibge": 4308433,
    "lat": -29.3828,
    "lon": -52.0981,
-   "milho_t": 2128,
-   "soja_t": 899
+   "milho_t": 1988,
+   "soja_t": 792
   },
   {
    "uf": "RS",
@@ -2558,8 +2558,8 @@
    "codigo_ibge": 4309159,
    "lat": -29.2706,
    "lon": -52.5795,
-   "milho_t": 6210,
-   "soja_t": 14850
+   "milho_t": 5536,
+   "soja_t": 12593
   },
   {
    "uf": "RS",
@@ -2568,8 +2568,8 @@
    "codigo_ibge": 4309571,
    "lat": -29.4552,
    "lon": -52.6553,
-   "milho_t": 1260,
-   "soja_t": 1134
+   "milho_t": 1638,
+   "soja_t": 1211
   },
   {
    "uf": "RS",
@@ -2578,8 +2578,8 @@
    "codigo_ibge": 4309753,
    "lat": -29.4203,
    "lon": -53.1295,
-   "milho_t": 5116,
-   "soja_t": 3023
+   "milho_t": 3825,
+   "soja_t": 2160
   },
   {
    "uf": "RS",
@@ -2588,8 +2588,8 @@
    "codigo_ibge": 4310363,
    "lat": -29.3508,
    "lon": -51.7748,
-   "milho_t": 520,
-   "soja_t": 90
+   "milho_t": 488,
+   "soja_t": 174
   },
   {
    "uf": "RS",
@@ -2598,8 +2598,8 @@
    "codigo_ibge": 4311239,
    "lat": -29.4939,
    "lon": -53.017,
-   "milho_t": 1560,
-   "soja_t": 4890
+   "milho_t": 1580,
+   "soja_t": 3815
   },
   {
    "uf": "RS",
@@ -2608,8 +2608,8 @@
    "codigo_ibge": 4311403,
    "lat": -29.4591,
    "lon": -51.9644,
-   "milho_t": 2052,
-   "soja_t": 1188
+   "milho_t": 1720,
+   "soja_t": 1436
   },
   {
    "uf": "RS",
@@ -2618,8 +2618,8 @@
    "codigo_ibge": 4312054,
    "lat": -29.3311,
    "lon": -52.0973,
-   "milho_t": 2048,
-   "soja_t": 882
+   "milho_t": 1829,
+   "soja_t": 906
   },
   {
    "uf": "RS",
@@ -2628,8 +2628,8 @@
    "codigo_ibge": 4312153,
    "lat": -29.5285,
    "lon": -52.1278,
-   "milho_t": 7200,
-   "soja_t": 2268
+   "milho_t": 8483,
+   "soja_t": 1876
   },
   {
    "uf": "RS",
@@ -2638,8 +2638,8 @@
    "codigo_ibge": 4312609,
    "lat": -29.163,
    "lon": -51.8714,
-   "milho_t": 1500,
-   "soja_t": 792
+   "milho_t": 2165,
+   "soja_t": 980
   },
   {
    "uf": "RS",
@@ -2648,7 +2648,7 @@
    "codigo_ibge": 4313003,
    "lat": -29.2182,
    "lon": -52.0319,
-   "milho_t": 1800,
+   "milho_t": 1260,
    "soja_t": 0
   },
   {
@@ -2658,8 +2658,8 @@
    "codigo_ibge": 4313391,
    "lat": -29.7338,
    "lon": -52.9489,
-   "milho_t": 6318,
-   "soja_t": 16750
+   "milho_t": 3786,
+   "soja_t": 15159
   },
   {
    "uf": "RS",
@@ -2668,8 +2668,8 @@
    "codigo_ibge": 4313953,
    "lat": -30.1902,
    "lon": -52.3729,
-   "milho_t": 8520,
-   "soja_t": 25200
+   "milho_t": 5800,
+   "soja_t": 28430
   },
   {
    "uf": "RS",
@@ -2678,8 +2678,8 @@
    "codigo_ibge": 4314027,
    "lat": -29.6717,
    "lon": -53.144,
-   "milho_t": 10500,
-   "soja_t": 8800
+   "milho_t": 7418,
+   "soja_t": 8123
   },
   {
    "uf": "RS",
@@ -2688,8 +2688,8 @@
    "codigo_ibge": 4314068,
    "lat": -29.4577,
    "lon": -52.9599,
-   "milho_t": 4500,
-   "soja_t": 13500
+   "milho_t": 4100,
+   "soja_t": 12067
   },
   {
    "uf": "RS",
@@ -2698,8 +2698,8 @@
    "codigo_ibge": 4314076,
    "lat": -29.748,
    "lon": -52.2748,
-   "milho_t": 2688,
-   "soja_t": 18900
+   "milho_t": 4496,
+   "soja_t": 23660
   },
   {
    "uf": "RS",
@@ -2708,8 +2708,8 @@
    "codigo_ibge": 4314159,
    "lat": -29.5486,
    "lon": -51.7339,
-   "milho_t": 5300,
-   "soja_t": 2650
+   "milho_t": 2779,
+   "soja_t": 1773
   },
   {
    "uf": "RS",
@@ -2718,8 +2718,8 @@
    "codigo_ibge": 4315131,
    "lat": -29.1738,
    "lon": -52.2136,
-   "milho_t": 576,
-   "soja_t": 25
+   "milho_t": 1443,
+   "soja_t": 81
   },
   {
    "uf": "RS",
@@ -2728,8 +2728,8 @@
    "codigo_ibge": 4315156,
    "lat": -29.2441,
    "lon": -52.3197,
-   "milho_t": 4161,
-   "soja_t": 153
+   "milho_t": 3926,
+   "soja_t": 166
   },
   {
    "uf": "RS",
@@ -2738,8 +2738,8 @@
    "codigo_ibge": 4315453,
    "lat": -29.1164,
    "lon": -52.0778,
-   "milho_t": 4467,
-   "soja_t": 202
+   "milho_t": 2897,
+   "soja_t": 334
   },
   {
    "uf": "RS",
@@ -2748,8 +2748,8 @@
    "codigo_ibge": 4315701,
    "lat": -29.988,
    "lon": -52.3711,
-   "milho_t": 16704,
-   "soja_t": 137754
+   "milho_t": 18266,
+   "soja_t": 151789
   },
   {
    "uf": "RS",
@@ -2758,8 +2758,8 @@
    "codigo_ibge": 4315800,
    "lat": -29.2884,
    "lon": -51.8658,
-   "milho_t": 9537,
-   "soja_t": 4110
+   "milho_t": 7889,
+   "soja_t": 3895
   },
   {
    "uf": "RS",
@@ -2768,8 +2768,8 @@
    "codigo_ibge": 4316758,
    "lat": -29.4747,
    "lon": -52.0843,
-   "milho_t": 3696,
-   "soja_t": 2520
+   "milho_t": 3212,
+   "soja_t": 2267
   },
   {
    "uf": "RS",
@@ -2778,8 +2778,8 @@
    "codigo_ibge": 4316808,
    "lat": -29.722,
    "lon": -52.4343,
-   "milho_t": 19127,
-   "soja_t": 7050
+   "milho_t": 15072,
+   "soja_t": 6980
   },
   {
    "uf": "RS",
@@ -2788,8 +2788,8 @@
    "codigo_ibge": 4320263,
    "lat": -29.3523,
    "lon": -52.9767,
-   "milho_t": 5090,
-   "soja_t": 16314
+   "milho_t": 4363,
+   "soja_t": 11192
   },
   {
    "uf": "RS",
@@ -2798,8 +2798,8 @@
    "codigo_ibge": 4320677,
    "lat": -29.5357,
    "lon": -52.5304,
-   "milho_t": 5400,
-   "soja_t": 3375
+   "milho_t": 6093,
+   "soja_t": 2850
   },
   {
    "uf": "RS",
@@ -2808,8 +2808,8 @@
    "codigo_ibge": 4320701,
    "lat": -29.4194,
    "lon": -53.0326,
-   "milho_t": 4212,
-   "soja_t": 6345
+   "milho_t": 3484,
+   "soja_t": 5029
   },
   {
    "uf": "RS",
@@ -2818,8 +2818,8 @@
    "codigo_ibge": 4320453,
    "lat": -29.3904,
    "lon": -52.2685,
-   "milho_t": 1650,
-   "soja_t": 5
+   "milho_t": 1554,
+   "soja_t": 2
   },
   {
    "uf": "RS",
@@ -2828,7 +2828,7 @@
    "codigo_ibge": 4320859,
    "lat": -29.643,
    "lon": -51.6823,
-   "milho_t": 210,
+   "milho_t": 250,
    "soja_t": 0
   },
   {
@@ -2838,8 +2838,8 @@
    "codigo_ibge": 4321303,
    "lat": -29.7943,
    "lon": -51.8653,
-   "milho_t": 2848,
-   "soja_t": 1120
+   "milho_t": 2779,
+   "soja_t": 827
   },
   {
    "uf": "RS",
@@ -2848,8 +2848,8 @@
    "codigo_ibge": 4321451,
    "lat": -29.4482,
    "lon": -51.8044,
-   "milho_t": 8140,
-   "soja_t": 1539
+   "milho_t": 6331,
+   "soja_t": 1378
   },
   {
    "uf": "RS",
@@ -2858,8 +2858,8 @@
    "codigo_ibge": 4321626,
    "lat": -29.2977,
    "lon": -52.0532,
-   "milho_t": 1182,
-   "soja_t": 655
+   "milho_t": 852,
+   "soja_t": 641
   },
   {
    "uf": "RS",
@@ -2868,8 +2868,8 @@
    "codigo_ibge": 4322533,
    "lat": -29.5967,
    "lon": -52.6839,
-   "milho_t": 13200,
-   "soja_t": 2270
+   "milho_t": 13670,
+   "soja_t": 2172
   },
   {
    "uf": "RS",
@@ -2878,8 +2878,8 @@
    "codigo_ibge": 4322608,
    "lat": -29.6143,
    "lon": -52.1932,
-   "milho_t": 51015,
-   "soja_t": 10797
+   "milho_t": 47005,
+   "soja_t": 13255
   },
   {
    "uf": "RS",
@@ -2888,8 +2888,8 @@
    "codigo_ibge": 4322707,
    "lat": -29.7184,
    "lon": -52.5152,
-   "milho_t": 11712,
-   "soja_t": 540
+   "milho_t": 9490,
+   "soja_t": 1148
   },
   {
    "uf": "RS",
@@ -2898,8 +2898,8 @@
    "codigo_ibge": 4322855,
    "lat": -29.0655,
    "lon": -51.8625,
-   "milho_t": 4508,
-   "soja_t": 7040
+   "milho_t": 3257,
+   "soja_t": 5555
   },
   {
    "uf": "RS",
@@ -2908,8 +2908,8 @@
    "codigo_ibge": 4323770,
    "lat": -29.4263,
    "lon": -51.7645,
-   "milho_t": 972,
-   "soja_t": 371
+   "milho_t": 340,
+   "soja_t": 256
   },
   {
    "uf": "RS",
@@ -2918,7 +2918,7 @@
    "codigo_ibge": 4300570,
    "lat": -29.3919,
    "lon": -51.3123,
-   "milho_t": 1062,
+   "milho_t": 905,
    "soja_t": 0
   },
   {
@@ -2929,7 +2929,7 @@
    "lat": -29.9914,
    "lon": -51.0809,
    "milho_t": 0,
-   "soja_t": 50
+   "soja_t": 37
   },
   {
    "uf": "RS",
@@ -2938,8 +2938,8 @@
    "codigo_ibge": 4300851,
    "lat": -30.9092,
    "lon": -51.5046,
-   "milho_t": 150,
-   "soja_t": 19635
+   "milho_t": 209,
+   "soja_t": 26307
   },
   {
    "uf": "RS",
@@ -2948,7 +2948,7 @@
    "codigo_ibge": 4300877,
    "lat": -29.6168,
    "lon": -50.9291,
-   "milho_t": 3,
+   "milho_t": 2,
    "soja_t": 0
   },
   {
@@ -2958,8 +2958,8 @@
    "codigo_ibge": 4301057,
    "lat": -29.5439,
    "lon": -49.8895,
-   "milho_t": 0,
-   "soja_t": 990
+   "milho_t": 221,
+   "soja_t": 910
   },
   {
    "uf": "RS",
@@ -2968,8 +2968,8 @@
    "codigo_ibge": 4301107,
    "lat": -30.0875,
    "lon": -51.7275,
-   "milho_t": 470,
-   "soja_t": 9240
+   "milho_t": 777,
+   "soja_t": 9613
   },
   {
    "uf": "RS",
@@ -2978,8 +2978,8 @@
    "codigo_ibge": 4301636,
    "lat": -30.2419,
    "lon": -50.2337,
-   "milho_t": 0,
-   "soja_t": 1142
+   "milho_t": 5,
+   "soja_t": 1189
   },
   {
    "uf": "RS",
@@ -2988,8 +2988,8 @@
    "codigo_ibge": 4301909,
    "lat": -30.2939,
    "lon": -51.3014,
-   "milho_t": 1175,
-   "soja_t": 19980
+   "milho_t": 1247,
+   "soja_t": 31175
   },
   {
    "uf": "RS",
@@ -2998,7 +2998,7 @@
    "codigo_ibge": 4301651,
    "lat": -29.3725,
    "lon": -51.4949,
-   "milho_t": 4320,
+   "milho_t": 4693,
    "soja_t": 0
   },
   {
@@ -3008,8 +3008,8 @@
    "codigo_ibge": 4301750,
    "lat": -30.3891,
    "lon": -51.7384,
-   "milho_t": 3200,
-   "soja_t": 2800
+   "milho_t": 4293,
+   "soja_t": 3817
   },
   {
    "uf": "RS",
@@ -3018,8 +3018,8 @@
    "codigo_ibge": 4302352,
    "lat": -29.4856,
    "lon": -51.3548,
-   "milho_t": 630,
-   "soja_t": 0
+   "milho_t": 1530,
+   "soja_t": 39
   },
   {
    "uf": "RS",
@@ -3028,7 +3028,7 @@
    "codigo_ibge": 4302659,
    "lat": -29.5501,
    "lon": -51.5945,
-   "milho_t": 672,
+   "milho_t": 385,
    "soja_t": 0
   },
   {
@@ -3038,8 +3038,8 @@
    "codigo_ibge": 4302709,
    "lat": -30.1179,
    "lon": -51.9601,
-   "milho_t": 1500,
-   "soja_t": 38813
+   "milho_t": 960,
+   "soja_t": 34438
   },
   {
    "uf": "RS",
@@ -3058,8 +3058,8 @@
    "codigo_ibge": 4303509,
    "lat": -30.8489,
    "lon": -51.8043,
-   "milho_t": 18954,
-   "soja_t": 36864
+   "milho_t": 18371,
+   "soja_t": 78088
   },
   {
    "uf": "RS",
@@ -3068,7 +3068,7 @@
    "codigo_ibge": 4303905,
    "lat": -29.6747,
    "lon": -51.0606,
-   "milho_t": 76,
+   "milho_t": 88,
    "soja_t": 0
   },
   {
@@ -3078,7 +3078,7 @@
    "codigo_ibge": 4304408,
    "lat": -29.356,
    "lon": -50.8119,
-   "milho_t": 605,
+   "milho_t": 737,
    "soja_t": 0
   },
   {
@@ -3089,7 +3089,7 @@
    "lat": -29.9128,
    "lon": -51.1857,
    "milho_t": 0,
-   "soja_t": 0
+   "soja_t": 99
   },
   {
    "uf": "RS",
@@ -3098,8 +3098,8 @@
    "codigo_ibge": 4304689,
    "lat": -29.6961,
    "lon": -51.328,
-   "milho_t": 162,
-   "soja_t": 966
+   "milho_t": 117,
+   "soja_t": 1105
   },
   {
    "uf": "RS",
@@ -3108,8 +3108,8 @@
    "codigo_ibge": 4304671,
    "lat": -30.1383,
    "lon": -50.5152,
-   "milho_t": 115,
-   "soja_t": 7197
+   "milho_t": 208,
+   "soja_t": 23169
   },
   {
    "uf": "RS",
@@ -3118,7 +3118,7 @@
    "codigo_ibge": 4304630,
    "lat": -29.7642,
    "lon": -50.0282,
-   "milho_t": 28,
+   "milho_t": 53,
    "soja_t": 0
   },
   {
@@ -3128,8 +3128,8 @@
    "codigo_ibge": 4304713,
    "lat": -29.7869,
    "lon": -50.4316,
-   "milho_t": 2000,
-   "soja_t": 180
+   "milho_t": 3280,
+   "soja_t": 204
   },
   {
    "uf": "RS",
@@ -3138,7 +3138,7 @@
    "codigo_ibge": 4305173,
    "lat": -30.5905,
    "lon": -51.7418,
-   "milho_t": 5250,
+   "milho_t": 9037,
    "soja_t": 675
   },
   {
@@ -3148,8 +3148,8 @@
    "codigo_ibge": 4305355,
    "lat": -29.9625,
    "lon": -51.6289,
-   "milho_t": 200,
-   "soja_t": 4313
+   "milho_t": 194,
+   "soja_t": 3721
   },
   {
    "uf": "RS",
@@ -3158,8 +3158,8 @@
    "codigo_ibge": 4305447,
    "lat": -30.7504,
    "lon": -51.9737,
-   "milho_t": 7020,
-   "soja_t": 378
+   "milho_t": 10740,
+   "soja_t": 315
   },
   {
    "uf": "RS",
@@ -3168,8 +3168,8 @@
    "codigo_ibge": 4305454,
    "lat": -30.1604,
    "lon": -50.2337,
-   "milho_t": 56,
-   "soja_t": 0
+   "milho_t": 69,
+   "soja_t": 604
   },
   {
    "uf": "RS",
@@ -3178,7 +3178,7 @@
    "codigo_ibge": 4306403,
    "lat": -29.5836,
    "lon": -51.0898,
-   "milho_t": 368,
+   "milho_t": 383,
    "soja_t": 0
   },
   {
@@ -3188,8 +3188,8 @@
    "codigo_ibge": 4306502,
    "lat": -30.7004,
    "lon": -52.1026,
-   "milho_t": 14040,
-   "soja_t": 4800
+   "milho_t": 17653,
+   "soja_t": 7380
   },
   {
    "uf": "RS",
@@ -3208,8 +3208,8 @@
    "codigo_ibge": 4306767,
    "lat": -30.0847,
    "lon": -51.6187,
-   "milho_t": 120,
-   "soja_t": 4480
+   "milho_t": 134,
+   "soja_t": 5781
   },
   {
    "uf": "RS",
@@ -3228,7 +3228,7 @@
    "codigo_ibge": 4307609,
    "lat": -29.6535,
    "lon": -51.1843,
-   "milho_t": 150,
+   "milho_t": 168,
    "soja_t": 0
   },
   {
@@ -3238,7 +3238,7 @@
    "codigo_ibge": 4308102,
    "lat": -29.4527,
    "lon": -51.3032,
-   "milho_t": 353,
+   "milho_t": 362,
    "soja_t": 0
   },
   {
@@ -3248,8 +3248,8 @@
    "codigo_ibge": 4308805,
    "lat": -29.9032,
    "lon": -51.7612,
-   "milho_t": 9000,
-   "soja_t": 42130
+   "milho_t": 6042,
+   "soja_t": 27837
   },
   {
    "uf": "RS",
@@ -3258,8 +3258,8 @@
    "codigo_ibge": 4309050,
    "lat": -29.8798,
    "lon": -50.7734,
-   "milho_t": 324,
-   "soja_t": 8505
+   "milho_t": 448,
+   "soja_t": 7659
   },
   {
    "uf": "RS",
@@ -3268,7 +3268,7 @@
    "codigo_ibge": 4309100,
    "lat": -29.3734,
    "lon": -50.8762,
-   "milho_t": 1266,
+   "milho_t": 2211,
    "soja_t": 0
   },
   {
@@ -3278,8 +3278,8 @@
    "codigo_ibge": 4309209,
    "lat": -29.9413,
    "lon": -50.9869,
-   "milho_t": 465,
-   "soja_t": 1021
+   "milho_t": 353,
+   "soja_t": 915
   },
   {
    "uf": "RS",
@@ -3288,8 +3288,8 @@
    "codigo_ibge": 4309308,
    "lat": -30.1086,
    "lon": -51.3233,
-   "milho_t": 540,
-   "soja_t": 521
+   "milho_t": 496,
+   "soja_t": 1927
   },
   {
    "uf": "RS",
@@ -3298,7 +3298,7 @@
    "codigo_ibge": 4309555,
    "lat": -29.5456,
    "lon": -51.4185,
-   "milho_t": 168,
+   "milho_t": 260,
    "soja_t": 0
   },
   {
@@ -3308,8 +3308,8 @@
    "codigo_ibge": 4310108,
    "lat": -29.5693,
    "lon": -50.7919,
-   "milho_t": 105,
-   "soja_t": 13
+   "milho_t": 151,
+   "soja_t": 23
   },
   {
    "uf": "RS",
@@ -3328,7 +3328,7 @@
    "codigo_ibge": 4310652,
    "lat": -29.4974,
    "lon": -50.1016,
-   "milho_t": 53,
+   "milho_t": 55,
    "soja_t": 0
   },
   {
@@ -3338,7 +3338,7 @@
    "codigo_ibge": 4310801,
    "lat": -29.5995,
    "lon": -51.1533,
-   "milho_t": 175,
+   "milho_t": 268,
    "soja_t": 0
   },
   {
@@ -3348,7 +3348,7 @@
    "codigo_ibge": 4311627,
    "lat": -29.5859,
    "lon": -51.2141,
-   "milho_t": 500,
+   "milho_t": 497,
    "soja_t": 0
   },
   {
@@ -3358,7 +3358,7 @@
    "codigo_ibge": 4311643,
    "lat": -29.4679,
    "lon": -51.2003,
-   "milho_t": 377,
+   "milho_t": 366,
    "soja_t": 0
   },
   {
@@ -3368,7 +3368,7 @@
    "codigo_ibge": 4311734,
    "lat": -29.2136,
    "lon": -49.9311,
-   "milho_t": 891,
+   "milho_t": 861,
    "soja_t": 0
   },
   {
@@ -3378,8 +3378,8 @@
    "codigo_ibge": 4311775,
    "lat": -29.6798,
    "lon": -50.2079,
-   "milho_t": 4875,
-   "soja_t": 375
+   "milho_t": 6025,
+   "soja_t": 250
   },
   {
    "uf": "RS",
@@ -3388,7 +3388,7 @@
    "codigo_ibge": 4311791,
    "lat": -29.5457,
    "lon": -51.5573,
-   "milho_t": 245,
+   "milho_t": 241,
    "soja_t": 0
   },
   {
@@ -3398,8 +3398,8 @@
    "codigo_ibge": 4311981,
    "lat": -30.353,
    "lon": -51.5803,
-   "milho_t": 2520,
-   "soja_t": 600
+   "milho_t": 2160,
+   "soja_t": 1488
   },
   {
    "uf": "RS",
@@ -3408,8 +3408,8 @@
    "codigo_ibge": 4312252,
    "lat": -30.1346,
    "lon": -52.0423,
-   "milho_t": 2240,
-   "soja_t": 22500
+   "milho_t": 1788,
+   "soja_t": 27900
   },
   {
    "uf": "RS",
@@ -3418,8 +3418,8 @@
    "codigo_ibge": 4312401,
    "lat": -29.6824,
    "lon": -51.4679,
-   "milho_t": 2970,
-   "soja_t": 370
+   "milho_t": 2118,
+   "soja_t": 227
   },
   {
    "uf": "RS",
@@ -3428,8 +3428,8 @@
    "codigo_ibge": 4312443,
    "lat": -29.3578,
    "lon": -49.9328,
-   "milho_t": 140,
-   "soja_t": 25
+   "milho_t": 233,
+   "soja_t": 158
   },
   {
    "uf": "RS",
@@ -3438,7 +3438,7 @@
    "codigo_ibge": 4312476,
    "lat": -29.5379,
    "lon": -51.0811,
-   "milho_t": 1365,
+   "milho_t": 1628,
    "soja_t": 0
   },
   {
@@ -3448,8 +3448,8 @@
    "codigo_ibge": 4312500,
    "lat": -31.1054,
    "lon": -50.9167,
-   "milho_t": 738,
-   "soja_t": 5940
+   "milho_t": 1521,
+   "soja_t": 16152
   },
   {
    "uf": "RS",
@@ -3458,8 +3458,8 @@
    "codigo_ibge": 4313060,
    "lat": -29.5808,
    "lon": -50.9051,
-   "milho_t": 75,
-   "soja_t": 0
+   "milho_t": 97,
+   "soja_t": 47
   },
   {
    "uf": "RS",
@@ -3468,7 +3468,7 @@
    "codigo_ibge": 4313201,
    "lat": -29.3741,
    "lon": -51.1136,
-   "milho_t": 5460,
+   "milho_t": 6356,
    "soja_t": 0
   },
   {
@@ -3478,7 +3478,7 @@
    "codigo_ibge": 4313375,
    "lat": -29.8525,
    "lon": -51.2837,
-   "milho_t": 31,
+   "milho_t": 29,
    "soja_t": 0
   },
   {
@@ -3488,8 +3488,8 @@
    "codigo_ibge": 4313409,
    "lat": -29.6875,
    "lon": -51.1328,
-   "milho_t": 1647,
-   "soja_t": 644
+   "milho_t": 1861,
+   "soja_t": 680
   },
   {
    "uf": "RS",
@@ -3498,8 +3498,8 @@
    "codigo_ibge": 4313508,
    "lat": -29.8881,
    "lon": -50.2667,
-   "milho_t": 408,
-   "soja_t": 3080
+   "milho_t": 424,
+   "soja_t": 4620
   },
   {
    "uf": "RS",
@@ -3508,8 +3508,8 @@
    "codigo_ibge": 4313656,
    "lat": -30.2535,
    "lon": -50.5103,
-   "milho_t": 504,
-   "soja_t": 5074
+   "milho_t": 748,
+   "soja_t": 20025
   },
   {
    "uf": "RS",
@@ -3518,7 +3518,7 @@
    "codigo_ibge": 4314035,
    "lat": -29.6365,
    "lon": -51.3974,
-   "milho_t": 0,
+   "milho_t": 9,
    "soja_t": 0
   },
   {
@@ -3528,8 +3528,8 @@
    "codigo_ibge": 4314050,
    "lat": -29.6243,
    "lon": -50.8312,
-   "milho_t": 39,
-   "soja_t": 0
+   "milho_t": 38,
+   "soja_t": 100
   },
   {
    "uf": "RS",
@@ -3538,7 +3538,7 @@
    "codigo_ibge": 4314423,
    "lat": -29.4464,
    "lon": -51.1367,
-   "milho_t": 971,
+   "milho_t": 1115,
    "soja_t": 0
   },
   {
@@ -3548,8 +3548,8 @@
    "codigo_ibge": 4314902,
    "lat": -30.0318,
    "lon": -51.2065,
-   "milho_t": 30,
-   "soja_t": 41
+   "milho_t": 82,
+   "soja_t": 929
   },
   {
    "uf": "RS",
@@ -3558,8 +3558,8 @@
    "codigo_ibge": 4314803,
    "lat": -29.7015,
    "lon": -51.2429,
-   "milho_t": 625,
-   "soja_t": 1118
+   "milho_t": 658,
+   "soja_t": 1198
   },
   {
    "uf": "RS",
@@ -3568,7 +3568,7 @@
    "codigo_ibge": 4314753,
    "lat": -29.4481,
    "lon": -51.6719,
-   "milho_t": 483,
+   "milho_t": 404,
    "soja_t": 0
   },
   {
@@ -3578,7 +3578,7 @@
    "codigo_ibge": 4315149,
    "lat": -29.5175,
    "lon": -51.1798,
-   "milho_t": 143,
+   "milho_t": 182,
    "soja_t": 0
   },
   {
@@ -3588,7 +3588,7 @@
    "codigo_ibge": 4315750,
    "lat": -29.639,
    "lon": -50.4488,
-   "milho_t": 264,
+   "milho_t": 481,
    "soja_t": 0
   },
   {
@@ -3598,8 +3598,8 @@
    "codigo_ibge": 4316006,
    "lat": -29.6462,
    "lon": -50.5819,
-   "milho_t": 1750,
-   "soja_t": 5
+   "milho_t": 2893,
+   "soja_t": 8
   },
   {
    "uf": "RS",
@@ -3608,7 +3608,7 @@
    "codigo_ibge": 4316501,
    "lat": -29.4386,
    "lon": -51.5077,
-   "milho_t": 3294,
+   "milho_t": 4068,
    "soja_t": 0
   },
   {
@@ -3618,8 +3618,8 @@
    "codigo_ibge": 4316956,
    "lat": -29.4902,
    "lon": -50.9919,
-   "milho_t": 2405,
-   "soja_t": 38
+   "milho_t": 3885,
+   "soja_t": 37
   },
   {
    "uf": "RS",
@@ -3628,8 +3628,8 @@
    "codigo_ibge": 4317608,
    "lat": -29.8268,
    "lon": -50.5175,
-   "milho_t": 7000,
-   "soja_t": 16500
+   "milho_t": 6667,
+   "soja_t": 27700
   },
   {
    "uf": "RS",
@@ -3638,7 +3638,7 @@
    "codigo_ibge": 4319901,
    "lat": -29.6349,
    "lon": -51.0064,
-   "milho_t": 162,
+   "milho_t": 309,
    "soja_t": 0
   },
   {
@@ -3648,8 +3648,8 @@
    "codigo_ibge": 4320008,
    "lat": -29.8276,
    "lon": -51.145,
-   "milho_t": 86,
-   "soja_t": 26
+   "milho_t": 89,
+   "soja_t": 44
   },
   {
    "uf": "RS",
@@ -3658,8 +3658,8 @@
    "codigo_ibge": 4320354,
    "lat": -30.6107,
    "lon": -51.5862,
-   "milho_t": 1800,
-   "soja_t": 4485
+   "milho_t": 2670,
+   "soja_t": 4632
   },
   {
    "uf": "RS",
@@ -3668,8 +3668,8 @@
    "codigo_ibge": 4320552,
    "lat": -30.4562,
    "lon": -51.6017,
-   "milho_t": 3465,
-   "soja_t": 1620
+   "milho_t": 4651,
+   "soja_t": 1940
   },
   {
    "uf": "RS",
@@ -3678,8 +3678,8 @@
    "codigo_ibge": 4318408,
    "lat": -29.9716,
    "lon": -51.7251,
-   "milho_t": 2520,
-   "soja_t": 11088
+   "milho_t": 3393,
+   "soja_t": 14079
   },
   {
    "uf": "RS",
@@ -3688,7 +3688,7 @@
    "codigo_ibge": 4318481,
    "lat": -29.528,
    "lon": -51.245,
-   "milho_t": 203,
+   "milho_t": 182,
    "soja_t": 0
   },
   {
@@ -3708,7 +3708,7 @@
    "codigo_ibge": 4318705,
    "lat": -29.7545,
    "lon": -51.1498,
-   "milho_t": 13,
+   "milho_t": 26,
    "soja_t": 0
   },
   {
@@ -3718,7 +3718,7 @@
    "codigo_ibge": 4319356,
    "lat": -29.4193,
    "lon": -51.5134,
-   "milho_t": 370,
+   "milho_t": 409,
    "soja_t": 0
   },
   {
@@ -3728,7 +3728,7 @@
    "codigo_ibge": 4319505,
    "lat": -29.5885,
    "lon": -51.3749,
-   "milho_t": 68,
+   "milho_t": 179,
    "soja_t": 0
   },
   {
@@ -3738,7 +3738,7 @@
    "codigo_ibge": 4319752,
    "lat": -29.3729,
    "lon": -51.3675,
-   "milho_t": 75,
+   "milho_t": 145,
    "soja_t": 0
   },
   {
@@ -3748,8 +3748,8 @@
    "codigo_ibge": 4321105,
    "lat": -30.6683,
    "lon": -51.3991,
-   "milho_t": 560,
-   "soja_t": 38013
+   "milho_t": 532,
+   "soja_t": 41681
   },
   {
    "uf": "RS",
@@ -3758,8 +3758,8 @@
    "codigo_ibge": 4321204,
    "lat": -29.6505,
    "lon": -50.7753,
-   "milho_t": 95,
-   "soja_t": 140
+   "milho_t": 102,
+   "soja_t": 168
   },
   {
    "uf": "RS",
@@ -3768,8 +3768,8 @@
    "codigo_ibge": 4321352,
    "lat": -31.2843,
    "lon": -51.088,
-   "milho_t": 108,
-   "soja_t": 39
+   "milho_t": 503,
+   "soja_t": 1985
   },
   {
    "uf": "RS",
@@ -3778,7 +3778,7 @@
    "codigo_ibge": 4321436,
    "lat": -29.5782,
    "lon": -50.0644,
-   "milho_t": 585,
+   "milho_t": 532,
    "soja_t": 0
   },
   {
@@ -3788,8 +3788,8 @@
    "codigo_ibge": 4321501,
    "lat": -29.3334,
    "lon": -49.7333,
-   "milho_t": 306,
-   "soja_t": 1575
+   "milho_t": 299,
+   "soja_t": 1050
   },
   {
    "uf": "RS",
@@ -3798,8 +3798,8 @@
    "codigo_ibge": 4321600,
    "lat": -29.9841,
    "lon": -50.1322,
-   "milho_t": 5,
-   "soja_t": 560
+   "milho_t": 13,
+   "soja_t": 453
   },
   {
    "uf": "RS",
@@ -3808,8 +3808,8 @@
    "codigo_ibge": 4322004,
    "lat": -29.9291,
    "lon": -51.7075,
-   "milho_t": 1568,
-   "soja_t": 3120
+   "milho_t": 3403,
+   "soja_t": 4140
   },
   {
    "uf": "RS",
@@ -3818,7 +3818,7 @@
    "codigo_ibge": 4321667,
    "lat": -29.4487,
    "lon": -49.9275,
-   "milho_t": 186,
+   "milho_t": 217,
    "soja_t": 0
   },
   {
@@ -3828,7 +3828,7 @@
    "codigo_ibge": 4321709,
    "lat": -29.5137,
    "lon": -50.7739,
-   "milho_t": 252,
+   "milho_t": 447,
    "soja_t": 0
   },
   {
@@ -3838,7 +3838,7 @@
    "codigo_ibge": 4321832,
    "lat": -29.5384,
    "lon": -50.0708,
-   "milho_t": 333,
+   "milho_t": 345,
    "soja_t": 0
   },
   {
@@ -3848,7 +3848,7 @@
    "codigo_ibge": 4322251,
    "lat": -29.4772,
    "lon": -51.4174,
-   "milho_t": 225,
+   "milho_t": 281,
    "soja_t": 0
   },
   {
@@ -3858,7 +3858,7 @@
    "codigo_ibge": 4322541,
    "lat": -29.3919,
    "lon": -51.2559,
-   "milho_t": 160,
+   "milho_t": 241,
    "soja_t": 0
   },
   {
@@ -3868,8 +3868,8 @@
    "codigo_ibge": 4322525,
    "lat": -29.7864,
    "lon": -52.1857,
-   "milho_t": 1349,
-   "soja_t": 15750
+   "milho_t": 1355,
+   "soja_t": 18583
   },
   {
    "uf": "RS",
@@ -3878,8 +3878,8 @@
    "codigo_ibge": 4323002,
    "lat": -30.0819,
    "lon": -51.0194,
-   "milho_t": 1320,
-   "soja_t": 14172
+   "milho_t": 1596,
+   "soja_t": 18968
   },
   {
    "uf": "RS",
@@ -3889,7 +3889,7 @@
    "lat": -29.8065,
    "lon": -50.0519,
    "milho_t": 0,
-   "soja_t": 0
+   "soja_t": 288
   },
   {
    "uf": "RS",
@@ -3898,8 +3898,8 @@
    "codigo_ibge": 4300661,
    "lat": -28.6283,
    "lon": -51.5797,
-   "milho_t": 10500,
-   "soja_t": 40620
+   "milho_t": 14275,
+   "soja_t": 30150
   },
   {
    "uf": "RS",
@@ -3908,8 +3908,8 @@
    "codigo_ibge": 4300703,
    "lat": -28.9698,
    "lon": -52.0102,
-   "milho_t": 19383,
-   "soja_t": 1260
+   "milho_t": 13489,
+   "soja_t": 1140
   },
   {
    "uf": "RS",
@@ -3918,7 +3918,7 @@
    "codigo_ibge": 4300802,
    "lat": -28.8565,
    "lon": -51.2883,
-   "milho_t": 10200,
+   "milho_t": 8257,
    "soja_t": 0
   },
   {
@@ -3928,8 +3928,8 @@
    "codigo_ibge": 4301404,
    "lat": -28.8737,
    "lon": -52.1781,
-   "milho_t": 6830,
-   "soja_t": 4730
+   "milho_t": 4985,
+   "soja_t": 4233
   },
   {
    "uf": "RS",
@@ -3938,7 +3938,7 @@
    "codigo_ibge": 4302105,
    "lat": -29.1662,
    "lon": -51.5165,
-   "milho_t": 446,
+   "milho_t": 392,
    "soja_t": 0
   },
   {
@@ -3948,7 +3948,7 @@
    "codigo_ibge": 4302253,
    "lat": -29.3544,
    "lon": -51.6687,
-   "milho_t": 2420,
+   "milho_t": 1379,
    "soja_t": 0
   },
   {
@@ -3958,8 +3958,8 @@
    "codigo_ibge": 4302303,
    "lat": -28.6697,
    "lon": -50.4295,
-   "milho_t": 38160,
-   "soja_t": 35550
+   "milho_t": 50360,
+   "soja_t": 31470
   },
   {
    "uf": "RS",
@@ -3968,8 +3968,8 @@
    "codigo_ibge": 4303608,
    "lat": -29.0474,
    "lon": -50.1465,
-   "milho_t": 2340,
-   "soja_t": 1403
+   "milho_t": 2940,
+   "soja_t": 1656
   },
   {
    "uf": "RS",
@@ -3978,8 +3978,8 @@
    "codigo_ibge": 4303673,
    "lat": -28.7926,
    "lon": -51.0941,
-   "milho_t": 6720,
-   "soja_t": 8910
+   "milho_t": 9540,
+   "soja_t": 20802
   },
   {
    "uf": "RS",
@@ -3988,8 +3988,8 @@
    "codigo_ibge": 4304622,
    "lat": -28.1254,
    "lon": -51.3961,
-   "milho_t": 22050,
-   "soja_t": 99840
+   "milho_t": 21108,
+   "soja_t": 74530
   },
   {
    "uf": "RS",
@@ -3998,7 +3998,7 @@
    "codigo_ibge": 4304804,
    "lat": -29.2969,
    "lon": -51.5028,
-   "milho_t": 6221,
+   "milho_t": 6234,
    "soja_t": 0
   },
   {
@@ -4008,8 +4008,8 @@
    "codigo_ibge": 4305108,
    "lat": -29.1629,
    "lon": -51.1792,
-   "milho_t": 33800,
-   "soja_t": 750
+   "milho_t": 38100,
+   "soja_t": 1048
   },
   {
    "uf": "RS",
@@ -4018,7 +4018,7 @@
    "codigo_ibge": 4305934,
    "lat": -29.2695,
    "lon": -51.6847,
-   "milho_t": 1848,
+   "milho_t": 1595,
    "soja_t": 0
   },
   {
@@ -4028,8 +4028,8 @@
    "codigo_ibge": 4305959,
    "lat": -28.9891,
    "lon": -51.6971,
-   "milho_t": 5744,
-   "soja_t": 1361
+   "milho_t": 4610,
+   "soja_t": 860
   },
   {
    "uf": "RS",
@@ -4038,8 +4038,8 @@
    "codigo_ibge": 4306452,
    "lat": -28.983,
    "lon": -51.8396,
-   "milho_t": 5700,
-   "soja_t": 3840
+   "milho_t": 4315,
+   "soja_t": 3246
   },
   {
    "uf": "RS",
@@ -4048,8 +4048,8 @@
    "codigo_ibge": 4307401,
    "lat": -28.0518,
    "lon": -51.1933,
-   "milho_t": 37440,
-   "soja_t": 115200
+   "milho_t": 34495,
+   "soja_t": 92680
   },
   {
    "uf": "RS",
@@ -4058,8 +4058,8 @@
    "codigo_ibge": 4307864,
    "lat": -28.8794,
    "lon": -51.7014,
-   "milho_t": 5796,
-   "soja_t": 3432
+   "milho_t": 4775,
+   "soja_t": 3603
   },
   {
    "uf": "RS",
@@ -4068,7 +4068,7 @@
    "codigo_ibge": 4307906,
    "lat": -29.2227,
    "lon": -51.3419,
-   "milho_t": 6240,
+   "milho_t": 7237,
    "soja_t": 0
   },
   {
@@ -4078,8 +4078,8 @@
    "codigo_ibge": 4308201,
    "lat": -29.0261,
    "lon": -51.1875,
-   "milho_t": 1920,
-   "soja_t": 38
+   "milho_t": 1674,
+   "soja_t": 13
   },
   {
    "uf": "RS",
@@ -4088,7 +4088,7 @@
    "codigo_ibge": 4308607,
    "lat": -29.259,
    "lon": -51.5352,
-   "milho_t": 2700,
+   "milho_t": 2400,
    "soja_t": 0
   },
   {
@@ -4098,8 +4098,8 @@
    "codigo_ibge": 4309258,
    "lat": -28.5421,
    "lon": -51.6948,
-   "milho_t": 13500,
-   "soja_t": 21600
+   "milho_t": 7673,
+   "soja_t": 16014
   },
   {
    "uf": "RS",
@@ -4108,8 +4108,8 @@
    "codigo_ibge": 4309407,
    "lat": -28.8399,
    "lon": -51.8895,
-   "milho_t": 12384,
-   "soja_t": 9720
+   "milho_t": 9104,
+   "soja_t": 7612
   },
   {
    "uf": "RS",
@@ -4118,8 +4118,8 @@
    "codigo_ibge": 4310306,
    "lat": -28.9282,
    "lon": -52.1258,
-   "milho_t": 3803,
-   "soja_t": 271
+   "milho_t": 3354,
+   "soja_t": 272
   },
   {
    "uf": "RS",
@@ -4128,8 +4128,8 @@
    "codigo_ibge": 4310439,
    "lat": -28.8171,
    "lon": -51.2859,
-   "milho_t": 20160,
-   "soja_t": 30030
+   "milho_t": 16245,
+   "soja_t": 25370
   },
   {
    "uf": "RS",
@@ -4138,8 +4138,8 @@
    "codigo_ibge": 4310579,
    "lat": -28.7768,
    "lon": -52.1693,
-   "milho_t": 4275,
-   "soja_t": 17172
+   "milho_t": 3544,
+   "soja_t": 16882
   },
   {
    "uf": "RS",
@@ -4148,8 +4148,8 @@
    "codigo_ibge": 4311122,
    "lat": -28.8811,
    "lon": -50.3637,
-   "milho_t": 1395,
-   "soja_t": 643
+   "milho_t": 1113,
+   "soja_t": 1134
   },
   {
    "uf": "RS",
@@ -4158,8 +4158,8 @@
    "codigo_ibge": 4311304,
    "lat": -28.2093,
    "lon": -51.5248,
-   "milho_t": 50400,
-   "soja_t": 176400
+   "milho_t": 37053,
+   "soja_t": 141520
   },
   {
    "uf": "RS",
@@ -4168,8 +4168,8 @@
    "codigo_ibge": 4312351,
    "lat": -28.6462,
    "lon": -52.0767,
-   "milho_t": 7600,
-   "soja_t": 10989
+   "milho_t": 4764,
+   "soja_t": 6963
   },
   {
    "uf": "RS",
@@ -4178,8 +4178,8 @@
    "codigo_ibge": 4312377,
    "lat": -28.6805,
    "lon": -50.7834,
-   "milho_t": 2346,
-   "soja_t": 1880
+   "milho_t": 2565,
+   "soja_t": 7440
   },
   {
    "uf": "RS",
@@ -4188,7 +4188,7 @@
    "codigo_ibge": 4312385,
    "lat": -29.1607,
    "lon": -51.6333,
-   "milho_t": 230,
+   "milho_t": 199,
    "soja_t": 0
   },
   {
@@ -4198,8 +4198,8 @@
    "codigo_ibge": 4312617,
    "lat": -28.3132,
    "lon": -51.1836,
-   "milho_t": 144000,
-   "soja_t": 193320
+   "milho_t": 91670,
+   "soja_t": 173880
   },
   {
    "uf": "RS",
@@ -4208,8 +4208,8 @@
    "codigo_ibge": 4312757,
    "lat": -28.6822,
    "lon": -52.1631,
-   "milho_t": 5400,
-   "soja_t": 18200
+   "milho_t": 4163,
+   "soja_t": 13461
   },
   {
    "uf": "RS",
@@ -4218,8 +4218,8 @@
    "codigo_ibge": 4312807,
    "lat": -28.6537,
    "lon": -51.7458,
-   "milho_t": 7956,
-   "soja_t": 1755
+   "milho_t": 5201,
+   "soja_t": 1350
   },
   {
    "uf": "RS",
@@ -4228,8 +4228,8 @@
    "codigo_ibge": 4312906,
    "lat": -28.7291,
    "lon": -51.7072,
-   "milho_t": 22948,
-   "soja_t": 5958
+   "milho_t": 16969,
+   "soja_t": 6204
   },
   {
    "uf": "RS",
@@ -4238,8 +4238,8 @@
    "codigo_ibge": 4313300,
    "lat": -28.7799,
    "lon": -51.6113,
-   "milho_t": 7352,
-   "soja_t": 7487
+   "milho_t": 6583,
+   "soja_t": 6862
   },
   {
    "uf": "RS",
@@ -4248,7 +4248,7 @@
    "codigo_ibge": 4313086,
    "lat": -29.0275,
    "lon": -51.3098,
-   "milho_t": 935,
+   "milho_t": 979,
    "soja_t": 0
   },
   {
@@ -4258,8 +4258,8 @@
    "codigo_ibge": 4313359,
    "lat": -28.9882,
    "lon": -51.4095,
-   "milho_t": 1838,
-   "soja_t": 150
+   "milho_t": 1685,
+   "soja_t": 132
   },
   {
    "uf": "RS",
@@ -4268,8 +4268,8 @@
    "codigo_ibge": 4314001,
    "lat": -28.5964,
    "lon": -51.7896,
-   "milho_t": 5764,
-   "soja_t": 3488
+   "milho_t": 4472,
+   "soja_t": 2368
   },
   {
    "uf": "RS",
@@ -4278,8 +4278,8 @@
    "codigo_ibge": 4314464,
    "lat": -27.8751,
    "lon": -51.1673,
-   "milho_t": 16380,
-   "soja_t": 28080
+   "milho_t": 15135,
+   "soja_t": 25160
   },
   {
    "uf": "RS",
@@ -4288,7 +4288,7 @@
    "codigo_ibge": 4314548,
    "lat": -29.0975,
    "lon": -51.4503,
-   "milho_t": 1020,
+   "milho_t": 890,
    "soja_t": 0
   },
   {
@@ -4298,8 +4298,8 @@
    "codigo_ibge": 4315172,
    "lat": -28.7572,
    "lon": -51.4757,
-   "milho_t": 4404,
-   "soja_t": 5084
+   "milho_t": 3203,
+   "soja_t": 4625
   },
   {
    "uf": "RS",
@@ -4308,8 +4308,8 @@
    "codigo_ibge": 4315206,
    "lat": -29.0045,
    "lon": -52.1569,
-   "milho_t": 5325,
-   "soja_t": 952
+   "milho_t": 4553,
+   "soja_t": 842
   },
   {
    "uf": "RS",
@@ -4318,7 +4318,7 @@
    "codigo_ibge": 4317251,
    "lat": -29.1655,
    "lon": -51.7351,
-   "milho_t": 137,
+   "milho_t": 391,
    "soja_t": 0
   },
   {
@@ -4328,8 +4328,8 @@
    "codigo_ibge": 4320404,
    "lat": -28.7126,
    "lon": -51.9352,
-   "milho_t": 8370,
-   "soja_t": 9855
+   "milho_t": 6234,
+   "soja_t": 7665
   },
   {
    "uf": "RS",
@@ -4338,8 +4338,8 @@
    "codigo_ibge": 4318200,
    "lat": -29.4404,
    "lon": -50.5828,
-   "milho_t": 20800,
-   "soja_t": 21280
+   "milho_t": 26933,
+   "soja_t": 23323
   },
   {
    "uf": "RS",
@@ -4348,8 +4348,8 @@
    "codigo_ibge": 4318440,
    "lat": -28.4984,
    "lon": -51.7064,
-   "milho_t": 15336,
-   "soja_t": 6741
+   "milho_t": 10453,
+   "soja_t": 5357
   },
   {
    "uf": "RS",
@@ -4358,8 +4358,8 @@
    "codigo_ibge": 4318622,
    "lat": -28.7476,
    "lon": -50.0677,
-   "milho_t": 3600,
-   "soja_t": 450
+   "milho_t": 5720,
+   "soja_t": 634
   },
   {
    "uf": "RS",
@@ -4368,7 +4368,7 @@
    "codigo_ibge": 4319000,
    "lat": -28.9677,
    "lon": -51.0696,
-   "milho_t": 1593,
+   "milho_t": 1520,
    "soja_t": 0
   },
   {
@@ -4378,8 +4378,8 @@
    "codigo_ibge": 4319711,
    "lat": -29.0451,
    "lon": -51.7684,
-   "milho_t": 2022,
-   "soja_t": 3195
+   "milho_t": 1489,
+   "soja_t": 2728
   },
   {
    "uf": "RS",
@@ -4388,8 +4388,8 @@
    "codigo_ibge": 4322350,
    "lat": -28.7833,
    "lon": -52.0238,
-   "milho_t": 8670,
-   "soja_t": 7560
+   "milho_t": 5984,
+   "soja_t": 5949
   },
   {
    "uf": "RS",
@@ -4398,8 +4398,8 @@
    "codigo_ibge": 4322509,
    "lat": -28.5079,
    "lon": -50.9418,
-   "milho_t": 76560,
-   "soja_t": 235900
+   "milho_t": 70334,
+   "soja_t": 200883
   },
   {
    "uf": "RS",
@@ -4408,8 +4408,8 @@
    "codigo_ibge": 4322806,
    "lat": -28.9312,
    "lon": -51.5516,
-   "milho_t": 3285,
-   "soja_t": 4340
+   "milho_t": 3779,
+   "soja_t": 3441
   },
   {
    "uf": "RS",
@@ -4418,8 +4418,8 @@
    "codigo_ibge": 4323309,
    "lat": -28.8598,
    "lon": -51.5504,
-   "milho_t": 4480,
-   "soja_t": 2344
+   "milho_t": 4118,
+   "soja_t": 2528
   },
   {
    "uf": "RS",
@@ -4428,8 +4428,8 @@
    "codigo_ibge": 4323606,
    "lat": -28.8052,
    "lon": -51.7947,
-   "milho_t": 2403,
-   "soja_t": 3240
+   "milho_t": 1641,
+   "soja_t": 3433
   },
   {
    "uf": "RS",
@@ -4438,8 +4438,8 @@
    "codigo_ibge": 4300208,
    "lat": -28.2342,
    "lon": -53.7757,
-   "milho_t": 5628,
-   "soja_t": 74606
+   "milho_t": 3628,
+   "soja_t": 41001
   },
   {
    "uf": "RS",
@@ -4448,8 +4448,8 @@
    "codigo_ibge": 4300307,
    "lat": -27.6579,
    "lon": -54.7649,
-   "milho_t": 4627,
-   "soja_t": 6354
+   "milho_t": 3888,
+   "soja_t": 3544
   },
   {
    "uf": "RS",
@@ -4458,8 +4458,8 @@
    "codigo_ibge": 4300455,
    "lat": -27.8345,
    "lon": -54.0557,
-   "milho_t": 11760,
-   "soja_t": 16326
+   "milho_t": 9343,
+   "soja_t": 12200
   },
   {
    "uf": "RS",
@@ -4468,8 +4468,8 @@
    "codigo_ibge": 4300471,
    "lat": -28.1149,
    "lon": -52.9142,
-   "milho_t": 9161,
-   "soja_t": 67620
+   "milho_t": 5505,
+   "soja_t": 44301
   },
   {
    "uf": "RS",
@@ -4478,8 +4478,8 @@
    "codigo_ibge": 4300505,
    "lat": -27.2502,
    "lon": -53.0341,
-   "milho_t": 12933,
-   "soja_t": 5478
+   "milho_t": 13242,
+   "soja_t": 4199
   },
   {
    "uf": "RS",
@@ -4488,8 +4488,8 @@
    "codigo_ibge": 4300554,
    "lat": -28.7769,
    "lon": -52.9893,
-   "milho_t": 3800,
-   "soja_t": 19930
+   "milho_t": 1741,
+   "soja_t": 11416
   },
   {
    "uf": "RS",
@@ -4498,8 +4498,8 @@
    "codigo_ibge": 4300646,
    "lat": -27.3607,
    "lon": -53.183,
-   "milho_t": 2700,
-   "soja_t": 2041
+   "milho_t": 2304,
+   "soja_t": 1635
   },
   {
    "uf": "RS",
@@ -4508,8 +4508,8 @@
    "codigo_ibge": 4300901,
    "lat": -27.3978,
    "lon": -52.2975,
-   "milho_t": 6600,
-   "soja_t": 5940
+   "milho_t": 4200,
+   "soja_t": 3990
   },
   {
    "uf": "RS",
@@ -4518,8 +4518,8 @@
    "codigo_ibge": 4301503,
    "lat": -28.5172,
    "lon": -53.9883,
-   "milho_t": 720,
-   "soja_t": 66432
+   "milho_t": 384,
+   "soja_t": 33712
   },
   {
    "uf": "RS",
@@ -4528,8 +4528,8 @@
    "codigo_ibge": 4301958,
    "lat": -27.9205,
    "lon": -53.0391,
-   "milho_t": 2079,
-   "soja_t": 12304
+   "milho_t": 1452,
+   "soja_t": 8520
   },
   {
    "uf": "RS",
@@ -4538,8 +4538,8 @@
    "codigo_ibge": 4301859,
    "lat": -27.1927,
    "lon": -53.7109,
-   "milho_t": 1500,
-   "soja_t": 6435
+   "milho_t": 1662,
+   "soja_t": 4320
   },
   {
    "uf": "RS",
@@ -4548,8 +4548,8 @@
    "codigo_ibge": 4301925,
    "lat": -27.4069,
    "lon": -52.4084,
-   "milho_t": 6283,
-   "soja_t": 5425
+   "milho_t": 6797,
+   "soja_t": 4952
   },
   {
    "uf": "RS",
@@ -4558,8 +4558,8 @@
    "codigo_ibge": 4301800,
    "lat": -27.6739,
    "lon": -51.4585,
-   "milho_t": 20700,
-   "soja_t": 98800
+   "milho_t": 14147,
+   "soja_t": 78961
   },
   {
    "uf": "RS",
@@ -4568,8 +4568,8 @@
    "codigo_ibge": 4302006,
    "lat": -29.0947,
    "lon": -52.5836,
-   "milho_t": 10176,
-   "soja_t": 28350
+   "milho_t": 6349,
+   "soja_t": 21150
   },
   {
    "uf": "RS",
@@ -4578,8 +4578,8 @@
    "codigo_ibge": 4301701,
    "lat": -27.6208,
    "lon": -52.3798,
-   "milho_t": 25200,
-   "soja_t": 25200
+   "milho_t": 16704,
+   "soja_t": 19358
   },
   {
    "uf": "RS",
@@ -4588,8 +4588,8 @@
    "codigo_ibge": 4302055,
    "lat": -27.5086,
    "lon": -52.5995,
-   "milho_t": 3600,
-   "soja_t": 4804
+   "milho_t": 2422,
+   "soja_t": 3719
   },
   {
    "uf": "RS",
@@ -4598,8 +4598,8 @@
    "codigo_ibge": 4302154,
    "lat": -27.6671,
    "lon": -53.3102,
-   "milho_t": 19980,
-   "soja_t": 41490
+   "milho_t": 18880,
+   "soja_t": 32070
   },
   {
    "uf": "RS",
@@ -4608,8 +4608,8 @@
    "codigo_ibge": 4302204,
    "lat": -27.6693,
    "lon": -54.1082,
-   "milho_t": 5940,
-   "soja_t": 6345
+   "milho_t": 5430,
+   "soja_t": 3760
   },
   {
    "uf": "RS",
@@ -4618,8 +4618,8 @@
    "codigo_ibge": 4302220,
    "lat": -28.5791,
    "lon": -53.8108,
-   "milho_t": 26460,
-   "soja_t": 146520
+   "milho_t": 27338,
+   "soja_t": 84656
   },
   {
    "uf": "RS",
@@ -4628,8 +4628,8 @@
    "codigo_ibge": 4302238,
    "lat": -28.8185,
    "lon": -53.391,
-   "milho_t": 8960,
-   "soja_t": 112320
+   "milho_t": 8984,
+   "soja_t": 72763
   },
   {
    "uf": "RS",
@@ -4638,8 +4638,8 @@
    "codigo_ibge": 4302378,
    "lat": -27.5399,
    "lon": -53.8716,
-   "milho_t": 2520,
-   "soja_t": 14520
+   "milho_t": 2135,
+   "soja_t": 10560
   },
   {
    "uf": "RS",
@@ -4648,8 +4648,8 @@
    "codigo_ibge": 4302501,
    "lat": -28.7291,
    "lon": -54.9035,
-   "milho_t": 24960,
-   "soja_t": 184800
+   "milho_t": 14479,
+   "soja_t": 77908
   },
   {
    "uf": "RS",
@@ -4658,8 +4658,8 @@
    "codigo_ibge": 4302584,
    "lat": -28.3659,
    "lon": -53.772,
-   "milho_t": 3509,
-   "soja_t": 50046
+   "milho_t": 3137,
+   "soja_t": 26724
   },
   {
    "uf": "RS",
@@ -4668,8 +4668,8 @@
    "codigo_ibge": 4302600,
    "lat": -27.6173,
    "lon": -53.7405,
-   "milho_t": 7200,
-   "soja_t": 28800
+   "milho_t": 5400,
+   "soja_t": 18453
   },
   {
    "uf": "RS",
@@ -4678,8 +4678,8 @@
    "codigo_ibge": 4303202,
    "lat": -27.767,
    "lon": -51.6597,
-   "milho_t": 7331,
-   "soja_t": 36195
+   "milho_t": 6144,
+   "soja_t": 27443
   },
   {
    "uf": "RS",
@@ -4688,8 +4688,8 @@
    "codigo_ibge": 4303301,
    "lat": -28.2905,
    "lon": -54.6454,
-   "milho_t": 20940,
-   "soja_t": 51990
+   "milho_t": 14907,
+   "soja_t": 23478
   },
   {
    "uf": "RS",
@@ -4698,8 +4698,8 @@
    "codigo_ibge": 4303400,
    "lat": -27.2791,
    "lon": -53.4257,
-   "milho_t": 7200,
-   "soja_t": 12450
+   "milho_t": 7400,
+   "soja_t": 8400
   },
   {
    "uf": "RS",
@@ -4708,8 +4708,8 @@
    "codigo_ibge": 4303558,
    "lat": -28.588,
    "lon": -52.2003,
-   "milho_t": 5950,
-   "soja_t": 23085
+   "milho_t": 3643,
+   "soja_t": 16801
   },
   {
    "uf": "RS",
@@ -4718,8 +4718,8 @@
    "codigo_ibge": 4303707,
    "lat": -27.9888,
    "lon": -54.8416,
-   "milho_t": 6342,
-   "soja_t": 16200
+   "milho_t": 4424,
+   "soja_t": 6912
   },
   {
    "uf": "RS",
@@ -4728,8 +4728,8 @@
    "codigo_ibge": 4303806,
    "lat": -27.7174,
    "lon": -52.6248,
-   "milho_t": 16200,
-   "soja_t": 63200
+   "milho_t": 8808,
+   "soja_t": 44233
   },
   {
    "uf": "RS",
@@ -4738,8 +4738,8 @@
    "codigo_ibge": 4304002,
    "lat": -27.6792,
    "lon": -53.8052,
-   "milho_t": 21360,
-   "soja_t": 37488
+   "milho_t": 17985,
+   "soja_t": 26112
   },
   {
    "uf": "RS",
@@ -4748,8 +4748,8 @@
    "codigo_ibge": 4304101,
    "lat": -28.8871,
    "lon": -53.0008,
-   "milho_t": 1302,
-   "soja_t": 24330
+   "milho_t": 969,
+   "soja_t": 14633
   },
   {
    "uf": "RS",
@@ -4758,8 +4758,8 @@
    "codigo_ibge": 4304705,
    "lat": -28.2958,
    "lon": -52.7933,
-   "milho_t": 21462,
-   "soja_t": 153636
+   "milho_t": 17384,
+   "soja_t": 107062
   },
   {
    "uf": "RS",
@@ -4768,8 +4768,8 @@
    "codigo_ibge": 4304853,
    "lat": -27.7167,
    "lon": -51.9121,
-   "milho_t": 7200,
-   "soja_t": 12960
+   "milho_t": 4913,
+   "soja_t": 10800
   },
   {
    "uf": "RS",
@@ -4778,8 +4778,8 @@
    "codigo_ibge": 4304903,
    "lat": -28.5605,
    "lon": -51.9815,
-   "milho_t": 28800,
-   "soja_t": 29700
+   "milho_t": 18300,
+   "soja_t": 23365
   },
   {
    "uf": "RS",
@@ -4788,8 +4788,8 @@
    "codigo_ibge": 4304952,
    "lat": -28.2582,
    "lon": -51.6861,
-   "milho_t": 4400,
-   "soja_t": 29520
+   "milho_t": 3707,
+   "soja_t": 20240
   },
   {
    "uf": "RS",
@@ -4798,8 +4798,8 @@
    "codigo_ibge": 4305009,
    "lat": -28.2554,
    "lon": -54.0132,
-   "milho_t": 10500,
-   "soja_t": 120110
+   "milho_t": 13609,
+   "soja_t": 63270
   },
   {
    "uf": "RS",
@@ -4808,8 +4808,8 @@
    "codigo_ibge": 4305116,
    "lat": -27.7615,
    "lon": -51.9984,
-   "milho_t": 6480,
-   "soja_t": 23725
+   "milho_t": 4530,
+   "soja_t": 19608
   },
   {
    "uf": "RS",
@@ -4818,8 +4818,8 @@
    "codigo_ibge": 4305157,
    "lat": -27.6106,
    "lon": -53.1672,
-   "milho_t": 9600,
-   "soja_t": 10230
+   "milho_t": 5667,
+   "soja_t": 8261
   },
   {
    "uf": "RS",
@@ -4828,8 +4828,8 @@
    "codigo_ibge": 4305207,
    "lat": -28.1463,
    "lon": -54.7428,
-   "milho_t": 3600,
-   "soja_t": 14100
+   "milho_t": 4272,
+   "soja_t": 5781
   },
   {
    "uf": "RS",
@@ -4838,8 +4838,8 @@
    "codigo_ibge": 4305306,
    "lat": -28.0559,
    "lon": -53.0665,
-   "milho_t": 15000,
-   "soja_t": 162000
+   "milho_t": 6340,
+   "soja_t": 110200
   },
   {
    "uf": "RS",
@@ -4848,8 +4848,8 @@
    "codigo_ibge": 4305371,
    "lat": -27.9493,
    "lon": -52.015,
-   "milho_t": 4680,
-   "soja_t": 30690
+   "milho_t": 4507,
+   "soja_t": 29622
   },
   {
    "uf": "RS",
@@ -4858,8 +4858,8 @@
    "codigo_ibge": 4305405,
    "lat": -27.923,
    "lon": -53.9419,
-   "milho_t": 27900,
-   "soja_t": 110819
+   "milho_t": 25923,
+   "soja_t": 70979
   },
   {
    "uf": "RS",
@@ -4868,8 +4868,8 @@
    "codigo_ibge": 4305504,
    "lat": -28.3419,
    "lon": -51.8741,
-   "milho_t": 25200,
-   "soja_t": 39000
+   "milho_t": 19663,
+   "soja_t": 29928
   },
   {
    "uf": "RS",
@@ -4878,8 +4878,8 @@
    "codigo_ibge": 4305603,
    "lat": -28.5258,
    "lon": -52.9928,
-   "milho_t": 12672,
-   "soja_t": 75672
+   "milho_t": 7844,
+   "soja_t": 50146
   },
   {
    "uf": "RS",
@@ -4888,8 +4888,8 @@
    "codigo_ibge": 4305702,
    "lat": -28.2075,
    "lon": -53.4905,
-   "milho_t": 11400,
-   "soja_t": 118776
+   "milho_t": 10330,
+   "soja_t": 78210
   },
   {
    "uf": "RS",
@@ -4898,8 +4898,8 @@
    "codigo_ibge": 4305801,
    "lat": -27.732,
    "lon": -52.9938,
-   "milho_t": 6494,
-   "soja_t": 45000
+   "milho_t": 3979,
+   "soja_t": 31667
   },
   {
    "uf": "RS",
@@ -4908,8 +4908,8 @@
    "codigo_ibge": 4305850,
    "lat": -28.1194,
    "lon": -52.7842,
-   "milho_t": 1500,
-   "soja_t": 51381
+   "milho_t": 1440,
+   "soja_t": 39361
   },
   {
    "uf": "RS",
@@ -4918,8 +4918,8 @@
    "codigo_ibge": 4305871,
    "lat": -28.3921,
    "lon": -54.0686,
-   "milho_t": 2087,
-   "soja_t": 39009
+   "milho_t": 1708,
+   "soja_t": 17177
   },
   {
    "uf": "RS",
@@ -4928,8 +4928,8 @@
    "codigo_ibge": 4305900,
    "lat": -27.7197,
    "lon": -53.7022,
-   "milho_t": 34800,
-   "soja_t": 122400
+   "milho_t": 31650,
+   "soja_t": 90000
   },
   {
    "uf": "RS",
@@ -4938,8 +4938,8 @@
    "codigo_ibge": 4305975,
    "lat": -28.128,
    "lon": -52.3023,
-   "milho_t": 27222,
-   "soja_t": 137984
+   "milho_t": 15774,
+   "soja_t": 95925
   },
   {
    "uf": "RS",
@@ -4948,8 +4948,8 @@
    "codigo_ibge": 4306007,
    "lat": -27.4999,
    "lon": -54.0994,
-   "milho_t": 11040,
-   "soja_t": 36450
+   "milho_t": 10220,
+   "soja_t": 22950
   },
   {
    "uf": "RS",
@@ -4958,8 +4958,8 @@
    "codigo_ibge": 4306072,
    "lat": -27.452,
    "lon": -53.2422,
-   "milho_t": 11970,
-   "soja_t": 16496
+   "milho_t": 9398,
+   "soja_t": 12038
   },
   {
    "uf": "RS",
@@ -4968,8 +4968,8 @@
    "codigo_ibge": 4306106,
    "lat": -28.645,
    "lon": -53.6048,
-   "milho_t": 76800,
-   "soja_t": 339240
+   "milho_t": 78496,
+   "soja_t": 214000
   },
   {
    "uf": "RS",
@@ -4978,8 +4978,8 @@
    "codigo_ibge": 4306130,
    "lat": -27.6672,
    "lon": -52.6522,
-   "milho_t": 10400,
-   "soja_t": 27900
+   "milho_t": 5730,
+   "soja_t": 17858
   },
   {
    "uf": "RS",
@@ -4988,8 +4988,8 @@
    "codigo_ibge": 4304309,
    "lat": -27.9515,
    "lon": -54.7517,
-   "milho_t": 9600,
-   "soja_t": 27930
+   "milho_t": 6455,
+   "soja_t": 13710
   },
   {
    "uf": "RS",
@@ -4998,8 +4998,8 @@
    "codigo_ibge": 4306304,
    "lat": -28.3849,
    "lon": -51.8482,
-   "milho_t": 18000,
-   "soja_t": 17600
+   "milho_t": 10868,
+   "soja_t": 15963
   },
   {
    "uf": "RS",
@@ -5008,8 +5008,8 @@
    "codigo_ibge": 4306320,
    "lat": -27.2642,
    "lon": -53.8645,
-   "milho_t": 9450,
-   "soja_t": 33000
+   "milho_t": 11865,
+   "soja_t": 22600
   },
   {
    "uf": "RS",
@@ -5018,8 +5018,8 @@
    "codigo_ibge": 4306353,
    "lat": -28.219,
    "lon": -55.0617,
-   "milho_t": 2040,
-   "soja_t": 5001
+   "milho_t": 1872,
+   "soja_t": 2441
   },
   {
    "uf": "RS",
@@ -5028,8 +5028,8 @@
    "codigo_ibge": 4306429,
    "lat": -27.6621,
    "lon": -53.5304,
-   "milho_t": 14100,
-   "soja_t": 56400
+   "milho_t": 10940,
+   "soja_t": 37510
   },
   {
    "uf": "RS",
@@ -5038,8 +5038,8 @@
    "codigo_ibge": 4306734,
    "lat": -27.5103,
    "lon": -54.3577,
-   "milho_t": 13740,
-   "soja_t": 45483
+   "milho_t": 34726,
+   "soja_t": 33102
   },
   {
    "uf": "RS",
@@ -5048,8 +5048,8 @@
    "codigo_ibge": 4306924,
    "lat": -27.706,
    "lon": -52.9145,
-   "milho_t": 1440,
-   "soja_t": 11550
+   "milho_t": 870,
+   "soja_t": 7667
   },
   {
    "uf": "RS",
@@ -5058,8 +5058,8 @@
    "codigo_ibge": 4306957,
    "lat": -27.5298,
    "lon": -52.7347,
-   "milho_t": 2720,
-   "soja_t": 19620
+   "milho_t": 1707,
+   "soja_t": 14240
   },
   {
    "uf": "RS",
@@ -5068,8 +5068,8 @@
    "codigo_ibge": 4306932,
    "lat": -28.3686,
    "lon": -54.2686,
-   "milho_t": 31421,
-   "soja_t": 116161
+   "milho_t": 25393,
+   "soja_t": 53930
   },
   {
    "uf": "RS",
@@ -5078,8 +5078,8 @@
    "codigo_ibge": 4306973,
    "lat": -27.8544,
    "lon": -52.3005,
-   "milho_t": 2880,
-   "soja_t": 44000
+   "milho_t": 3257,
+   "soja_t": 35797
   },
   {
    "uf": "RS",
@@ -5088,8 +5088,8 @@
    "codigo_ibge": 4307005,
    "lat": -27.6364,
    "lon": -52.2697,
-   "milho_t": 9800,
-   "soja_t": 34340
+   "milho_t": 7167,
+   "soja_t": 28917
   },
   {
    "uf": "RS",
@@ -5098,8 +5098,8 @@
    "codigo_ibge": 4307054,
    "lat": -28.4977,
    "lon": -52.5836,
-   "milho_t": 1080,
-   "soja_t": 59850
+   "milho_t": 835,
+   "soja_t": 39900
   },
   {
    "uf": "RS",
@@ -5108,8 +5108,8 @@
    "codigo_ibge": 4307203,
    "lat": -27.3926,
    "lon": -52.574,
-   "milho_t": 2880,
-   "soja_t": 12960
+   "milho_t": 1840,
+   "soja_t": 10240
   },
   {
    "uf": "RS",
@@ -5118,8 +5118,8 @@
    "codigo_ibge": 4307302,
    "lat": -27.5443,
    "lon": -53.5005,
-   "milho_t": 18000,
-   "soja_t": 53720
+   "milho_t": 14400,
+   "soja_t": 38547
   },
   {
    "uf": "RS",
@@ -5128,8 +5128,8 @@
    "codigo_ibge": 4307450,
    "lat": -27.3603,
    "lon": -53.9891,
-   "milho_t": 9860,
-   "soja_t": 13200
+   "milho_t": 6222,
+   "soja_t": 8017
   },
   {
    "uf": "RS",
@@ -5138,8 +5138,8 @@
    "codigo_ibge": 4307500,
    "lat": -28.7286,
    "lon": -52.8461,
-   "milho_t": 10080,
-   "soja_t": 157000
+   "milho_t": 5340,
+   "soja_t": 108257
   },
   {
    "uf": "RS",
@@ -5148,8 +5148,8 @@
    "codigo_ibge": 4307559,
    "lat": -27.9135,
    "lon": -52.2635,
-   "milho_t": 2538,
-   "soja_t": 23276
+   "milho_t": 1496,
+   "soja_t": 17464
   },
   {
    "uf": "RS",
@@ -5158,8 +5158,8 @@
    "codigo_ibge": 4307831,
    "lat": -28.5315,
    "lon": -54.1506,
-   "milho_t": 24588,
-   "soja_t": 105743
+   "milho_t": 17366,
+   "soja_t": 54708
   },
   {
    "uf": "RS",
@@ -5168,8 +5168,8 @@
    "codigo_ibge": 4308052,
    "lat": -27.4238,
    "lon": -52.6789,
-   "milho_t": 2520,
-   "soja_t": 27300
+   "milho_t": 4560,
+   "soja_t": 18850
   },
   {
    "uf": "RS",
@@ -5178,8 +5178,8 @@
    "codigo_ibge": 4308250,
    "lat": -27.8614,
    "lon": -52.0838,
-   "milho_t": 3360,
-   "soja_t": 22638
+   "milho_t": 3587,
+   "soja_t": 16285
   },
   {
    "uf": "RS",
@@ -5188,8 +5188,8 @@
    "codigo_ibge": 4308300,
    "lat": -28.9817,
    "lon": -52.3445,
-   "milho_t": 6300,
-   "soja_t": 14000
+   "milho_t": 3789,
+   "soja_t": 12667
   },
   {
    "uf": "RS",
@@ -5198,8 +5198,8 @@
    "codigo_ibge": 4308458,
    "lat": -28.7986,
    "lon": -53.2249,
-   "milho_t": 20400,
-   "soja_t": 131400
+   "milho_t": 20767,
+   "soja_t": 70584
   },
   {
    "uf": "RS",
@@ -5208,8 +5208,8 @@
    "codigo_ibge": 4308508,
    "lat": -27.3586,
    "lon": -53.3958,
-   "milho_t": 12600,
-   "soja_t": 28080
+   "milho_t": 13190,
+   "soja_t": 20910
   },
   {
    "uf": "RS",
@@ -5218,8 +5218,8 @@
    "codigo_ibge": 4308706,
    "lat": -27.5856,
    "lon": -52.0915,
-   "milho_t": 13260,
-   "soja_t": 27000
+   "milho_t": 11620,
+   "soja_t": 24840
   },
   {
    "uf": "RS",
@@ -5228,8 +5228,8 @@
    "codigo_ibge": 4308854,
    "lat": -28.4316,
    "lon": -52.0337,
-   "milho_t": 3600,
-   "soja_t": 37800
+   "milho_t": 1680,
+   "soja_t": 24150
   },
   {
    "uf": "RS",
@@ -5238,8 +5238,8 @@
    "codigo_ibge": 4308904,
    "lat": -27.8911,
    "lon": -52.2294,
-   "milho_t": 25200,
-   "soja_t": 60996
+   "milho_t": 19268,
+   "soja_t": 49332
   },
   {
    "uf": "RS",
@@ -5248,8 +5248,8 @@
    "codigo_ibge": 4309001,
    "lat": -28.0297,
    "lon": -54.3517,
-   "milho_t": 50100,
-   "soja_t": 185400
+   "milho_t": 37860,
+   "soja_t": 102712
   },
   {
    "uf": "RS",
@@ -5258,8 +5258,8 @@
    "codigo_ibge": 4309126,
    "lat": -27.4429,
    "lon": -52.9149,
-   "milho_t": 4680,
-   "soja_t": 21960
+   "milho_t": 3338,
+   "soja_t": 15837
   },
   {
    "uf": "RS",
@@ -5268,8 +5268,8 @@
    "codigo_ibge": 4309506,
    "lat": -28.1491,
    "lon": -54.5629,
-   "milho_t": 18563,
-   "soja_t": 49539
+   "milho_t": 9613,
+   "soja_t": 20413
   },
   {
    "uf": "RS",
@@ -5278,8 +5278,8 @@
    "codigo_ibge": 4309605,
    "lat": -27.6282,
    "lon": -54.3053,
-   "milho_t": 11340,
-   "soja_t": 39600
+   "milho_t": 19890,
+   "soja_t": 24308
   },
   {
    "uf": "RS",
@@ -5288,8 +5288,8 @@
    "codigo_ibge": 4309704,
    "lat": -27.5691,
    "lon": -53.9695,
-   "milho_t": 4860,
-   "soja_t": 23166
+   "milho_t": 5370,
+   "soja_t": 15282
   },
   {
    "uf": "RS",
@@ -5298,8 +5298,8 @@
    "codigo_ibge": 4309803,
    "lat": -28.0566,
    "lon": -51.8599,
-   "milho_t": 33600,
-   "soja_t": 68400
+   "milho_t": 24320,
+   "soja_t": 53600
   },
   {
    "uf": "RS",
@@ -5308,8 +5308,8 @@
    "codigo_ibge": 4309902,
    "lat": -28.3741,
    "lon": -51.6377,
-   "milho_t": 22400,
-   "soja_t": 38400
+   "milho_t": 14650,
+   "soja_t": 33917
   },
   {
    "uf": "RS",
@@ -5318,8 +5318,8 @@
    "codigo_ibge": 4309951,
    "lat": -28.6247,
    "lon": -52.5158,
-   "milho_t": 1671,
-   "soja_t": 54450
+   "milho_t": 943,
+   "soja_t": 43296
   },
   {
    "uf": "RS",
@@ -5328,8 +5328,8 @@
    "codigo_ibge": 4310009,
    "lat": -28.6302,
    "lon": -53.0961,
-   "milho_t": 16500,
-   "soja_t": 162360
+   "milho_t": 16651,
+   "soja_t": 110010
   },
   {
    "uf": "RS",
@@ -5338,8 +5338,8 @@
    "codigo_ibge": 4310207,
    "lat": -28.388,
    "lon": -53.92,
-   "milho_t": 2970,
-   "soja_t": 146520
+   "milho_t": 2459,
+   "soja_t": 79440
   },
   {
    "uf": "RS",
@@ -5348,8 +5348,8 @@
    "codigo_ibge": 4310405,
    "lat": -27.8354,
    "lon": -54.1886,
-   "milho_t": 30282,
-   "soja_t": 79200
+   "milho_t": 23334,
+   "soja_t": 48997
   },
   {
    "uf": "RS",
@@ -5358,8 +5358,8 @@
    "codigo_ibge": 4310413,
    "lat": -27.8752,
    "lon": -54.015,
-   "milho_t": 9000,
-   "soja_t": 23937
+   "milho_t": 7194,
+   "soja_t": 13291
   },
   {
    "uf": "RS",
@@ -5368,8 +5368,8 @@
    "codigo_ibge": 4310462,
    "lat": -27.9404,
    "lon": -52.4271,
-   "milho_t": 9795,
-   "soja_t": 41184
+   "milho_t": 4629,
+   "soja_t": 33727
   },
   {
    "uf": "RS",
@@ -5378,8 +5378,8 @@
    "codigo_ibge": 4310504,
    "lat": -27.1951,
    "lon": -53.2543,
-   "milho_t": 4500,
-   "soja_t": 14399
+   "milho_t": 4100,
+   "soja_t": 10530
   },
   {
    "uf": "RS",
@@ -5388,8 +5388,8 @@
    "codigo_ibge": 4310702,
    "lat": -27.3846,
    "lon": -52.4538,
-   "milho_t": 4500,
-   "soja_t": 3630
+   "milho_t": 5625,
+   "soja_t": 2810
   },
   {
    "uf": "RS",
@@ -5398,8 +5398,8 @@
    "codigo_ibge": 4310850,
    "lat": -27.6347,
    "lon": -53.2762,
-   "milho_t": 3000,
-   "soja_t": 20790
+   "milho_t": 2567,
+   "soja_t": 14369
   },
   {
    "uf": "RS",
@@ -5408,8 +5408,8 @@
    "codigo_ibge": 4310876,
    "lat": -29.0401,
    "lon": -53.0657,
-   "milho_t": 4860,
-   "soja_t": 66000
+   "milho_t": 5738,
+   "soja_t": 37900
   },
   {
    "uf": "RS",
@@ -5418,8 +5418,8 @@
    "codigo_ibge": 4310900,
    "lat": -27.7291,
    "lon": -52.5372,
-   "milho_t": 15750,
-   "soja_t": 50400
+   "milho_t": 10920,
+   "soja_t": 37680
   },
   {
    "uf": "RS",
@@ -5428,8 +5428,8 @@
    "codigo_ibge": 4311155,
    "lat": -28.6435,
    "lon": -54.1141,
-   "milho_t": 27360,
-   "soja_t": 253623
+   "milho_t": 22842,
+   "soja_t": 123001
   },
   {
    "uf": "RS",
@@ -5438,8 +5438,8 @@
    "codigo_ibge": 4311270,
    "lat": -28.5676,
    "lon": -52.8618,
-   "milho_t": 3708,
-   "soja_t": 40872
+   "milho_t": 3052,
+   "soja_t": 23456
   },
   {
    "uf": "RS",
@@ -5448,8 +5448,8 @@
    "codigo_ibge": 4311254,
    "lat": -29.2348,
    "lon": -52.7997,
-   "milho_t": 6322,
-   "soja_t": 21900
+   "milho_t": 3528,
+   "soja_t": 13707
   },
   {
    "uf": "RS",
@@ -5458,8 +5458,8 @@
    "codigo_ibge": 4311429,
    "lat": -27.6913,
    "lon": -53.1818,
-   "milho_t": 4800,
-   "soja_t": 8850
+   "milho_t": 4200,
+   "soja_t": 6530
   },
   {
    "uf": "RS",
@@ -5468,8 +5468,8 @@
    "codigo_ibge": 4311601,
    "lat": -27.601,
    "lon": -53.0753,
-   "milho_t": 5940,
-   "soja_t": 19500
+   "milho_t": 4400,
+   "soja_t": 15740
   },
   {
    "uf": "RS",
@@ -5478,8 +5478,8 @@
    "codigo_ibge": 4311700,
    "lat": -27.5667,
    "lon": -51.6668,
-   "milho_t": 9603,
-   "soja_t": 39010
+   "milho_t": 5123,
+   "soja_t": 36337
   },
   {
    "uf": "RS",
@@ -5488,8 +5488,8 @@
    "codigo_ibge": 4311809,
    "lat": -28.4498,
    "lon": -52.1986,
-   "milho_t": 17490,
-   "soja_t": 118500
+   "milho_t": 11563,
+   "soja_t": 94866
   },
   {
    "uf": "RS",
@@ -5498,8 +5498,8 @@
    "codigo_ibge": 4311908,
    "lat": -27.4676,
    "lon": -51.9095,
-   "milho_t": 13800,
-   "soja_t": 16500
+   "milho_t": 12089,
+   "soja_t": 10947
   },
   {
    "uf": "RS",
@@ -5508,8 +5508,8 @@
    "codigo_ibge": 4312005,
    "lat": -27.3568,
    "lon": -52.1467,
-   "milho_t": 4000,
-   "soja_t": 6480
+   "milho_t": 2407,
+   "soja_t": 4374
   },
   {
    "uf": "RS",
@@ -5518,8 +5518,8 @@
    "codigo_ibge": 4312138,
    "lat": -28.28,
    "lon": -52.1932,
-   "milho_t": 3460,
-   "soja_t": 36630
+   "milho_t": 2025,
+   "soja_t": 23650
   },
   {
    "uf": "RS",
@@ -5528,8 +5528,8 @@
    "codigo_ibge": 4312179,
    "lat": -28.252,
    "lon": -54.6159,
-   "milho_t": 6870,
-   "soja_t": 20639
+   "milho_t": 7170,
+   "soja_t": 9968
   },
   {
    "uf": "RS",
@@ -5538,8 +5538,8 @@
    "codigo_ibge": 4312203,
    "lat": -27.6325,
    "lon": -51.802,
-   "milho_t": 5760,
-   "soja_t": 25428
+   "milho_t": 4190,
+   "soja_t": 18696
   },
   {
    "uf": "RS",
@@ -5548,8 +5548,8 @@
    "codigo_ibge": 4312302,
    "lat": -27.497,
    "lon": -53.6891,
-   "milho_t": 2000,
-   "soja_t": 12960
+   "milho_t": 1927,
+   "soja_t": 10800
   },
   {
    "uf": "RS",
@@ -5558,8 +5558,8 @@
    "codigo_ibge": 4312427,
    "lat": -28.6968,
    "lon": -52.6999,
-   "milho_t": 1080,
-   "soja_t": 23040
+   "milho_t": 798,
+   "soja_t": 10740
   },
   {
    "uf": "RS",
@@ -5568,8 +5568,8 @@
    "codigo_ibge": 4312625,
    "lat": -28.3253,
    "lon": -51.7697,
-   "milho_t": 3600,
-   "soja_t": 12870
+   "milho_t": 2900,
+   "soja_t": 8710
   },
   {
    "uf": "RS",
@@ -5578,8 +5578,8 @@
    "codigo_ibge": 4312674,
    "lat": -28.5298,
    "lon": -52.4676,
-   "milho_t": 1350,
-   "soja_t": 34776
+   "milho_t": 970,
+   "soja_t": 24219
   },
   {
    "uf": "RS",
@@ -5588,8 +5588,8 @@
    "codigo_ibge": 4312708,
    "lat": -27.3689,
    "lon": -52.7756,
-   "milho_t": 10800,
-   "soja_t": 55800
+   "milho_t": 6649,
+   "soja_t": 41600
   },
   {
    "uf": "RS",
@@ -5598,8 +5598,8 @@
    "codigo_ibge": 4312955,
    "lat": -27.9926,
    "lon": -52.9784,
-   "milho_t": 3360,
-   "soja_t": 13230
+   "milho_t": 1740,
+   "soja_t": 9660
   },
   {
    "uf": "RS",
@@ -5608,8 +5608,8 @@
    "codigo_ibge": 4313011,
    "lat": -27.6137,
    "lon": -54.1074,
-   "milho_t": 4620,
-   "soja_t": 9240
+   "milho_t": 4210,
+   "soja_t": 5564
   },
   {
    "uf": "RS",
@@ -5618,8 +5618,8 @@
    "codigo_ibge": 4313334,
    "lat": -28.0667,
    "lon": -53.6992,
-   "milho_t": 6105,
-   "soja_t": 57732
+   "milho_t": 4274,
+   "soja_t": 31566
   },
   {
    "uf": "RS",
@@ -5628,8 +5628,8 @@
    "codigo_ibge": 4313490,
    "lat": -27.9077,
    "lon": -53.1103,
-   "milho_t": 6480,
-   "soja_t": 18000
+   "milho_t": 5020,
+   "soja_t": 11880
   },
   {
    "uf": "RS",
@@ -5638,8 +5638,8 @@
    "codigo_ibge": 4313425,
    "lat": -27.5765,
    "lon": -54.5036,
-   "milho_t": 27819,
-   "soja_t": 33653
+   "milho_t": 26602,
+   "soja_t": 21748
   },
   {
    "uf": "RS",
@@ -5648,8 +5648,8 @@
    "codigo_ibge": 4313441,
    "lat": -27.5649,
    "lon": -53.1837,
-   "milho_t": 4800,
-   "soja_t": 7280
+   "milho_t": 3910,
+   "soja_t": 6767
   },
   {
    "uf": "RS",
@@ -5658,8 +5658,8 @@
    "codigo_ibge": 4313466,
    "lat": -27.749,
    "lon": -53.0639,
-   "milho_t": 3300,
-   "soja_t": 11550
+   "milho_t": 2268,
+   "soja_t": 6671
   },
   {
    "uf": "RS",
@@ -5668,8 +5668,8 @@
    "codigo_ibge": 4312658,
    "lat": -28.4548,
    "lon": -52.8182,
-   "milho_t": 23910,
-   "soja_t": 87150
+   "milho_t": 17080,
+   "soja_t": 62816
   },
   {
    "uf": "RS",
@@ -5678,8 +5678,8 @@
    "codigo_ibge": 4313607,
    "lat": -27.7075,
    "lon": -51.763,
-   "milho_t": 7200,
-   "soja_t": 18810
+   "milho_t": 5100,
+   "soja_t": 15270
   },
   {
    "uf": "RS",
@@ -5688,8 +5688,8 @@
    "codigo_ibge": 4313706,
    "lat": -27.9007,
    "lon": -53.3134,
-   "milho_t": 140400,
-   "soja_t": 363000
+   "milho_t": 112067,
+   "soja_t": 237000
   },
   {
    "uf": "RS",
@@ -5698,8 +5698,8 @@
    "codigo_ibge": 4313805,
    "lat": -27.3596,
    "lon": -53.558,
-   "milho_t": 3960,
-   "soja_t": 1495
+   "milho_t": 4032,
+   "soja_t": 1041
   },
   {
    "uf": "RS",
@@ -5708,8 +5708,8 @@
    "codigo_ibge": 4313904,
    "lat": -28.2833,
    "lon": -53.5023,
-   "milho_t": 9200,
-   "soja_t": 97560
+   "milho_t": 7327,
+   "soja_t": 63654
   },
   {
    "uf": "RS",
@@ -5718,8 +5718,8 @@
    "codigo_ibge": 4314100,
    "lat": -28.2576,
    "lon": -52.4091,
-   "milho_t": 13770,
-   "soja_t": 135300
+   "milho_t": 9330,
+   "soja_t": 114800
   },
   {
    "uf": "RS",
@@ -5728,8 +5728,8 @@
    "codigo_ibge": 4314134,
    "lat": -27.7051,
    "lon": -52.4169,
-   "milho_t": 9840,
-   "soja_t": 23400
+   "milho_t": 6490,
+   "soja_t": 18618
   },
   {
    "uf": "RS",
@@ -5738,8 +5738,8 @@
    "codigo_ibge": 4314308,
    "lat": -28.4283,
    "lon": -53.6579,
-   "milho_t": 21480,
-   "soja_t": 122544
+   "milho_t": 20120,
+   "soja_t": 72826
   },
   {
    "uf": "RS",
@@ -5748,8 +5748,8 @@
    "codigo_ibge": 4314456,
    "lat": -27.508,
    "lon": -53.2082,
-   "milho_t": 4320,
-   "soja_t": 3600
+   "milho_t": 2960,
+   "soja_t": 3146
   },
   {
    "uf": "RS",
@@ -5758,8 +5758,8 @@
    "codigo_ibge": 4314498,
    "lat": -27.2109,
    "lon": -53.608,
-   "milho_t": 2160,
-   "soja_t": 2500
+   "milho_t": 2852,
+   "soja_t": 1921
   },
   {
    "uf": "RS",
@@ -5768,8 +5768,8 @@
    "codigo_ibge": 4314555,
    "lat": -28.0439,
    "lon": -55.2001,
-   "milho_t": 2745,
-   "soja_t": 19983
+   "milho_t": 2495,
+   "soja_t": 9799
   },
   {
    "uf": "RS",
@@ -5778,8 +5778,8 @@
    "codigo_ibge": 4314704,
    "lat": -27.3297,
    "lon": -53.0575,
-   "milho_t": 3960,
-   "soja_t": 6750
+   "milho_t": 4850,
+   "soja_t": 5110
   },
   {
    "uf": "RS",
@@ -5788,8 +5788,8 @@
    "codigo_ibge": 4314787,
    "lat": -27.6587,
    "lon": -52.4848,
-   "milho_t": 4620,
-   "soja_t": 17490
+   "milho_t": 2980,
+   "soja_t": 12500
   },
   {
    "uf": "RS",
@@ -5798,8 +5798,8 @@
    "codigo_ibge": 4314779,
    "lat": -28.0585,
    "lon": -52.6791,
-   "milho_t": 24960,
-   "soja_t": 117250
+   "milho_t": 16804,
+   "soja_t": 90689
   },
   {
    "uf": "RS",
@@ -5808,8 +5808,8 @@
    "codigo_ibge": 4315008,
    "lat": -27.8569,
    "lon": -55.01,
-   "milho_t": 5580,
-   "soja_t": 13500
+   "milho_t": 7140,
+   "soja_t": 7431
   },
   {
    "uf": "RS",
@@ -5818,8 +5818,8 @@
    "codigo_ibge": 4315057,
    "lat": -27.5796,
    "lon": -54.6657,
-   "milho_t": 6510,
-   "soja_t": 9900
+   "milho_t": 6820,
+   "soja_t": 5500
   },
   {
    "uf": "RS",
@@ -5828,8 +5828,8 @@
    "codigo_ibge": 4315073,
    "lat": -27.7405,
    "lon": -54.8994,
-   "milho_t": 2450,
-   "soja_t": 1685
+   "milho_t": 2448,
+   "soja_t": 870
   },
   {
    "uf": "RS",
@@ -5838,8 +5838,8 @@
    "codigo_ibge": 4315107,
    "lat": -27.9082,
    "lon": -55.1379,
-   "milho_t": 3465,
-   "soja_t": 4361
+   "milho_t": 2450,
+   "soja_t": 1880
   },
   {
    "uf": "RS",
@@ -5848,8 +5848,8 @@
    "codigo_ibge": 4315313,
    "lat": -27.8257,
    "lon": -52.4424,
-   "milho_t": 12960,
-   "soja_t": 70524
+   "milho_t": 9440,
+   "soja_t": 44216
   },
   {
    "uf": "RS",
@@ -5858,8 +5858,8 @@
    "codigo_ibge": 4315354,
    "lat": -28.7466,
    "lon": -53.1011,
-   "milho_t": 600,
-   "soja_t": 30210
+   "milho_t": 334,
+   "soja_t": 15107
   },
   {
    "uf": "RS",
@@ -5868,8 +5868,8 @@
    "codigo_ibge": 4315404,
    "lat": -27.664,
    "lon": -53.6407,
-   "milho_t": 15000,
-   "soja_t": 30100
+   "milho_t": 9667,
+   "soja_t": 23467
   },
   {
    "uf": "RS",
@@ -5878,8 +5878,8 @@
    "codigo_ibge": 4315552,
    "lat": -27.2973,
    "lon": -52.8417,
-   "milho_t": 6300,
-   "soja_t": 27720
+   "milho_t": 6353,
+   "soja_t": 22680
   },
   {
    "uf": "RS",
@@ -5888,8 +5888,8 @@
    "codigo_ibge": 4315909,
    "lat": -27.4742,
    "lon": -53.1706,
-   "milho_t": 9450,
-   "soja_t": 11376
+   "milho_t": 7770,
+   "soja_t": 8516
   },
   {
    "uf": "RS",
@@ -5898,8 +5898,8 @@
    "codigo_ibge": 4315958,
    "lat": -28.2566,
    "lon": -54.8186,
-   "milho_t": 12600,
-   "soja_t": 46536
+   "milho_t": 10620,
+   "soja_t": 20227
   },
   {
    "uf": "RS",
@@ -5908,8 +5908,8 @@
    "codigo_ibge": 4316105,
    "lat": -27.7758,
    "lon": -52.8056,
-   "milho_t": 15000,
-   "soja_t": 93600
+   "milho_t": 10266,
+   "soja_t": 67773
   },
   {
    "uf": "RS",
@@ -5918,8 +5918,8 @@
    "codigo_ibge": 4316204,
    "lat": -27.8315,
    "lon": -52.9081,
-   "milho_t": 3300,
-   "soja_t": 39959
+   "milho_t": 1980,
+   "soja_t": 28582
   },
   {
    "uf": "RS",
@@ -5928,8 +5928,8 @@
    "codigo_ibge": 4316303,
    "lat": -28.1297,
    "lon": -55.0266,
-   "milho_t": 13592,
-   "soja_t": 24951
+   "milho_t": 9419,
+   "soja_t": 11667
   },
   {
    "uf": "RS",
@@ -5938,8 +5938,8 @@
    "codigo_ibge": 4316428,
    "lat": -27.7085,
    "lon": -53.1351,
-   "milho_t": 9000,
-   "soja_t": 8680
+   "milho_t": 6300,
+   "soja_t": 5973
   },
   {
    "uf": "RS",
@@ -5948,8 +5948,8 @@
    "codigo_ibge": 4316436,
    "lat": -28.3941,
    "lon": -53.097,
-   "milho_t": 9660,
-   "soja_t": 44101
+   "milho_t": 9283,
+   "soja_t": 28379
   },
   {
    "uf": "RS",
@@ -5958,8 +5958,8 @@
    "codigo_ibge": 4316451,
    "lat": -29.0951,
    "lon": -53.2133,
-   "milho_t": 11520,
-   "soja_t": 71160
+   "milho_t": 10188,
+   "soja_t": 35220
   },
   {
    "uf": "RS",
@@ -5968,8 +5968,8 @@
    "codigo_ibge": 4316477,
    "lat": -28.1233,
    "lon": -54.8373,
-   "milho_t": 2775,
-   "soja_t": 11649
+   "milho_t": 2739,
+   "soja_t": 5106
   },
   {
    "uf": "RS",
@@ -5978,8 +5978,8 @@
    "codigo_ibge": 4316600,
    "lat": -27.947,
    "lon": -51.8079,
-   "milho_t": 24000,
-   "soja_t": 81432
+   "milho_t": 16000,
+   "soja_t": 67415
   },
   {
    "uf": "RS",
@@ -5988,8 +5988,8 @@
    "codigo_ibge": 4316709,
    "lat": -28.3653,
    "lon": -53.251,
-   "milho_t": 54000,
-   "soja_t": 301200
+   "milho_t": 46480,
+   "soja_t": 190550
   },
   {
    "uf": "RS",
@@ -5998,8 +5998,8 @@
    "codigo_ibge": 4316733,
    "lat": -28.1609,
    "lon": -51.9279,
-   "milho_t": 5760,
-   "soja_t": 35748
+   "milho_t": 4585,
+   "soja_t": 25203
   },
   {
    "uf": "RS",
@@ -6008,8 +6008,8 @@
    "codigo_ibge": 4317202,
    "lat": -27.8702,
    "lon": -54.4796,
-   "milho_t": 14000,
-   "soja_t": 66211
+   "milho_t": 14675,
+   "soja_t": 37812
   },
   {
    "uf": "RS",
@@ -6018,8 +6018,8 @@
    "codigo_ibge": 4317707,
    "lat": -28.514,
    "lon": -55.2251,
-   "milho_t": 45900,
-   "soja_t": 190500
+   "milho_t": 45840,
+   "soja_t": 89232
   },
   {
    "uf": "RS",
@@ -6028,8 +6028,8 @@
    "codigo_ibge": 4317558,
    "lat": -28.4956,
    "lon": -52.0267,
-   "milho_t": 3600,
-   "soja_t": 11200
+   "milho_t": 1784,
+   "soja_t": 9253
   },
   {
    "uf": "RS",
@@ -6038,8 +6038,8 @@
    "codigo_ibge": 4317756,
    "lat": -28.403,
    "lon": -52.6992,
-   "milho_t": 9894,
-   "soja_t": 50490
+   "milho_t": 6537,
+   "soja_t": 38696
   },
   {
    "uf": "RS",
@@ -6048,8 +6048,8 @@
    "codigo_ibge": 4317806,
    "lat": -27.8526,
    "lon": -53.7776,
-   "milho_t": 35400,
-   "soja_t": 120473
+   "milho_t": 29880,
+   "soja_t": 81656
   },
   {
    "uf": "RS",
@@ -6058,8 +6058,8 @@
    "codigo_ibge": 4317905,
    "lat": -27.8263,
    "lon": -54.662,
-   "milho_t": 12780,
-   "soja_t": 23184
+   "milho_t": 17705,
+   "soja_t": 11892
   },
   {
    "uf": "RS",
@@ -6068,8 +6068,8 @@
    "codigo_ibge": 4317954,
    "lat": -27.9074,
    "lon": -51.6434,
-   "milho_t": 8640,
-   "soja_t": 19600
+   "milho_t": 5697,
+   "soja_t": 16053
   },
   {
    "uf": "RS",
@@ -6078,8 +6078,8 @@
    "codigo_ibge": 4317509,
    "lat": -28.3001,
    "lon": -54.2668,
-   "milho_t": 20400,
-   "soja_t": 119189
+   "milho_t": 17575,
+   "soja_t": 60869
   },
   {
    "uf": "RS",
@@ -6088,8 +6088,8 @@
    "codigo_ibge": 4320107,
    "lat": -27.942,
    "lon": -52.9231,
-   "milho_t": 18300,
-   "soja_t": 73368
+   "milho_t": 11830,
+   "soja_t": 51041
   },
   {
    "uf": "RS",
@@ -6098,8 +6098,8 @@
    "codigo_ibge": 4320206,
    "lat": -27.4829,
    "lon": -53.4026,
-   "milho_t": 27360,
-   "soja_t": 32247
+   "milho_t": 19648,
+   "soja_t": 28671
   },
   {
    "uf": "RS",
@@ -6108,8 +6108,8 @@
    "codigo_ibge": 4320230,
    "lat": -27.6367,
    "lon": -53.9493,
-   "milho_t": 2520,
-   "soja_t": 23400
+   "milho_t": 3277,
+   "soja_t": 14785
   },
   {
    "uf": "RS",
@@ -6118,8 +6118,8 @@
    "codigo_ibge": 4320305,
    "lat": -28.6294,
    "lon": -52.9498,
-   "milho_t": 14048,
-   "soja_t": 42602
+   "milho_t": 7187,
+   "soja_t": 25269
   },
   {
    "uf": "RS",
@@ -6128,8 +6128,8 @@
    "codigo_ibge": 4320321,
    "lat": -28.025,
    "lon": -54.5507,
-   "milho_t": 4572,
-   "soja_t": 30838
+   "milho_t": 3144,
+   "soja_t": 12738
   },
   {
    "uf": "RS",
@@ -6138,8 +6138,8 @@
    "codigo_ibge": 4320503,
    "lat": -27.9798,
    "lon": -52.2588,
-   "milho_t": 34200,
-   "soja_t": 111600
+   "milho_t": 18656,
+   "soja_t": 86800
   },
   {
    "uf": "RS",
@@ -6148,8 +6148,8 @@
    "codigo_ibge": 4320578,
    "lat": -28.1362,
    "lon": -54.4637,
-   "milho_t": 4321,
-   "soja_t": 22548
+   "milho_t": 2534,
+   "soja_t": 10534
   },
   {
    "uf": "RS",
@@ -6158,8 +6158,8 @@
    "codigo_ibge": 4320602,
    "lat": -27.4362,
    "lon": -52.1217,
-   "milho_t": 6480,
-   "soja_t": 9855
+   "milho_t": 4048,
+   "soja_t": 9635
   },
   {
    "uf": "RS",
@@ -6168,8 +6168,8 @@
    "codigo_ibge": 4320800,
    "lat": -28.8306,
    "lon": -52.5131,
-   "milho_t": 10800,
-   "soja_t": 108000
+   "milho_t": 5060,
+   "soja_t": 109800
   },
   {
    "uf": "RS",
@@ -6178,8 +6178,8 @@
    "codigo_ibge": 4318051,
    "lat": -28.5312,
    "lon": -51.886,
-   "milho_t": 3300,
-   "soja_t": 7314
+   "milho_t": 3176,
+   "soja_t": 4695
   },
   {
    "uf": "RS",
@@ -6188,8 +6188,8 @@
    "codigo_ibge": 4318457,
    "lat": -27.7789,
    "lon": -53.1226,
-   "milho_t": 4800,
-   "soja_t": 16200
+   "milho_t": 3600,
+   "soja_t": 10200
   },
   {
    "uf": "RS",
@@ -6198,8 +6198,8 @@
    "codigo_ibge": 4318465,
    "lat": -29.052,
    "lon": -52.295,
-   "milho_t": 90,
-   "soja_t": 567
+   "milho_t": 583,
+   "soja_t": 563
   },
   {
    "uf": "RS",
@@ -6208,8 +6208,8 @@
    "codigo_ibge": 4318499,
    "lat": -27.7251,
    "lon": -54.1275,
-   "milho_t": 1620,
-   "soja_t": 5544
+   "milho_t": 1436,
+   "soja_t": 3535
   },
   {
    "uf": "RS",
@@ -6218,8 +6218,8 @@
    "codigo_ibge": 4318606,
    "lat": -27.7707,
    "lon": -51.5966,
-   "milho_t": 17000,
-   "soja_t": 71460
+   "milho_t": 13167,
+   "soja_t": 61968
   },
   {
    "uf": "RS",
@@ -6228,8 +6228,8 @@
    "codigo_ibge": 4318424,
    "lat": -27.8195,
    "lon": -51.8257,
-   "milho_t": 8580,
-   "soja_t": 18810
+   "milho_t": 6720,
+   "soja_t": 17167
   },
   {
    "uf": "RS",
@@ -6238,8 +6238,8 @@
    "codigo_ibge": 4318903,
    "lat": -28.412,
    "lon": -54.9559,
-   "milho_t": 96360,
-   "soja_t": 275877
+   "milho_t": 104720,
+   "soja_t": 135629
   },
   {
    "uf": "RS",
@@ -6248,8 +6248,8 @@
    "codigo_ibge": 4319109,
    "lat": -27.7112,
    "lon": -53.9699,
-   "milho_t": 8640,
-   "soja_t": 39930
+   "milho_t": 8255,
+   "soja_t": 24825
   },
   {
    "uf": "RS",
@@ -6258,8 +6258,8 @@
    "codigo_ibge": 4319158,
    "lat": -28.556,
    "lon": -54.5559,
-   "milho_t": 71400,
-   "soja_t": 238262
+   "milho_t": 69600,
+   "soja_t": 108712
   },
   {
    "uf": "RS",
@@ -6268,8 +6268,8 @@
    "codigo_ibge": 4319208,
    "lat": -28.1834,
    "lon": -55.2654,
-   "milho_t": 20034,
-   "soja_t": 73336
+   "milho_t": 19904,
+   "soja_t": 36261
   },
   {
    "uf": "RS",
@@ -6278,8 +6278,8 @@
    "codigo_ibge": 4319307,
    "lat": -28.0195,
    "lon": -54.9404,
-   "milho_t": 7350,
-   "soja_t": 10260
+   "milho_t": 6745,
+   "soja_t": 4911
   },
   {
    "uf": "RS",
@@ -6288,8 +6288,8 @@
    "codigo_ibge": 4319364,
    "lat": -27.7706,
    "lon": -53.2513,
-   "milho_t": 4080,
-   "soja_t": 19800
+   "milho_t": 2320,
+   "soja_t": 13350
   },
   {
    "uf": "RS",
@@ -6298,8 +6298,8 @@
    "codigo_ibge": 4319372,
    "lat": -28.1243,
    "lon": -54.8926,
-   "milho_t": 5256,
-   "soja_t": 16272
+   "milho_t": 4213,
+   "soja_t": 7176
   },
   {
    "uf": "RS",
@@ -6308,8 +6308,8 @@
    "codigo_ibge": 4319703,
    "lat": -27.5583,
    "lon": -52.5237,
-   "milho_t": 5700,
-   "soja_t": 12870
+   "milho_t": 3524,
+   "soja_t": 9085
   },
   {
    "uf": "RS",
@@ -6318,8 +6318,8 @@
    "codigo_ibge": 4319737,
    "lat": -27.7906,
    "lon": -53.9368,
-   "milho_t": 4186,
-   "soja_t": 19642
+   "milho_t": 2897,
+   "soja_t": 11982
   },
   {
    "uf": "RS",
@@ -6328,8 +6328,8 @@
    "codigo_ibge": 4320909,
    "lat": -28.0652,
    "lon": -52.0097,
-   "milho_t": 11934,
-   "soja_t": 57408
+   "milho_t": 10358,
+   "soja_t": 47686
   },
   {
    "uf": "RS",
@@ -6338,8 +6338,8 @@
    "codigo_ibge": 4321006,
    "lat": -28.6277,
    "lon": -52.8613,
-   "milho_t": 5809,
-   "soja_t": 52701
+   "milho_t": 6100,
+   "soja_t": 33287
   },
   {
    "uf": "RS",
@@ -6348,8 +6348,8 @@
    "codigo_ibge": 4321329,
    "lat": -27.4005,
    "lon": -53.4702,
-   "milho_t": 5081,
-   "soja_t": 8120
+   "milho_t": 4317,
+   "soja_t": 5723
   },
   {
    "uf": "RS",
@@ -6358,8 +6358,8 @@
    "codigo_ibge": 4321402,
    "lat": -27.3711,
    "lon": -53.7585,
-   "milho_t": 10800,
-   "soja_t": 47700
+   "milho_t": 9400,
+   "soja_t": 33920
   },
   {
    "uf": "RS",
@@ -6368,8 +6368,8 @@
    "codigo_ibge": 4321469,
    "lat": -28.5712,
    "lon": -52.5955,
-   "milho_t": 1080,
-   "soja_t": 25200
+   "milho_t": 467,
+   "soja_t": 18130
   },
   {
    "uf": "RS",
@@ -6379,7 +6379,7 @@
    "lat": -27.4022,
    "lon": -54.0814,
    "milho_t": 9000,
-   "soja_t": 18000
+   "soja_t": 10440
   },
   {
    "uf": "RS",
@@ -6388,8 +6388,8 @@
    "codigo_ibge": 4321956,
    "lat": -27.5239,
    "lon": -52.8956,
-   "milho_t": 4800,
-   "soja_t": 40920
+   "milho_t": 4094,
+   "soja_t": 25834
   },
   {
    "uf": "RS",
@@ -6398,8 +6398,8 @@
    "codigo_ibge": 4321634,
    "lat": -27.5003,
    "lon": -52.1448,
-   "milho_t": 12528,
-   "soja_t": 8942
+   "milho_t": 8989,
+   "soja_t": 6587
   },
   {
    "uf": "RS",
@@ -6408,8 +6408,8 @@
    "codigo_ibge": 4321857,
    "lat": -27.6139,
    "lon": -52.8437,
-   "milho_t": 3000,
-   "soja_t": 30240
+   "milho_t": 2220,
+   "soja_t": 20930
   },
   {
    "uf": "RS",
@@ -6418,8 +6418,8 @@
    "codigo_ibge": 4321907,
    "lat": -27.4555,
    "lon": -53.9296,
-   "milho_t": 7560,
-   "soja_t": 26100
+   "milho_t": 7520,
+   "soja_t": 18060
   },
   {
    "uf": "RS",
@@ -6428,8 +6428,8 @@
    "codigo_ibge": 4321808,
    "lat": -27.78,
    "lon": -54.2357,
-   "milho_t": 24000,
-   "soja_t": 75708
+   "milho_t": 17625,
+   "soja_t": 43721
   },
   {
    "uf": "RS",
@@ -6438,8 +6438,8 @@
    "codigo_ibge": 4322103,
    "lat": -27.6573,
    "lon": -54.4439,
-   "milho_t": 18816,
-   "soja_t": 31620
+   "milho_t": 20792,
+   "soja_t": 19664
   },
   {
    "uf": "RS",
@@ -6448,8 +6448,8 @@
    "codigo_ibge": 4322152,
    "lat": -29.1039,
    "lon": -52.9538,
-   "milho_t": 1650,
-   "soja_t": 12480
+   "milho_t": 839,
+   "soja_t": 10040
   },
   {
    "uf": "RS",
@@ -6458,8 +6458,8 @@
    "codigo_ibge": 4322186,
    "lat": -27.9241,
    "lon": -51.5383,
-   "milho_t": 8900,
-   "soja_t": 23040
+   "milho_t": 8522,
+   "soja_t": 15812
   },
   {
    "uf": "RS",
@@ -6468,8 +6468,8 @@
    "codigo_ibge": 4322301,
    "lat": -27.7598,
    "lon": -54.4814,
-   "milho_t": 14084,
-   "soja_t": 38202
+   "milho_t": 14164,
+   "soja_t": 20633
   },
   {
    "uf": "RS",
@@ -6478,8 +6478,8 @@
    "codigo_ibge": 4322343,
    "lat": -28.0404,
    "lon": -54.686,
-   "milho_t": 900,
-   "soja_t": 15300
+   "milho_t": 780,
+   "soja_t": 7004
   },
   {
    "uf": "RS",
@@ -6488,8 +6488,8 @@
    "codigo_ibge": 4322558,
    "lat": -28.4758,
    "lon": -51.8447,
-   "milho_t": 5500,
-   "soja_t": 7920
+   "milho_t": 3902,
+   "soja_t": 5432
   },
   {
    "uf": "RS",
@@ -6498,8 +6498,8 @@
    "codigo_ibge": 4322905,
    "lat": -27.5716,
    "lon": -52.0211,
-   "milho_t": 16560,
-   "soja_t": 42024
+   "milho_t": 15360,
+   "soja_t": 28748
   },
   {
    "uf": "RS",
@@ -6508,8 +6508,8 @@
    "codigo_ibge": 4323101,
    "lat": -27.1607,
    "lon": -53.4022,
-   "milho_t": 16200,
-   "soja_t": 16500
+   "milho_t": 15550,
+   "soja_t": 12600
   },
   {
    "uf": "RS",
@@ -6518,8 +6518,8 @@
    "codigo_ibge": 4323200,
    "lat": -28.5632,
    "lon": -52.7495,
-   "milho_t": 11880,
-   "soja_t": 54510
+   "milho_t": 6910,
+   "soja_t": 41743
   },
   {
    "uf": "RS",
@@ -6528,8 +6528,8 @@
    "codigo_ibge": 4323358,
    "lat": -28.1062,
    "lon": -52.1438,
-   "milho_t": 7560,
-   "soja_t": 36738
+   "milho_t": 6960,
+   "soja_t": 26876
   },
   {
    "uf": "RS",
@@ -6539,7 +6539,7 @@
    "lat": -28.5359,
    "lon": -52.1486,
    "milho_t": 6240,
-   "soja_t": 26284
+   "soja_t": 19161
   },
   {
    "uf": "RS",
@@ -6548,8 +6548,8 @@
    "codigo_ibge": 4323507,
    "lat": -27.3686,
    "lon": -53.4919,
-   "milho_t": 2340,
-   "soja_t": 4032
+   "milho_t": 2663,
+   "soja_t": 3224
   },
   {
    "uf": "RS",
@@ -6558,8 +6558,8 @@
    "codigo_ibge": 4323705,
    "lat": -27.2902,
    "lon": -53.6974,
-   "milho_t": 4500,
-   "soja_t": 10944
+   "milho_t": 4600,
+   "soja_t": 8119
   },
   {
    "uf": "RS",
@@ -6568,8 +6568,8 @@
    "codigo_ibge": 4323754,
    "lat": -28.3516,
    "lon": -54.504,
-   "milho_t": 10200,
-   "soja_t": 37225
+   "milho_t": 6848,
+   "soja_t": 14683
   },
   {
    "uf": "RS",
@@ -6578,8 +6578,8 @@
    "codigo_ibge": 4300059,
    "lat": -28.1672,
    "lon": -52.031,
-   "milho_t": 15600,
-   "soja_t": 46860
+   "milho_t": 8473,
+   "soja_t": 38045
   },
   {
    "uf": "RS",
@@ -6588,8 +6588,8 @@
    "codigo_ibge": 4301552,
    "lat": -27.6936,
    "lon": -52.0505,
-   "milho_t": 4800,
-   "soja_t": 31500
+   "milho_t": 4377,
+   "soja_t": 21840
   },
   {
    "uf": "RS",
@@ -6598,8 +6598,8 @@
    "codigo_ibge": 4300638,
    "lat": -30.8756,
    "lon": -52.2509,
-   "milho_t": 4080,
-   "soja_t": 3600
+   "milho_t": 5227,
+   "soja_t": 5400
   },
   {
    "uf": "RS",
@@ -6608,8 +6608,8 @@
    "codigo_ibge": 4301305,
    "lat": -32.2327,
    "lon": -53.0862,
-   "milho_t": 6002,
-   "soja_t": 61327
+   "milho_t": 5879,
+   "soja_t": 96064
   },
   {
    "uf": "RS",
@@ -6618,8 +6618,8 @@
    "codigo_ibge": 4301073,
    "lat": -31.4389,
    "lon": -52.4246,
-   "milho_t": 2160,
-   "soja_t": 1053
+   "milho_t": 2248,
+   "soja_t": 1519
   },
   {
    "uf": "RS",
@@ -6628,8 +6628,8 @@
    "codigo_ibge": 4304358,
    "lat": -31.5516,
    "lon": -53.6773,
-   "milho_t": 1103,
-   "soja_t": 27000
+   "milho_t": 1142,
+   "soja_t": 26290
   },
   {
    "uf": "RS",
@@ -6638,8 +6638,8 @@
    "codigo_ibge": 4304507,
    "lat": -31.396,
    "lon": -52.6783,
-   "milho_t": 19440,
-   "soja_t": 71424
+   "milho_t": 32830,
+   "soja_t": 106028
   },
   {
    "uf": "RS",
@@ -6648,8 +6648,8 @@
    "codigo_ibge": 4304663,
    "lat": -31.7565,
    "lon": -52.4889,
-   "milho_t": 450,
-   "soja_t": 19800
+   "milho_t": 695,
+   "soja_t": 26553
   },
   {
    "uf": "RS",
@@ -6658,8 +6658,8 @@
    "codigo_ibge": 4302808,
    "lat": -30.5144,
    "lon": -53.4827,
-   "milho_t": 2310,
-   "soja_t": 68360
+   "milho_t": 1410,
+   "soja_t": 55197
   },
   {
    "uf": "RS",
@@ -6668,8 +6668,8 @@
    "codigo_ibge": 4305124,
    "lat": -31.8419,
    "lon": -52.8004,
-   "milho_t": 735,
-   "soja_t": 19543
+   "milho_t": 1765,
+   "soja_t": 20202
   },
   {
    "uf": "RS",
@@ -6678,8 +6678,8 @@
    "codigo_ibge": 4305439,
    "lat": -33.6866,
    "lon": -53.4594,
-   "milho_t": 80,
-   "soja_t": 11255
+   "milho_t": 58,
+   "soja_t": 12193
   },
   {
    "uf": "RS",
@@ -6688,8 +6688,8 @@
    "codigo_ibge": 4306056,
    "lat": -31.0046,
    "lon": -52.0436,
-   "milho_t": 3360,
-   "soja_t": 35200
+   "milho_t": 3333,
+   "soja_t": 39973
   },
   {
    "uf": "RS",
@@ -6698,8 +6698,8 @@
    "codigo_ibge": 4306908,
    "lat": -30.543,
    "lon": -52.5204,
-   "milho_t": 7500,
-   "soja_t": 93600
+   "milho_t": 6150,
+   "soja_t": 100670
   },
   {
    "uf": "RS",
@@ -6708,8 +6708,8 @@
    "codigo_ibge": 4307104,
    "lat": -32.024,
    "lon": -53.3944,
-   "milho_t": 3900,
-   "soja_t": 23688
+   "milho_t": 3160,
+   "soja_t": 27046
   },
   {
    "uf": "RS",
@@ -6718,8 +6718,8 @@
    "codigo_ibge": 4311007,
    "lat": -32.5604,
    "lon": -53.377,
-   "milho_t": 1575,
-   "soja_t": 29376
+   "milho_t": 3142,
+   "soja_t": 60792
   },
   {
    "uf": "RS",
@@ -6728,8 +6728,8 @@
    "codigo_ibge": 4312450,
    "lat": -31.5887,
    "lon": -52.6261,
-   "milho_t": 756,
-   "soja_t": 3465
+   "milho_t": 1452,
+   "soja_t": 4455
   },
   {
    "uf": "RS",
@@ -6738,8 +6738,8 @@
    "codigo_ibge": 4314175,
    "lat": -31.7365,
    "lon": -53.5814,
-   "milho_t": 554,
-   "soja_t": 82935
+   "milho_t": 383,
+   "soja_t": 87425
   },
   {
    "uf": "RS",
@@ -6748,8 +6748,8 @@
    "codigo_ibge": 4314209,
    "lat": -31.8642,
    "lon": -52.8184,
-   "milho_t": 540,
-   "soja_t": 21450
+   "milho_t": 873,
+   "soja_t": 24730
   },
   {
    "uf": "RS",
@@ -6758,8 +6758,8 @@
    "codigo_ibge": 4314407,
    "lat": -31.7649,
    "lon": -52.3371,
-   "milho_t": 19440,
-   "soja_t": 43411
+   "milho_t": 24480,
+   "soja_t": 54340
   },
   {
    "uf": "RS",
@@ -6768,8 +6768,8 @@
    "codigo_ibge": 4314506,
    "lat": -31.5794,
    "lon": -53.3798,
-   "milho_t": 486,
-   "soja_t": 11604
+   "milho_t": 600,
+   "soja_t": 16478
   },
   {
    "uf": "RS",
@@ -6778,8 +6778,8 @@
    "codigo_ibge": 4314605,
    "lat": -31.4473,
    "lon": -53.0973,
-   "milho_t": 3260,
-   "soja_t": 75000
+   "milho_t": 7414,
+   "soja_t": 115525
   },
   {
    "uf": "RS",
@@ -6788,8 +6788,8 @@
    "codigo_ibge": 4315602,
    "lat": -32.0349,
    "lon": -52.1071,
-   "milho_t": 1032,
-   "soja_t": 26675
+   "milho_t": 811,
+   "soja_t": 42789
   },
   {
    "uf": "RS",
@@ -6798,8 +6798,8 @@
    "codigo_ibge": 4317301,
    "lat": -33.525,
    "lon": -53.3717,
-   "milho_t": 900,
-   "soja_t": 35751
+   "milho_t": 5271,
+   "soja_t": 113268
   },
   {
    "uf": "RS",
@@ -6808,8 +6808,8 @@
    "codigo_ibge": 4317004,
    "lat": -30.8697,
    "lon": -53.11,
-   "milho_t": 2400,
-   "soja_t": 48000
+   "milho_t": 2240,
+   "soja_t": 64300
   },
   {
    "uf": "RS",
@@ -6818,8 +6818,8 @@
    "codigo_ibge": 4318507,
    "lat": -32.0151,
    "lon": -52.0331,
-   "milho_t": 1920,
-   "soja_t": 240
+   "milho_t": 892,
+   "soja_t": 80
   },
   {
    "uf": "RS",
@@ -6828,8 +6828,8 @@
    "codigo_ibge": 4318804,
    "lat": -31.3564,
    "lon": -51.9715,
-   "milho_t": 25200,
-   "soja_t": 45000
+   "milho_t": 38593,
+   "soja_t": 90307
   },
   {
    "uf": "RS",
@@ -6838,8 +6838,8 @@
    "codigo_ibge": 4322327,
    "lat": -31.4173,
    "lon": -52.1706,
-   "milho_t": 4680,
-   "soja_t": 8536
+   "milho_t": 4045,
+   "soja_t": 11920
   },
   {
    "uf": "RS",
@@ -6848,8 +6848,8 @@
    "codigo_ibge": 4300034,
    "lat": -31.8665,
    "lon": -54.1615,
-   "milho_t": 2400,
-   "soja_t": 36288
+   "milho_t": 2463,
+   "soja_t": 40013
   },
   {
    "uf": "RS",
@@ -6858,8 +6858,8 @@
    "codigo_ibge": 4300406,
    "lat": -29.7902,
    "lon": -55.7949,
-   "milho_t": 28800,
-   "soja_t": 227000
+   "milho_t": 15333,
+   "soja_t": 116667
   },
   {
    "uf": "RS",
@@ -6868,8 +6868,8 @@
    "codigo_ibge": 4301602,
    "lat": -31.3297,
    "lon": -54.0999,
-   "milho_t": 1200,
-   "soja_t": 63000
+   "milho_t": 969,
+   "soja_t": 70756
   },
   {
    "uf": "RS",
@@ -6878,8 +6878,8 @@
    "codigo_ibge": 4301875,
    "lat": -30.2029,
    "lon": -57.5497,
-   "milho_t": 600,
-   "soja_t": 9660
+   "milho_t": 200,
+   "soja_t": 6243
   },
   {
    "uf": "RS",
@@ -6888,8 +6888,8 @@
    "codigo_ibge": 4306601,
    "lat": -30.9756,
    "lon": -54.6694,
-   "milho_t": 20760,
-   "soja_t": 180360
+   "milho_t": 25708,
+   "soja_t": 267903
   },
   {
    "uf": "RS",
@@ -6898,8 +6898,8 @@
    "codigo_ibge": 4308656,
    "lat": -28.1944,
    "lon": -55.6383,
-   "milho_t": 11508,
-   "soja_t": 51893
+   "milho_t": 11295,
+   "soja_t": 27559
   },
   {
    "uf": "RS",
@@ -6908,8 +6908,8 @@
    "codigo_ibge": 4309654,
    "lat": -31.4067,
    "lon": -53.8667,
-   "milho_t": 2656,
-   "soja_t": 14916
+   "milho_t": 3011,
+   "soja_t": 21292
   },
   {
    "uf": "RS",
@@ -6918,8 +6918,8 @@
    "codigo_ibge": 4310603,
    "lat": -29.1311,
    "lon": -56.5515,
-   "milho_t": 96000,
-   "soja_t": 141500
+   "milho_t": 63061,
+   "soja_t": 93767
   },
   {
    "uf": "RS",
@@ -6928,8 +6928,8 @@
    "codigo_ibge": 4311502,
    "lat": -30.8071,
    "lon": -53.8931,
-   "milho_t": 120,
-   "soja_t": 72300
+   "milho_t": 98,
+   "soja_t": 71250
   },
   {
    "uf": "RS",
@@ -6938,8 +6938,8 @@
    "codigo_ibge": 4311759,
    "lat": -29.5859,
    "lon": -55.4841,
-   "milho_t": 43100,
-   "soja_t": 138600
+   "milho_t": 22287,
+   "soja_t": 73920
   },
   {
    "uf": "RS",
@@ -6948,8 +6948,8 @@
    "codigo_ibge": 4311718,
    "lat": -29.1445,
    "lon": -56.0674,
-   "milho_t": 17000,
-   "soja_t": 147600
+   "milho_t": 14887,
+   "soja_t": 62110
   },
   {
    "uf": "RS",
@@ -6958,8 +6958,8 @@
    "codigo_ibge": 4315305,
    "lat": -30.384,
    "lon": -56.4483,
-   "milho_t": 208,
-   "soja_t": 1632
+   "milho_t": 87,
+   "soja_t": 1056
   },
   {
    "uf": "RS",
@@ -6968,8 +6968,8 @@
    "codigo_ibge": 4316402,
    "lat": -30.2515,
    "lon": -54.9221,
-   "milho_t": 2738,
-   "soja_t": 99180
+   "milho_t": 2516,
+   "soja_t": 100920
   },
   {
    "uf": "RS",
@@ -6978,8 +6978,8 @@
    "codigo_ibge": 4317103,
    "lat": -30.8773,
    "lon": -55.5392,
-   "milho_t": 11460,
-   "soja_t": 76000
+   "milho_t": 6782,
+   "soja_t": 115333
   },
   {
    "uf": "RS",
@@ -6988,8 +6988,8 @@
    "codigo_ibge": 4316972,
    "lat": -30.3393,
    "lon": -54.0817,
-   "milho_t": 720,
-   "soja_t": 93600
+   "milho_t": 856,
+   "soja_t": 70120
   },
   {
    "uf": "RS",
@@ -6998,8 +6998,8 @@
    "codigo_ibge": 4318002,
    "lat": -28.6578,
    "lon": -56.0036,
-   "milho_t": 96000,
-   "soja_t": 267000
+   "milho_t": 70600,
+   "soja_t": 159700
   },
   {
    "uf": "RS",
@@ -7008,8 +7008,8 @@
    "codigo_ibge": 4318101,
    "lat": -29.5547,
    "lon": -55.1253,
-   "milho_t": 7665,
-   "soja_t": 127794
+   "milho_t": 3715,
+   "soja_t": 65572
   },
   {
    "uf": "RS",
@@ -7018,8 +7018,8 @@
    "codigo_ibge": 4318309,
    "lat": -30.3337,
    "lon": -54.3217,
-   "milho_t": 18500,
-   "soja_t": 193128
+   "milho_t": 9755,
+   "soja_t": 206266
   },
   {
    "uf": "RS",
@@ -7028,8 +7028,8 @@
    "codigo_ibge": 4322400,
    "lat": -29.7614,
    "lon": -57.0853,
-   "milho_t": 1020,
-   "soja_t": 13560
+   "milho_t": 340,
+   "soja_t": 12352
   }
  ]
 }

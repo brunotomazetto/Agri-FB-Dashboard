@@ -5,7 +5,8 @@ Séries climáticas por REGIÃO produtora (RS + MT), a partir de TODOS os munic�
 Composição (locations.json -> "regioes"):
   MT: 7 macrorregiões Imea (lista municipal oficial da nota técnica de nov/2017).
   RS: 7 mesorregiões IBGE.
-  638 municípios no total, cada um com um campo "peso" (default 1).
+  638 municípios no total, cada um com milho_t e soja_t (produção média 22-24)
+  usados como peso alternativo à média simples.
 
 Como funciona
 -------------
@@ -60,11 +61,12 @@ def cell_of(lat, lon):
 
 
 # Ponderações oferecidas no dashboard. A chave entra no sufixo do ponto
-# ("UF|Região|n"). Produção 2024 em toneladas, SIDRA 1612.
+# ("UF|Região|n"). Produção média de 2022-2024 em toneladas, SIDRA 1612 —
+# média de 3 anos para diluir quebra de safra de um ano isolado.
 PESOS = {
     "n": ("simples (1 por município)", lambda m: 1),
-    "m": ("produção de milho 2024 (t)", lambda m: m.get("milho_t", 0)),
-    "s": ("produção de soja 2024 (t)", lambda m: m.get("soja_t", 0)),
+    "m": ("produção de milho, média 2022-24 (t)", lambda m: m.get("milho_t", 0)),
+    "s": ("produção de soja, média 2022-24 (t)", lambda m: m.get("soja_t", 0)),
 }
 
 
