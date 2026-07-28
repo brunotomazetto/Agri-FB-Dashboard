@@ -15,17 +15,22 @@ DATA SOURCES
                            (col D=date, F=feed_grain_6m USD/kg, G=hog USD/cwt,
                             H=carcass USD/cwt)  — Jan 2015 → Apr 2026
 
-SPREAD DEFINITIONS
-  • spread_integrated     = (Carcass / 45.36) / (fc_6m / 1000 × 5.8)
-    → Integrated producers: own hog farms, cost is feedgrain basket
-    → Carcass converted to USD/kg (/45.36); feed cost = fc_6m/1000 USD/kg × FCR 5.8
+SPREAD DEFINITIONS  (both are gross-margin fractions — × 100 = %, like the
+                     U.S. Chicken tracker's (rev − fc) / rev)
+  • spread_integrated     = (Carcass/45.36 − feed_grain_6m × 5.8) / (Carcass/45.36)
+    → Integrated producers: own hog farms, cost is the feed-grain basket
+    → Carcass USD/kg (÷45.36) minus feed cost = feed_grain_6m(USD/kg) × FCR 5.8
     → FCR 5.8 = kg feed per kg carcass weight (pork industry average)
-    → Result: ~1.5–2.5×
+    → Result: ~0.25–0.45 (25–45%)
 
-  • spread_non_integrated = (Carcass / Hog Price) / 45.36
+  • spread_non_integrated = (Carcass − Hog Price) / Carcass
     → Non-integrated packers: buy live hogs on open market
-    → (Carcass ÷ Hog) ratio then /45.36 → USD/kg packer margin
-    → Result: ~0.015–0.030 USD/kg
+    → (Carcass − Hog) ÷ Carcass; the USD/cwt→USD/kg /45.36 cancels
+    → Result: ~−0.05–0.15 (−5% to +15%)
+
+  feed_grain_6m ($/kg) = feed-grain basket (chicken formula) lagged 2 quarters:
+    basket = (2.9802 × corn_$/bu + 0.03851 × sbm_$/ton) / 100     [USD/kg]
+    feed_grain_6m[q] = basket[q−2]   (6-month lag)
 
   Feed cost basket (fc_spot, $/ton):
     fc_spot = (2/3) × corn_$/bu × 39.368  +  (1/3) × sbm_$/ton
@@ -101,7 +106,55 @@ CORN_BU_PER_TON = 39.368   # bushels of corn per metric ton
 CORN_SHARE      = 2 / 3
 SBM_SHARE       = 1 / 3
 HOG_FCR         = 5.8      # kg feed per kg carcass (for spread_integrated)
-GRAIN_LAG_Q     = 2        # quarters lag (≈6 months) for fc_6m
+GRAIN_LAG_Q     = 2        # quarters lag (≈6 months) for fc_6m / feed_grain_6m
+
+# Feed-grain basket (identical structure to the U.S. Chicken tracker).
+# fg_basket = (GRAIN_CORN_C * corn_$/bu + GRAIN_SBM_C * sbm_$/ton) / 100  → USD/kg
+# The /100 converts the chicken ¢/kg basket into USD/kg (the feed_grain_6m unit).
+# feed_grain_6m[q] = fg_basket[q-2]  (6-month lag, same as the seed embeds).
+GRAIN_CORN_C    = 2.9802
+GRAIN_SBM_C     = 0.03851
+
+
+def feed_grain_basket(corn, sbm):
+    """Feed-grain basket in USD/kg from corn ($/bu) + SBM ($/ton) — chicken formula."""
+    if corn is None or sbm is None:
+        return None
+    return (GRAIN_CORN_C * corn + GRAIN_SBM_C * sbm) / 100.0
+
+
+def integrated_margin(carcass, fg6m):
+    """Integrated gross margin (fraction): (carcass_value − feed_cost) / carcass_value.
+    carcass USD/cwt → USD/kg via /45.36; feed cost = feed_grain_6m(USD/kg) × FCR."""
+    if not (carcass and fg6m):
+        return None
+    rev  = carcass / 45.36
+    cost = fg6m * HOG_FCR
+    return (rev - cost) / rev
+
+
+def non_integrated_margin(carcass, hog_price):
+    """Non-integrated (packer) gross margin (fraction): (carcass − hog) / carcass.
+    The USD/cwt→USD/kg /45.36 cancels between carcass and hog."""
+    if not (carcass and hog_price):
+        return None
+    return (carcass - hog_price) / carcass
+
+
+# Quarterly corn/SBM basket inputs (shared USDA source with the chicken tracker,
+# 4Q17→current). Seeds the 6-month lag so feed_grain_6m is computed, not read
+# from the pre-lagged xlsx. Live fetch_corn/fetch_sbm extend the series forward.
+QUARTERLY_GRAIN_SEED = {
+    20174:(3.1708,309.04), 20181:(3.4117,347.387), 20182:(3.5446,370.553), 20183:(3.1915,322.747),
+    20184:(3.3875,296.937), 20191:(3.4838,293.48), 20192:(3.7617,289.945), 20193:(3.8815,292.733),
+    20194:(3.7342,292.597), 20201:(3.69,296.537), 20202:(3.0625,290.637), 20203:(3.2712,302.05),
+    20204:(3.9659,389.947), 20211:(5.2867,433.377), 20212:(6.5773,409.1), 20213:(5.8781,361.087),
+    20214:(5.4304,369.873), 20221:(6.5492,475.389), 20222:(7.6717,456.313), 20223:(6.72,508.071),
+    20224:(6.5023,439.71), 20231:(6.5162,497.6), 20232:(6.1715,435.295), 20233:(4.9731,434.43),
+    20234:(4.47,441.871), 20241:(4.0938,370.514), 20242:(4.1777,384.187), 20243:(3.6608,366.903),
+    20244:(3.9654,327.585), 20251:(4.4454,300.425), 20252:(4.3331,287.387), 20253:(3.8477,284.622),
+    20254:(4.0369,306.251), 20261:(4.2131,313.166), 20262:(4.2739,338.771), 20263:(4.25,347.145),
+}
 
 # Quarter range
 _now        = datetime.now()
@@ -1283,13 +1336,9 @@ def seed_from_xlsx(conn, path: str):
             continue
         if hog is None and carcass is None:
             continue
-        spread_int  = (carcass / (fg6m * 100 / 0.453592)
-                       if carcass and fg6m else None)
-        # fg6m is USD/kg; convert to USD/cwt: * 100 / 2.20462 ≈ * 45.36
-        # spread_integrated     = (Carcass/45.36) / (feed_grain_6m * 5.8)
-        # spread_non_integrated  = (Carcass/Hog) / 45.36
-        spread_int  = ((carcass / 45.36) / (fg6m * 5.8)) if (carcass and fg6m) else None
-        spread_nint = ((carcass / hog)   / 45.36)         if (carcass and hog)  else None
+        # Gross-margin fractions (× 100 = % in the UI), matching the quarterly logic.
+        spread_int  = integrated_margin(carcass, fg6m)
+        spread_nint = non_integrated_margin(carcass, hog)
         rows.append({
             "report_date":           date_val.strftime("%Y-%m-%d"),
             "carcass":               round(carcass, 4) if carcass else None,
@@ -1314,10 +1363,9 @@ def seed_from_hardcoded(conn):
     """Insert WEEKLY_SEED into DB (INSERT OR IGNORE — never overwrites)."""
     rows = []
     for dt, fg6m, hog, carcass in WEEKLY_SEED:
-        # spread_integrated     = (Carcass/45.36) / (feed_grain_6m * 5.8)
-        # spread_non_integrated  = (Carcass/Hog) / 45.36
-        spread_int  = ((carcass / 45.36) / (fg6m * 5.8)) if (carcass and fg6m) else None
-        spread_nint = ((carcass / hog)   / 45.36)         if (carcass and hog)  else None
+        # Gross-margin fractions (× 100 = % in the UI).
+        spread_int  = integrated_margin(carcass, fg6m)
+        spread_nint = non_integrated_margin(carcass, hog)
         rows.append({
             "report_date":           dt,
             "carcass":               round(carcass, 4) if carcass else None,
@@ -1331,6 +1379,31 @@ def seed_from_hardcoded(conn):
             "spread_non_integrated": round(spread_nint, 4) if spread_nint else None,
         })
     upsert_weekly(conn, rows, label="hardcoded seed — ")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# RECOMPUTE WEEKLY SPREADS  (keeps stored weekly margins in the current unit)
+# ══════════════════════════════════════════════════════════════════════════════
+def recompute_weekly_spreads(conn):
+    """Recompute stored weekly spread columns as gross-margin fractions.
+    Runs every time so pre-existing rows (seeded with the old units, or with
+    INSERT OR IGNORE) are brought onto the current definition."""
+    rows = conn.execute(
+        "SELECT report_date, carcass, hog_price, feed_grain_6m FROM weekly"
+    ).fetchall()
+    n = 0
+    for report_date, carcass, hog_price, fg6m in rows:
+        sint  = integrated_margin(carcass, fg6m)
+        snint = non_integrated_margin(carcass, hog_price)
+        conn.execute(
+            "UPDATE weekly SET spread_integrated=?, spread_non_integrated=? "
+            "WHERE report_date=?",
+            (round(sint, 6) if sint is not None else None,
+             round(snint, 6) if snint is not None else None,
+             report_date))
+        n += 1
+    conn.commit()
+    print(f"  weekly spreads recomputed: {n} rows")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1371,12 +1444,27 @@ def materialise_quarterly(conn):
 
     def avg(lst): return sum(lst)/len(lst) if lst else None
 
-    # Build quarterly rows. fc_6m keeps the corn/SBM basket (2-quarter lag) for
-    # transparency, but the integrated spread is driven by feed_grain_6m — the
-    # grain-basket series (USD/kg) that carries full history and already embeds
-    # the 6-month lag. This matches the seed and the dashboard.
+    # Build quarterly rows.
+    #   feed_grain_6m — the USD/kg grain-basket driving the integrated margin —
+    #   is COMPUTED from the corn/SBM basket (chicken formula) lagged 2 quarters,
+    #   not read from the pre-lagged xlsx seed. Grain inputs come from live weekly
+    #   corn/SBM when present, else QUARTERLY_GRAIN_SEED (shared USDA history).
+    #   Where neither exists (pre-4Q17 tail), fall back to the xlsx feed_grain_6m.
     quarters = sorted(qdata.keys())
     fc_spot_by_q = {k: avg(qdata[k]["fc_spot"]) for k in quarters}
+
+    # Per-quarter feed-grain basket (un-lagged, USD/kg): live corn/SBM else seed.
+    fg_basket_by_q = {}
+    for (yr, q) in quarters:
+        yq   = yr * 10 + q
+        corn = avg(qdata[(yr, q)]["corn"])
+        sbm  = avg(qdata[(yr, q)]["sbm"])
+        if corn is None or sbm is None:
+            seed = QUARTERLY_GRAIN_SEED.get(yq)
+            if seed:
+                corn = corn if corn is not None else seed[0]
+                sbm  = sbm  if sbm  is not None else seed[1]
+        fg_basket_by_q[(yr, q)] = feed_grain_basket(corn, sbm)
 
     written = 0
     for i, (yr, q) in enumerate(quarters):
@@ -1390,14 +1478,21 @@ def materialise_quarterly(conn):
 
         carcass   = avg(d["carcass"])
         hog_price = avg(d["hog_price"])
-        feed_grain_6m = avg(d["feed_grain_6m"])   # USD/kg, already 6m-lagged
 
-        # spread_integrated  = (Carcass/45.36) / (feed_grain_6m × HOG_FCR)
-        #   carcass/45.36           → USD/kg carcass
-        #   feed_grain_6m × 5.8     → USD/kg carcass-equivalent feed cost
-        # spread_non_integrated = (Carcass/Hog) / 45.36
-        spread_int  = ((carcass / 45.36) / (feed_grain_6m * HOG_FCR)) if (carcass and feed_grain_6m) else avg(d["spread_int"])
-        spread_nint = ((carcass / hog_price) / 45.36)                  if (carcass and hog_price)     else avg(d["spread_nint"])
+        # feed_grain_6m = basket from 2 quarters ago; fall back to the xlsx seed
+        # (weekly avg) only where the lagged basket is unavailable.
+        feed_grain_6m = fg_basket_by_q.get(quarters[i-2]) if i >= 2 else None
+        if feed_grain_6m is None:
+            feed_grain_6m = avg(d["feed_grain_6m"])
+
+        # Both margins expressed as gross-margin fractions (× 100 = % in the UI),
+        # mirroring the chicken tracker's (rev − fc) / rev.
+        spread_int  = integrated_margin(carcass, feed_grain_6m)
+        if spread_int is None:
+            spread_int = avg(d["spread_int"])
+        spread_nint = non_integrated_margin(carcass, hog_price)
+        if spread_nint is None:
+            spread_nint = avg(d["spread_nint"])
 
         conn.execute("""
             INSERT OR REPLACE INTO quarterly
@@ -1497,23 +1592,24 @@ def main():
         hog_price = row.get("hog_price")
         fc_spot   = row.get("fc_spot")
 
-        # For spread_integrated: use fc_spot as best available (6m lag computed in quarterly)
-        # At weekly level, store fc_6m = None (materialise_quarterly handles lag)
+        # feed_grain_6m (and the integrated margin) need the 2-quarter lag, which
+        # materialise_quarterly resolves from the corn/SBM basket. Non-integrated
+        # margin needs only this week's carcass & hog, so compute it here.
         row["fc_6m"]                 = None
         row["feed_grain_6m"]         = None
-        # spread_non_integrated = (Carcass/Hog) / 45.36
         row["spread_integrated"]     = None  # requires feed_grain_6m — set at quarterly level
-        row["spread_non_integrated"] = (
-            round((carcass / hog_price) / 45.36, 6) if (carcass and hog_price) else None
-        )
+        nint = non_integrated_margin(carcass, hog_price)
+        row["spread_non_integrated"] = round(nint, 6) if nint is not None else None
 
     if fresh:
         upsert_weekly(conn, list(fresh.values()), label="USDA fresh — ")
     else:
         print("  No fresh data fetched (network unavailable in this environment)")
 
-    # ── Step 2: Materialise quarterly ────────────────────────────────────────
-    print("\n[2] Materialising quarterly table …")
+    # ── Step 2: Recompute weekly spreads + materialise quarterly ─────────────
+    print("\n[2] Recomputing weekly spreads …")
+    recompute_weekly_spreads(conn)
+    print("\n[3] Materialising quarterly table …")
     materialise_quarterly(conn)
 
     conn.close()

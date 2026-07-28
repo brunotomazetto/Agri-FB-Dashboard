@@ -286,7 +286,7 @@ tr:hover td{background:#FFF8F5;}
         <span class="info-val" id="info-fg">—</span>
       </div>
       <div class="info-row" style="margin-top:4px;border-top:2px solid var(--border);padding-top:6px;">
-        <span class="info-label" style="font-weight:600;">Spread</span>
+        <span class="info-label" style="font-weight:600;">Margin</span>
         <span class="info-val orange" id="info-spread" style="font-size:13px;">—</span>
       </div>
 
@@ -321,9 +321,9 @@ tr:hover td{background:#FFF8F5;}
   </div><!-- bottom-row -->
 
   <div class="note-bar" id="note-bar">
-    <em>Integrated spread</em>: (Carcass ÷ 45.36) ÷ (Feed Grain USD/kg × 5.8) &nbsp;·&nbsp;
-    <em>Non-Integrated spread</em>: (Carcass ÷ Hog Price) ÷ 45.36 &nbsp;·&nbsp;
-    Carcass &amp; Hog: USD/cwt · Feed Grain: USD/kg basket (6-month lag, ⅔ corn + ⅓ SBM) · FCR: 5.8×
+    <em>Integrated margin</em>: (Carcass⁄45.36 − Feed Grain × 5.8) ÷ (Carcass⁄45.36) &nbsp;·&nbsp;
+    <em>Non-Integrated margin</em>: (Carcass − Hog Price) ÷ Carcass &nbsp;·&nbsp; both in % &nbsp;·&nbsp;
+    Carcass &amp; Hog: USD/cwt · Feed Grain: USD/kg basket (6-month lag, 2.9802·corn + 0.03851·SBM ÷ 100) · FCR: 5.8×
   </div>
 
 </div><!-- main-wrap -->
@@ -441,15 +441,20 @@ function spreadBgColor() {
 
 function spreadLabel() {
   return currentMode === 'integrated'
-    ? 'Integrated Spread (×)'
-    : 'Non-Integrated Spread (USD/kg)';
+    ? 'Integrated Margin (%)'
+    : 'Non-Integrated Margin (%)';
 }
 
+// Both spreads are gross-margin fractions → shown as %.
 function formatSpread(v) {
   if (v == null) return null;
-  return currentMode === 'integrated'
-    ? v.toFixed(3) + '×'
-    : v.toFixed(4) + ' USD/kg';
+  return (v * 100).toFixed(1) + '%';
+}
+
+// QoQ delta, in percentage points.
+function formatDelta(v) {
+  if (v == null) return null;
+  return (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + 'pp';
 }
 
 function latestRowForMode() {
@@ -524,12 +529,12 @@ function updateInfoPanel() {
   const isInt = currentMode === 'integrated';
 
   document.getElementById('ptype-desc').textContent = isInt
-    ? 'Integrated producers own hog farms — cost is the feed-grain basket (6-month lag). Spread = Carcass ÷ Feed Grain (×).'
-    : 'Non-integrated packers buy live hogs on the open market. Spread = Carcass ÷ Hog Price (USD/kg packing margin).';
+    ? 'Integrated producers own hog farms — cost is the feed-grain basket (6-month lag). Margin = (Carcass − Feed Grain) ÷ Carcass (%).'
+    : 'Non-integrated packers buy live hogs on the open market. Margin = (Carcass − Hog Price) ÷ Carcass (%).';
 
   document.getElementById('top-sub').innerHTML = isInt
-    ? 'Integrated spread — Carcass ÷ Feed Grain &nbsp;<span class="mode-badge integrated">Integrated</span>'
-    : 'Non-Integrated spread — Carcass ÷ Hog Price &nbsp;<span class="mode-badge non-integrated">Non-Integrated</span>';
+    ? 'Integrated margin — (Carcass − Feed Grain) ÷ Carcass &nbsp;<span class="mode-badge integrated">Integrated</span>'
+    : 'Non-Integrated margin — (Carcass − Hog Price) ÷ Carcass &nbsp;<span class="mode-badge non-integrated">Non-Integrated</span>';
 
   // Feed grain row is only meaningful in integrated mode
   document.getElementById('row-feedgrain').style.display = isInt ? '' : 'none';
@@ -572,9 +577,9 @@ function renderQuarterlyCharts() {
     `N = <strong>${allValid.length}</strong> quarters`;
 
   document.getElementById('chart1-title').textContent =
-    `QoQ ΔSpread — ${isInt ? 'Integrated' : 'Non-Integrated'}`;
+    `QoQ ΔMargin — ${isInt ? 'Integrated' : 'Non-Integrated'}`;
   document.getElementById('chart2-title').textContent =
-    `Spread Level — ${isInt ? 'Integrated (×)' : 'Non-Integrated (USD/kg)'}`;
+    `Margin Level — ${isInt ? 'Integrated (%)' : 'Non-Integrated (%)'}`;
 
   const validSpreads = allSeries.filter(r => r.spread != null).map(r => r.spread);
   const avg = validSpreads.length ? validSpreads.reduce((s,v)=>s+v,0)/validSpreads.length : null;
@@ -606,17 +611,13 @@ function renderQuarterlyCharts() {
       plugins: {
         legend: { display: false },
         tooltip: { callbacks: {
-          label: ctx => {
-            const v = ctx.parsed.y, sign = v >= 0 ? '+' : '';
-            return isInt ? `ΔSpread: ${sign}${v.toFixed(4)}×`
-                         : `ΔSpread: ${sign}${v.toFixed(5)} USD/kg`;
-          }
+          label: ctx => `ΔMargin: ${formatDelta(ctx.parsed.y)}`
         } }
       },
       scales: {
         x: { grid:{display:false}, ticks:{font:{size:10},color:'#888',maxRotation:45} },
         y: { grid:{color:'#f0f0f0'}, ticks:{font:{size:10},color:'#888',
-             callback: v => (v>=0?'+':'')+v.toFixed(isInt?3:4)+(isInt?'×':'')} }
+             callback: v => (v>=0?'+':'')+(v*100).toFixed(1)+'pp'} }
       }
     }
   });
@@ -651,17 +652,15 @@ function renderQuarterlyCharts() {
         tooltip: { callbacks: {
           label: ctx => {
             const v = ctx.parsed.y; if (v == null) return null;
-            return isInt ? `${ctx.dataset.label}: ${v.toFixed(3)}×`
-                         : `${ctx.dataset.label}: ${v.toFixed(4)} USD/kg`;
+            return `${ctx.dataset.label}: ${(v*100).toFixed(1)}%`;
           }
         } }
       },
       scales: {
         x: { grid:{display:false}, ticks:{font:{size:10},color:'#888',maxRotation:45} },
         y: { grid:{color:'#f0f0f0'}, ticks:{font:{size:10},color:color,
-             callback: v => isInt ? v.toFixed(2)+'×' : v.toFixed(3)},
-             title:{display:true,text: isInt ? 'Spread (×)' : 'Spread (USD/kg)',
-               font:{size:9.5},color:color} }
+             callback: v => (v*100).toFixed(0)+'%'},
+             title:{display:true,text:'Margin (%)',font:{size:9.5},color:color} }
       }
     }
   });
@@ -669,10 +668,9 @@ function renderQuarterlyCharts() {
   if (avg != null && levelData.length) {
     const latest = levelData[levelData.length-1];
     const vs = latest - avg;
-    const vsStr = (vs >= 0 ? '+' : '') + (isInt ? vs.toFixed(3)+'×' : vs.toFixed(4)+' USD/kg');
     document.getElementById('chart2-stat').innerHTML =
-      `Avg: <strong>${isInt ? avg.toFixed(3)+'×' : avg.toFixed(4)+' USD/kg'}</strong>
-       &nbsp;·&nbsp; Latest vs Avg: <strong>${vsStr}</strong>`;
+      `Avg: <strong>${(avg*100).toFixed(1)}%</strong>
+       &nbsp;·&nbsp; Latest vs Avg: <strong>${formatDelta(vs)}</strong>`;
   }
 }
 
@@ -690,7 +688,7 @@ function renderFineLevelChart(rows, key) {
   const period = currentTab === 'monthly' ? 'Monthly' : 'Weekly';
 
   document.getElementById('chart2-title').textContent =
-    `Spread Level — ${period} · ${isInt ? 'Integrated (×)' : 'Non-Integrated (USD/kg)'}`;
+    `Margin Level — ${period} · ${isInt ? 'Integrated (%)' : 'Non-Integrated (%)'}`;
   document.getElementById('chart2-stat').textContent =
     `${period} average · ${isInt ? 'Integrated' : 'Non-Integrated'} mode`;
 
@@ -716,8 +714,7 @@ function renderFineLevelChart(rows, key) {
         tooltip: { callbacks: {
           label: ctx => {
             const v = ctx.parsed.y; if (v == null) return null;
-            return isInt ? `${ctx.dataset.label}: ${v.toFixed(3)}×`
-                         : `${ctx.dataset.label}: ${v.toFixed(4)} USD/kg`;
+            return `${ctx.dataset.label}: ${(v*100).toFixed(1)}%`;
           }
         } }
       },
@@ -725,9 +722,8 @@ function renderFineLevelChart(rows, key) {
         x: { grid:{display:false}, ticks:{font:{size:10},color:'#888',maxRotation:45,
              autoSkip:true, maxTicksLimit:14} },
         y: { grid:{color:'#f0f0f0'}, ticks:{font:{size:10},color:color,
-             callback: v => isInt ? v.toFixed(2)+'×' : v.toFixed(3)},
-             title:{display:true,text: isInt ? 'Spread (×)' : 'Spread (USD/kg)',
-               font:{size:9.5},color:color} }
+             callback: v => (v*100).toFixed(0)+'%'},
+             title:{display:true,text:'Margin (%)',font:{size:9.5},color:color} }
       }
     }
   });
@@ -793,7 +789,7 @@ function fineSpreadCell(r) {
   const v = isInt ? r.spread_integrated : r.spread_non_integrated;
   const cls = isInt ? 'td-spread-int' : 'td-spread-nint';
   if (v == null) return '<span class="td-na">—</span>';
-  return `<span class="${cls}">${isInt ? v.toFixed(3)+'×' : v.toFixed(4)+' USD/kg'}</span>`;
+  return `<span class="${cls}">${formatSpread(v)}</span>`;
 }
 
 // ─── QUARTERLY TABLE ──────────────────────────────────────────────────────────
@@ -808,8 +804,8 @@ function renderTable() {
     <th>Carcass<br><span style="font-weight:400;font-size:9.5px;">USD/cwt</span></th>
     <th>Hog Price<br><span style="font-weight:400;font-size:9.5px;">USD/cwt</span></th>
     <th>Feed Grain 6m<br><span style="font-weight:400;font-size:9.5px;">USD/kg (6m lag)</span></th>
-    <th>${isInt ? 'Integrated Spread<br><span style="font-weight:400;font-size:9.5px;">(×)</span>'
-                : 'Non-Int. Spread<br><span style="font-weight:400;font-size:9.5px;">(USD/kg)</span>'}</th>
+    <th>${isInt ? 'Integrated Margin<br><span style="font-weight:400;font-size:9.5px;">(%)</span>'
+                : 'Non-Int. Margin<br><span style="font-weight:400;font-size:9.5px;">(%)</span>'}</th>
   </tr>`;
 
   const rows = [...computeSeries()].reverse();
@@ -837,8 +833,8 @@ function renderMonthlyTable() {
     <th>Carcass<br><span style="font-weight:400;font-size:9.5px;">USD/cwt avg</span></th>
     <th>Hog Price<br><span style="font-weight:400;font-size:9.5px;">USD/cwt avg</span></th>
     <th>Feed Grain 6m<br><span style="font-weight:400;font-size:9.5px;">USD/kg avg</span></th>
-    <th>${isInt ? 'Integrated Spread<br><span style="font-weight:400;font-size:9.5px;">(× avg)</span>'
-                : 'Non-Int Spread<br><span style="font-weight:400;font-size:9.5px;">(USD/kg avg)</span>'}</th>
+    <th>${isInt ? 'Integrated Margin<br><span style="font-weight:400;font-size:9.5px;">(% avg)</span>'
+                : 'Non-Int Margin<br><span style="font-weight:400;font-size:9.5px;">(% avg)</span>'}</th>
     <th style="text-align:right;font-size:10.5px;color:#aaa;"># Weeks</th>
   </tr>`;
 
@@ -861,8 +857,8 @@ function renderWeeklyTable() {
     <th>Carcass<br><span style="font-weight:400;font-size:9.5px;">USD/cwt avg</span></th>
     <th>Hog Price<br><span style="font-weight:400;font-size:9.5px;">USD/cwt avg</span></th>
     <th>Feed Grain 6m<br><span style="font-weight:400;font-size:9.5px;">USD/kg avg</span></th>
-    <th>${isInt ? 'Integrated Spread<br><span style="font-weight:400;font-size:9.5px;">(× avg)</span>'
-                : 'Non-Int Spread<br><span style="font-weight:400;font-size:9.5px;">(USD/kg avg)</span>'}</th>
+    <th>${isInt ? 'Integrated Margin<br><span style="font-weight:400;font-size:9.5px;">(% avg)</span>'
+                : 'Non-Int Margin<br><span style="font-weight:400;font-size:9.5px;">(% avg)</span>'}</th>
   </tr>`;
 
   const rows = computeWeekly();
