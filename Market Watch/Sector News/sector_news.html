@@ -871,6 +871,7 @@ async function loadNewsPrefs(){
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let allNews = [];
+let lastNewsSignature = null; // assinatura do último render (ver loadNews silent)
 let selectedItems = new Map();
 let groupsConfig = [];
 let categories = {};
@@ -1159,8 +1160,12 @@ function clearFeedSearch() {
 }
 
 // ── Load & Render News ────────────────────────────────────────────────────────
-async function loadNews() {
-  showLoading(true);
+// opts.silent: usado pelo polling do refresh em segundo plano — não limpa a
+// lista nem mostra o spinner, e só re-renderiza se o conjunto de notícias
+// realmente mudou. Assim o usuário consegue ler sem a lista piscar a cada 5s.
+async function loadNews(opts = {}) {
+  const silent = opts.silent === true;
+  if (!silent) showLoading(true);
   const params = new URLSearchParams();
   const df = document.getElementById("date-from").value;
   const dt = document.getElementById("date-to").value;
@@ -1175,15 +1180,18 @@ async function loadNews() {
     // Recategoriza cada notícia com base no conteúdo (título + resumo)
     news.forEach(n => n._category_id = categorizeNews(n));
     if (activeGroupId !== null) news = news.filter(n => n._category_id === activeGroupId);
+    const sig = news.map(n => n.id + ":" + (n.is_excluded ? 1 : 0)).join(",");
+    if (silent && sig === lastNewsSignature) return; // nada mudou — não re-renderiza
+    lastNewsSignature = sig;
     allNews = news;
     renderNews(allNews);
     updateSelectedCount();
     updatePageHeader();
     loadStats();
   } catch (e) {
-    showToast("Error loading news", "danger");
+    if (!silent) showToast("Error loading news", "danger");
   } finally {
-    showLoading(false);
+    if (!silent) showLoading(false);
   }
 }
 
@@ -1401,7 +1409,12 @@ async function fetchNews() {
       const sres = await fetch(API_BASE + "/api/news/fetch/status");
       status = await sres.json();
     } catch (e) { continue; } // transient — keep polling
-    if (status.running) { await loadNews(); continue; } // surface partial progress
+    // Ainda rodando: mostra progresso parcial, mas só a cada ~15s (3 polls) e
+    // sem spinner — re-renderiza apenas se chegou notícia nova.
+    if (status.running) {
+      if (i % 3 === 2) await loadNews({ silent: true });
+      continue;
+    }
 
     // Job finished.
     const r = status.last_result;
@@ -1415,14 +1428,14 @@ async function fetchNews() {
     document.getElementById("last-refresh").textContent =
       "Updated " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
     document.getElementById("last-refresh").classList.remove("d-none");
-    await loadNews();
+    await loadNews({ silent: true });
     restoreBtn();
     return;
   }
 
   // Timed out waiting — the job may still be running server-side.
   showToast("A busca está demorando mais que o normal. As notícias vão aparecer em instantes — clique em Refresh novamente em alguns minutos.", "info");
-  await loadNews();
+  await loadNews({ silent: true });
   restoreBtn();
 }
 
