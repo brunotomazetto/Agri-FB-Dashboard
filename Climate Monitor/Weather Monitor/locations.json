@@ -2,9 +2,9 @@
  "_meta": {
   "descricao": "Registro de pontos para o painel meteorológico. SLC: coordenada GPS real da sede da fazenda (API oficial). BrasilAgro: coordenada da sede do município (proxy).",
   "fonte_clima": "Open-Meteo (forecast + ERA5 archive)",
-  "escopo": "27 capitais (bares) + fazendas SLC e BrasilAgro + regiões produtoras de RS, MT, MA, TO, PI e BA (composição municipal completa, 1635 municípios)",
+  "escopo": "27 capitais (bares) + fazendas SLC e BrasilAgro + regiões produtoras de RS, MT, MA, TO, PI, BA, PR, MS e GO (composição municipal completa, 2359 municípios)",
   "fontes_fazendas": "SLC: API oficial slcagricola.com.br/api/map (coord GPS real). BrasilAgro: portfólio oficial ri.brasil-agro.com (coord = sede do município).",
-  "fontes_regioes": "MT: 7 macrorregiões do Imea, lista municipal oficial da nota técnica de nov/2017 (imea.com.br/imea-site/view/uploads/metodologia/justificativamapa.pdf). RS, MA, TO, PI e BA: mesorregiões IBGE. Todos os municípios de cada estado entram na composição da sua região. Coordenada = sede do município (IBGE).",
+  "fontes_regioes": "MT: 7 macrorregiões do Imea, lista municipal oficial da nota técnica de nov/2017 (imea.com.br/imea-site/view/uploads/metodologia/justificativamapa.pdf). RS, MA, TO, PI, BA, PR, MS e GO: mesorregiões IBGE. Todos os municípios de cada estado entram na composição da sua região. Coordenada = sede do município (IBGE).",
   "fontes_pesos": "Produção média de 2022-2024 (t) de milho e soja por município — SIDRA tabela 1612, Database/IGBE Grains/tabela1612-2.xlsx, aba 'Quantidade produzida (Toneladas)'. Média de 3 anos para diluir anomalia de safra de um ano isolado. Ponderações no dashboard: simples (1 por município), milho_t e soja_t."
  },
  "capitais": [
@@ -17000,6 +17000,7246 @@
    "lon": -42.7245,
    "milho_t": 168,
    "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Altamira do Paraná",
+   "codigo_ibge": 4100459,
+   "lat": -24.7983,
+   "lon": -52.7128,
+   "milho_t": 5733,
+   "soja_t": 7867
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Araruna",
+   "codigo_ibge": 4101705,
+   "lat": -23.9315,
+   "lon": -52.5021,
+   "milho_t": 22966,
+   "soja_t": 69945
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Barbosa Ferraz",
+   "codigo_ibge": 4102505,
+   "lat": -24.0334,
+   "lon": -52.004,
+   "milho_t": 37550,
+   "soja_t": 39224
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Boa Esperança",
+   "codigo_ibge": 4103008,
+   "lat": -24.2467,
+   "lon": -52.7876,
+   "milho_t": 113958,
+   "soja_t": 79476
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Campina da Lagoa",
+   "codigo_ibge": 4103909,
+   "lat": -24.5893,
+   "lon": -52.7976,
+   "milho_t": 160134,
+   "soja_t": 115220
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Campo Mourão",
+   "codigo_ibge": 4104303,
+   "lat": -24.0463,
+   "lon": -52.378,
+   "milho_t": 116757,
+   "soja_t": 160432
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Corumbataí do Sul",
+   "codigo_ibge": 4106555,
+   "lat": -24.101,
+   "lon": -52.1177,
+   "milho_t": 5450,
+   "soja_t": 11157
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Engenheiro Beltrão",
+   "codigo_ibge": 4107504,
+   "lat": -23.797,
+   "lon": -52.2659,
+   "milho_t": 150543,
+   "soja_t": 94036
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Farol",
+   "codigo_ibge": 4107553,
+   "lat": -24.0958,
+   "lon": -52.6217,
+   "milho_t": 66493,
+   "soja_t": 59860
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Fênix",
+   "codigo_ibge": 4107702,
+   "lat": -23.9135,
+   "lon": -51.9805,
+   "milho_t": 76595,
+   "soja_t": 49481
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Goioerê",
+   "codigo_ibge": 4108601,
+   "lat": -24.1835,
+   "lon": -53.0248,
+   "milho_t": 151553,
+   "soja_t": 102667
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Iretama",
+   "codigo_ibge": 4110805,
+   "lat": -24.4253,
+   "lon": -52.1012,
+   "milho_t": 9210,
+   "soja_t": 41612
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Janiópolis",
+   "codigo_ibge": 4112207,
+   "lat": -24.1401,
+   "lon": -52.7784,
+   "milho_t": 94080,
+   "soja_t": 60758
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Juranda",
+   "codigo_ibge": 4112959,
+   "lat": -24.4209,
+   "lon": -52.8413,
+   "milho_t": 168433,
+   "soja_t": 91062
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Luiziana",
+   "codigo_ibge": 4113734,
+   "lat": -24.2853,
+   "lon": -52.269,
+   "milho_t": 102097,
+   "soja_t": 176785
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Mamborê",
+   "codigo_ibge": 4114005,
+   "lat": -24.317,
+   "lon": -52.5271,
+   "milho_t": 172880,
+   "soja_t": 200943
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Moreira Sales",
+   "codigo_ibge": 4116109,
+   "lat": -24.0509,
+   "lon": -53.0102,
+   "milho_t": 17102,
+   "soja_t": 33553
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Nova Cantu",
+   "codigo_ibge": 4116802,
+   "lat": -24.6723,
+   "lon": -52.5661,
+   "milho_t": 84018,
+   "soja_t": 81990
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Peabiru",
+   "codigo_ibge": 4118808,
+   "lat": -23.914,
+   "lon": -52.3431,
+   "milho_t": 106754,
+   "soja_t": 81404
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Quarto Centenário",
+   "codigo_ibge": 4120655,
+   "lat": -24.2775,
+   "lon": -53.0759,
+   "milho_t": 170685,
+   "soja_t": 77591
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Quinta do Sol",
+   "codigo_ibge": 4121109,
+   "lat": -23.8533,
+   "lon": -52.1309,
+   "milho_t": 86223,
+   "soja_t": 63485
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Rancho Alegre D'Oeste",
+   "codigo_ibge": 4121356,
+   "lat": -24.3065,
+   "lon": -52.9552,
+   "milho_t": 108225,
+   "soja_t": 59428
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Roncador",
+   "codigo_ibge": 4122503,
+   "lat": -24.5958,
+   "lon": -52.2716,
+   "milho_t": 45866,
+   "soja_t": 119875
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Terra Boa",
+   "codigo_ibge": 4127205,
+   "lat": -23.7683,
+   "lon": -52.447,
+   "milho_t": 34189,
+   "soja_t": 28868
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Ocidental Paranaense",
+   "municipio": "Ubiratã",
+   "codigo_ibge": 4128005,
+   "lat": -24.5393,
+   "lon": -52.9865,
+   "milho_t": 330284,
+   "soja_t": 146214
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Arapoti",
+   "codigo_ibge": 4101606,
+   "lat": -24.1548,
+   "lon": -49.8285,
+   "milho_t": 53767,
+   "soja_t": 131224
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Carambeí",
+   "codigo_ibge": 4104659,
+   "lat": -24.9152,
+   "lon": -50.0986,
+   "milho_t": 51817,
+   "soja_t": 90242
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Castro",
+   "codigo_ibge": 4104907,
+   "lat": -24.7891,
+   "lon": -50.0108,
+   "milho_t": 141770,
+   "soja_t": 227513
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Imbaú",
+   "codigo_ibge": 4110078,
+   "lat": -24.448,
+   "lon": -50.7533,
+   "milho_t": 4913,
+   "soja_t": 10077
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Jaguariaíva",
+   "codigo_ibge": 4112009,
+   "lat": -24.2439,
+   "lon": -49.7066,
+   "milho_t": 28835,
+   "soja_t": 97383
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Ortigueira",
+   "codigo_ibge": 4117305,
+   "lat": -24.2058,
+   "lon": -50.9185,
+   "milho_t": 73043,
+   "soja_t": 106818
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Palmeira",
+   "codigo_ibge": 4117701,
+   "lat": -25.4257,
+   "lon": -50.007,
+   "milho_t": 84275,
+   "soja_t": 218433
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Piraí do Sul",
+   "codigo_ibge": 4119400,
+   "lat": -24.5306,
+   "lon": -49.9433,
+   "milho_t": 83213,
+   "soja_t": 141238
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Ponta Grossa",
+   "codigo_ibge": 4119905,
+   "lat": -25.0916,
+   "lon": -50.1668,
+   "milho_t": 50982,
+   "soja_t": 262782
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Reserva",
+   "codigo_ibge": 4121703,
+   "lat": -24.6492,
+   "lon": -50.8466,
+   "milho_t": 30310,
+   "soja_t": 91428
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Sengés",
+   "codigo_ibge": 4126306,
+   "lat": -24.1129,
+   "lon": -49.4616,
+   "milho_t": 18325,
+   "soja_t": 56572
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Telêmaco Borba",
+   "codigo_ibge": 4127106,
+   "lat": -24.3245,
+   "lon": -50.6176,
+   "milho_t": 382,
+   "soja_t": 1577
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Tibagi",
+   "codigo_ibge": 4127502,
+   "lat": -24.5153,
+   "lon": -50.4176,
+   "milho_t": 174480,
+   "soja_t": 393013
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro Oriental Paranaense",
+   "municipio": "Ventania",
+   "codigo_ibge": 4128534,
+   "lat": -24.2458,
+   "lon": -50.2376,
+   "milho_t": 46883,
+   "soja_t": 72769
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Boa Ventura de São Roque",
+   "codigo_ibge": 4103040,
+   "lat": -24.8688,
+   "lon": -51.6276,
+   "milho_t": 20707,
+   "soja_t": 84392
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Campina do Simão",
+   "codigo_ibge": 4103958,
+   "lat": -25.0802,
+   "lon": -51.8237,
+   "milho_t": 15339,
+   "soja_t": 44399
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Candói",
+   "codigo_ibge": 4104428,
+   "lat": -25.5758,
+   "lon": -52.0409,
+   "milho_t": 94014,
+   "soja_t": 189778
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Cantagalo",
+   "codigo_ibge": 4104451,
+   "lat": -25.3734,
+   "lon": -52.1198,
+   "milho_t": 26997,
+   "soja_t": 72053
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Clevelândia",
+   "codigo_ibge": 4105706,
+   "lat": -26.4043,
+   "lon": -52.3508,
+   "milho_t": 45367,
+   "soja_t": 123336
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Coronel Domingos Soares",
+   "codigo_ibge": 4106456,
+   "lat": -26.2277,
+   "lon": -52.0356,
+   "milho_t": 15633,
+   "soja_t": 69725
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Espigão Alto do Iguaçu",
+   "codigo_ibge": 4107546,
+   "lat": -25.4216,
+   "lon": -52.8348,
+   "milho_t": 11740,
+   "soja_t": 45907
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Foz do Jordão",
+   "codigo_ibge": 4108452,
+   "lat": -25.7371,
+   "lon": -52.1188,
+   "milho_t": 33814,
+   "soja_t": 39178
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Goioxim",
+   "codigo_ibge": 4108650,
+   "lat": -25.1927,
+   "lon": -51.9911,
+   "milho_t": 31672,
+   "soja_t": 80528
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Guarapuava",
+   "codigo_ibge": 4109401,
+   "lat": -25.3902,
+   "lon": -51.4623,
+   "milho_t": 168370,
+   "soja_t": 294868
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Honório Serpa",
+   "codigo_ibge": 4109658,
+   "lat": -26.139,
+   "lon": -52.3848,
+   "milho_t": 20449,
+   "soja_t": 81256
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Inácio Martins",
+   "codigo_ibge": 4110201,
+   "lat": -25.5704,
+   "lon": -51.0769,
+   "milho_t": 6783,
+   "soja_t": 26343
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Laranjal",
+   "codigo_ibge": 4113254,
+   "lat": -24.8862,
+   "lon": -52.47,
+   "milho_t": 5513,
+   "soja_t": 10460
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Laranjeiras do Sul",
+   "codigo_ibge": 4113304,
+   "lat": -25.4077,
+   "lon": -52.4109,
+   "milho_t": 25752,
+   "soja_t": 88551
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Mangueirinha",
+   "codigo_ibge": 4114401,
+   "lat": -25.9421,
+   "lon": -52.1743,
+   "milho_t": 76640,
+   "soja_t": 185337
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Marquinho",
+   "codigo_ibge": 4115457,
+   "lat": -25.112,
+   "lon": -52.2497,
+   "milho_t": 3870,
+   "soja_t": 22051
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Mato Rico",
+   "codigo_ibge": 4115739,
+   "lat": -24.6995,
+   "lon": -52.1454,
+   "milho_t": 13783,
+   "soja_t": 41155
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Nova Laranjeiras",
+   "codigo_ibge": 4117057,
+   "lat": -25.3054,
+   "lon": -52.5447,
+   "milho_t": 13965,
+   "soja_t": 59721
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Palmas",
+   "codigo_ibge": 4117602,
+   "lat": -26.4839,
+   "lon": -51.9888,
+   "milho_t": 12630,
+   "soja_t": 117300
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Palmital",
+   "codigo_ibge": 4117800,
+   "lat": -24.8853,
+   "lon": -52.2029,
+   "milho_t": 16006,
+   "soja_t": 24477
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Pinhão",
+   "codigo_ibge": 4119301,
+   "lat": -25.6944,
+   "lon": -51.6536,
+   "milho_t": 79717,
+   "soja_t": 150853
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Pitanga",
+   "codigo_ibge": 4119608,
+   "lat": -24.7588,
+   "lon": -51.7596,
+   "milho_t": 36587,
+   "soja_t": 204350
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Porto Barreiro",
+   "codigo_ibge": 4120150,
+   "lat": -25.5477,
+   "lon": -52.4067,
+   "milho_t": 13891,
+   "soja_t": 37299
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Quedas do Iguaçu",
+   "codigo_ibge": 4120903,
+   "lat": -25.4492,
+   "lon": -52.9102,
+   "milho_t": 42432,
+   "soja_t": 109822
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Reserva do Iguaçu",
+   "codigo_ibge": 4121752,
+   "lat": -25.8319,
+   "lon": -52.0272,
+   "milho_t": 41270,
+   "soja_t": 64551
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Rio Bonito do Iguaçu",
+   "codigo_ibge": 4122156,
+   "lat": -25.4874,
+   "lon": -52.5292,
+   "milho_t": 45671,
+   "soja_t": 112741
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Santa Maria do Oeste",
+   "codigo_ibge": 4123857,
+   "lat": -24.9377,
+   "lon": -51.8696,
+   "milho_t": 20233,
+   "soja_t": 70083
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Turvo",
+   "codigo_ibge": 4127965,
+   "lat": -25.0437,
+   "lon": -51.5282,
+   "milho_t": 23919,
+   "soja_t": 60360
+  },
+  {
+   "uf": "PR",
+   "regiao": "Centro-Sul Paranaense",
+   "municipio": "Virmond",
+   "codigo_ibge": 4128658,
+   "lat": -25.3829,
+   "lon": -52.1987,
+   "milho_t": 10045,
+   "soja_t": 38371
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Adrianópolis",
+   "codigo_ibge": 4100202,
+   "lat": -24.6606,
+   "lon": -48.9922,
+   "milho_t": 3575,
+   "soja_t": 44
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Agudos do Sul",
+   "codigo_ibge": 4100301,
+   "lat": -25.9899,
+   "lon": -49.3343,
+   "milho_t": 31984,
+   "soja_t": 6803
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Almirante Tamandaré",
+   "codigo_ibge": 4100400,
+   "lat": -25.3188,
+   "lon": -49.3037,
+   "milho_t": 5671,
+   "soja_t": 1037
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Antonina",
+   "codigo_ibge": 4101200,
+   "lat": -25.4386,
+   "lon": -48.7191,
+   "milho_t": 35,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Araucária",
+   "codigo_ibge": 4101804,
+   "lat": -25.5859,
+   "lon": -49.4047,
+   "milho_t": 33087,
+   "soja_t": 49866
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Balsa Nova",
+   "codigo_ibge": 4102307,
+   "lat": -25.5804,
+   "lon": -49.6291,
+   "milho_t": 16529,
+   "soja_t": 47783
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Bocaiúva do Sul",
+   "codigo_ibge": 4103107,
+   "lat": -25.2066,
+   "lon": -49.1141,
+   "milho_t": 3900,
+   "soja_t": 320
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Campina Grande do Sul",
+   "codigo_ibge": 4104006,
+   "lat": -25.3044,
+   "lon": -49.0551,
+   "milho_t": 2800,
+   "soja_t": 180
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Campo Largo",
+   "codigo_ibge": 4104204,
+   "lat": -25.4525,
+   "lon": -49.529,
+   "milho_t": 25933,
+   "soja_t": 31678
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Campo Magro",
+   "codigo_ibge": 4104253,
+   "lat": -25.3687,
+   "lon": -49.4501,
+   "milho_t": 16048,
+   "soja_t": 12275
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Campo do Tenente",
+   "codigo_ibge": 4104105,
+   "lat": -25.98,
+   "lon": -49.6844,
+   "milho_t": 20270,
+   "soja_t": 46194
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Cerro Azul",
+   "codigo_ibge": 4105201,
+   "lat": -26.0891,
+   "lon": -52.8691,
+   "milho_t": 24655,
+   "soja_t": 2384
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Colombo",
+   "codigo_ibge": 4105805,
+   "lat": -25.2925,
+   "lon": -49.2262,
+   "milho_t": 1036,
+   "soja_t": 20
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Contenda",
+   "codigo_ibge": 4106209,
+   "lat": -25.6788,
+   "lon": -49.535,
+   "milho_t": 27609,
+   "soja_t": 47617
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Curitiba",
+   "codigo_ibge": 4106902,
+   "lat": -25.4195,
+   "lon": -49.2646,
+   "milho_t": 559,
+   "soja_t": 274
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Doutor Ulysses",
+   "codigo_ibge": 4128633,
+   "lat": -24.5665,
+   "lon": -49.4219,
+   "milho_t": 14500,
+   "soja_t": 2772
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Fazenda Rio Grande",
+   "codigo_ibge": 4107652,
+   "lat": -25.6624,
+   "lon": -49.3073,
+   "milho_t": 2752,
+   "soja_t": 5128
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Guaraqueçaba",
+   "codigo_ibge": 4109500,
+   "lat": -25.3071,
+   "lon": -48.3204,
+   "milho_t": 15,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Guaratuba",
+   "codigo_ibge": 4109609,
+   "lat": -25.8817,
+   "lon": -48.5752,
+   "milho_t": 23,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Itaperuçu",
+   "codigo_ibge": 4111258,
+   "lat": -25.2193,
+   "lon": -49.3454,
+   "milho_t": 13976,
+   "soja_t": 784
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Lapa",
+   "codigo_ibge": 4113205,
+   "lat": -25.7671,
+   "lon": -49.7168,
+   "milho_t": 53842,
+   "soja_t": 221748
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Mandirituba",
+   "codigo_ibge": 4114302,
+   "lat": -25.777,
+   "lon": -49.3282,
+   "milho_t": 16291,
+   "soja_t": 3620
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Matinhos",
+   "codigo_ibge": 4115705,
+   "lat": -25.8237,
+   "lon": -48.549,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Morretes",
+   "codigo_ibge": 4116208,
+   "lat": -25.4744,
+   "lon": -48.8345,
+   "milho_t": 78,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Paranaguá",
+   "codigo_ibge": 4118204,
+   "lat": -25.5161,
+   "lon": -48.5225,
+   "milho_t": 32,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Pinhais",
+   "codigo_ibge": 4119152,
+   "lat": -25.4429,
+   "lon": -49.1927,
+   "milho_t": 281,
+   "soja_t": 306
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Piraquara",
+   "codigo_ibge": 4119509,
+   "lat": -25.4422,
+   "lon": -49.0624,
+   "milho_t": 1350,
+   "soja_t": 1533
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Piên",
+   "codigo_ibge": 4119103,
+   "lat": -26.0965,
+   "lon": -49.4336,
+   "milho_t": 11588,
+   "soja_t": 14214
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Pontal do Paraná",
+   "codigo_ibge": 4119954,
+   "lat": -25.6735,
+   "lon": -48.5111,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Porto Amazonas",
+   "codigo_ibge": 4120101,
+   "lat": -25.54,
+   "lon": -49.8946,
+   "milho_t": 12725,
+   "soja_t": 26977
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Quatro Barras",
+   "codigo_ibge": 4120804,
+   "lat": -25.3673,
+   "lon": -49.0763,
+   "milho_t": 733,
+   "soja_t": 234
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Quitandinha",
+   "codigo_ibge": 4121208,
+   "lat": -25.8734,
+   "lon": -49.4973,
+   "milho_t": 25346,
+   "soja_t": 44426
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Rio Branco do Sul",
+   "codigo_ibge": 4122206,
+   "lat": -25.1892,
+   "lon": -49.3115,
+   "milho_t": 2005,
+   "soja_t": 656
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Rio Negro",
+   "codigo_ibge": 4122305,
+   "lat": -26.095,
+   "lon": -49.7982,
+   "milho_t": 21556,
+   "soja_t": 40031
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "São José dos Pinhais",
+   "codigo_ibge": 4125506,
+   "lat": -25.5313,
+   "lon": -49.2031,
+   "milho_t": 11389,
+   "soja_t": 9074
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Tijucas do Sul",
+   "codigo_ibge": 4127601,
+   "lat": -25.9311,
+   "lon": -49.195,
+   "milho_t": 22664,
+   "soja_t": 15009
+  },
+  {
+   "uf": "PR",
+   "regiao": "Metropolitana de Curitiba",
+   "municipio": "Tunas do Paraná",
+   "codigo_ibge": 4127882,
+   "lat": -24.9731,
+   "lon": -49.0879,
+   "milho_t": 715,
+   "soja_t": 4
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Alto Paraná",
+   "codigo_ibge": 4100608,
+   "lat": -23.1312,
+   "lon": -52.3189,
+   "milho_t": 589,
+   "soja_t": 1473
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Alto Paraíso",
+   "codigo_ibge": 4128625,
+   "lat": -26.1146,
+   "lon": -52.7469,
+   "milho_t": 1550,
+   "soja_t": 1367
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Alto Piquiri",
+   "codigo_ibge": 4100707,
+   "lat": -24.0224,
+   "lon": -53.44,
+   "milho_t": 113367,
+   "soja_t": 88173
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Altônia",
+   "codigo_ibge": 4100509,
+   "lat": -23.8759,
+   "lon": -53.8958,
+   "milho_t": 12137,
+   "soja_t": 15295
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Amaporã",
+   "codigo_ibge": 4100905,
+   "lat": -23.0943,
+   "lon": -52.7866,
+   "milho_t": 7993,
+   "soja_t": 4597
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Brasilândia do Sul",
+   "codigo_ibge": 4103370,
+   "lat": -24.1978,
+   "lon": -53.5275,
+   "milho_t": 103595,
+   "soja_t": 55480
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Cafezal do Sul",
+   "codigo_ibge": 4103479,
+   "lat": -23.9005,
+   "lon": -53.5124,
+   "milho_t": 15500,
+   "soja_t": 26461
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Cianorte",
+   "codigo_ibge": 4105508,
+   "lat": -23.6599,
+   "lon": -52.6054,
+   "milho_t": 21163,
+   "soja_t": 25868
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Cidade Gaúcha",
+   "codigo_ibge": 4105607,
+   "lat": -23.3772,
+   "lon": -52.9436,
+   "milho_t": 2248,
+   "soja_t": 2623
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Cruzeiro do Oeste",
+   "codigo_ibge": 4106605,
+   "lat": -23.7799,
+   "lon": -53.0774,
+   "milho_t": 7700,
+   "soja_t": 20186
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Cruzeiro do Sul",
+   "codigo_ibge": 4106704,
+   "lat": -22.9624,
+   "lon": -52.1622,
+   "milho_t": 16147,
+   "soja_t": 13951
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Diamante do Norte",
+   "codigo_ibge": 4107108,
+   "lat": -22.655,
+   "lon": -52.8617,
+   "milho_t": 11609,
+   "soja_t": 6423
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Douradina",
+   "codigo_ibge": 4107256,
+   "lat": -23.3807,
+   "lon": -53.2918,
+   "milho_t": 1527,
+   "soja_t": 5620
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Esperança Nova",
+   "codigo_ibge": 4107520,
+   "lat": -23.7238,
+   "lon": -53.811,
+   "milho_t": 783,
+   "soja_t": 876
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Francisco Alves",
+   "codigo_ibge": 4108320,
+   "lat": -24.0667,
+   "lon": -53.8461,
+   "milho_t": 63090,
+   "soja_t": 27610
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Guairaçá",
+   "codigo_ibge": 4108908,
+   "lat": -22.932,
+   "lon": -52.6906,
+   "milho_t": 124,
+   "soja_t": 30
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Guaporema",
+   "codigo_ibge": 4109104,
+   "lat": -23.3402,
+   "lon": -52.7786,
+   "milho_t": 2048,
+   "soja_t": 2810
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Icaraíma",
+   "codigo_ibge": 4109906,
+   "lat": -23.3944,
+   "lon": -53.615,
+   "milho_t": 727,
+   "soja_t": 721
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Inajá",
+   "codigo_ibge": 4110300,
+   "lat": -22.7509,
+   "lon": -52.1995,
+   "milho_t": 1518,
+   "soja_t": 2481
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Indianópolis",
+   "codigo_ibge": 4110409,
+   "lat": -23.4762,
+   "lon": -52.6989,
+   "milho_t": 5458,
+   "soja_t": 3202
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Iporã",
+   "codigo_ibge": 4110607,
+   "lat": -24.0083,
+   "lon": -53.706,
+   "milho_t": 65209,
+   "soja_t": 52168
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Itaúna do Sul",
+   "codigo_ibge": 4111308,
+   "lat": -22.7289,
+   "lon": -52.8874,
+   "milho_t": 760,
+   "soja_t": 545
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Ivaté",
+   "codigo_ibge": 4111555,
+   "lat": -23.4072,
+   "lon": -53.3687,
+   "milho_t": 854,
+   "soja_t": 4254
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Japurá",
+   "codigo_ibge": 4112405,
+   "lat": -23.4693,
+   "lon": -52.5557,
+   "milho_t": 30945,
+   "soja_t": 14496
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Jardim Olinda",
+   "codigo_ibge": 4112603,
+   "lat": -22.5523,
+   "lon": -52.0503,
+   "milho_t": 7724,
+   "soja_t": 4008
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Jussara",
+   "codigo_ibge": 4113007,
+   "lat": -23.6219,
+   "lon": -52.4693,
+   "milho_t": 35746,
+   "soja_t": 25199
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Loanda",
+   "codigo_ibge": 4113502,
+   "lat": -22.9232,
+   "lon": -53.1362,
+   "milho_t": 4038,
+   "soja_t": 3160
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Maria Helena",
+   "codigo_ibge": 4114708,
+   "lat": -23.6158,
+   "lon": -53.2053,
+   "milho_t": 167,
+   "soja_t": 1275
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Marilena",
+   "codigo_ibge": 4115002,
+   "lat": -22.7336,
+   "lon": -53.0402,
+   "milho_t": 725,
+   "soja_t": 542
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Mariluz",
+   "codigo_ibge": 4115101,
+   "lat": -24.0089,
+   "lon": -53.1432,
+   "milho_t": 71967,
+   "soja_t": 65350
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Mirador",
+   "codigo_ibge": 4115903,
+   "lat": -23.255,
+   "lon": -52.7761,
+   "milho_t": 5030,
+   "soja_t": 6754
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Nova Aliança do Ivaí",
+   "codigo_ibge": 4116505,
+   "lat": -23.1763,
+   "lon": -52.6032,
+   "milho_t": 148,
+   "soja_t": 549
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Nova Londrina",
+   "codigo_ibge": 4117107,
+   "lat": -22.7639,
+   "lon": -52.9868,
+   "milho_t": 307,
+   "soja_t": 1030
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Nova Olímpia",
+   "codigo_ibge": 4117206,
+   "lat": -23.4703,
+   "lon": -53.0898,
+   "milho_t": 446,
+   "soja_t": 439
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Paranacity",
+   "codigo_ibge": 4118105,
+   "lat": -22.9297,
+   "lon": -52.1549,
+   "milho_t": 7665,
+   "soja_t": 6690
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Paranapoema",
+   "codigo_ibge": 4118303,
+   "lat": -22.6412,
+   "lon": -52.0905,
+   "milho_t": 2539,
+   "soja_t": 3092
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Paranavaí",
+   "codigo_ibge": 4118402,
+   "lat": -23.0816,
+   "lon": -52.4617,
+   "milho_t": 816,
+   "soja_t": 445
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Paraíso do Norte",
+   "codigo_ibge": 4118006,
+   "lat": -23.2824,
+   "lon": -52.6054,
+   "milho_t": 12744,
+   "soja_t": 10950
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Perobal",
+   "codigo_ibge": 4118857,
+   "lat": -23.8949,
+   "lon": -53.4098,
+   "milho_t": 22367,
+   "soja_t": 34597
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Planaltina do Paraná",
+   "codigo_ibge": 4119707,
+   "lat": -23.0101,
+   "lon": -52.9162,
+   "milho_t": 2388,
+   "soja_t": 1900
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Porto Rico",
+   "codigo_ibge": 4120200,
+   "lat": -22.7747,
+   "lon": -53.2677,
+   "milho_t": 193,
+   "soja_t": 180
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Pérola",
+   "codigo_ibge": 4118907,
+   "lat": -23.8039,
+   "lon": -53.6834,
+   "milho_t": 835,
+   "soja_t": 2618
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Querência do Norte",
+   "codigo_ibge": 4121000,
+   "lat": -23.0838,
+   "lon": -53.483,
+   "milho_t": 32518,
+   "soja_t": 22077
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Rondon",
+   "codigo_ibge": 4122602,
+   "lat": -23.412,
+   "lon": -52.7659,
+   "milho_t": 1702,
+   "soja_t": 1105
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Santa Cruz de Monte Castelo",
+   "codigo_ibge": 4123303,
+   "lat": -22.9582,
+   "lon": -53.2949,
+   "milho_t": 10981,
+   "soja_t": 11033
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Santa Isabel do Ivaí",
+   "codigo_ibge": 4123709,
+   "lat": -23.0025,
+   "lon": -53.1989,
+   "milho_t": 11205,
+   "soja_t": 11032
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Santa Mônica",
+   "codigo_ibge": 4123956,
+   "lat": -23.108,
+   "lon": -53.1103,
+   "milho_t": 9737,
+   "soja_t": 9159
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Santo Antônio do Caiuá",
+   "codigo_ibge": 4124202,
+   "lat": -22.7351,
+   "lon": -52.344,
+   "milho_t": 436,
+   "soja_t": 554
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São Carlos do Ivaí",
+   "codigo_ibge": 4124608,
+   "lat": -23.3158,
+   "lon": -52.4761,
+   "milho_t": 17717,
+   "soja_t": 13658
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São Jorge do Patrocínio",
+   "codigo_ibge": 4125357,
+   "lat": -23.7647,
+   "lon": -53.8823,
+   "milho_t": 445,
+   "soja_t": 1455
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São João do Caiuá",
+   "codigo_ibge": 4124905,
+   "lat": -22.8535,
+   "lon": -52.3411,
+   "milho_t": 0,
+   "soja_t": 45
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São Manoel do Paraná",
+   "codigo_ibge": 4125555,
+   "lat": -23.3941,
+   "lon": -52.6454,
+   "milho_t": 4137,
+   "soja_t": 3822
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São Pedro do Paraná",
+   "codigo_ibge": 4125902,
+   "lat": -22.8239,
+   "lon": -53.2241,
+   "milho_t": 1165,
+   "soja_t": 1367
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "São Tomé",
+   "codigo_ibge": 4126108,
+   "lat": -23.5349,
+   "lon": -52.5901,
+   "milho_t": 7165,
+   "soja_t": 7919
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Tamboara",
+   "codigo_ibge": 4126702,
+   "lat": -23.2036,
+   "lon": -52.4743,
+   "milho_t": 333,
+   "soja_t": 1619
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Tapejara",
+   "codigo_ibge": 4126801,
+   "lat": -23.7315,
+   "lon": -52.8735,
+   "milho_t": 391,
+   "soja_t": 0
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Tapira",
+   "codigo_ibge": 4126900,
+   "lat": -23.3193,
+   "lon": -53.0684,
+   "milho_t": 2913,
+   "soja_t": 5088
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Terra Rica",
+   "codigo_ibge": 4127304,
+   "lat": -22.7111,
+   "lon": -52.6188,
+   "milho_t": 407,
+   "soja_t": 1053
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Tuneiras do Oeste",
+   "codigo_ibge": 4127908,
+   "lat": -23.8648,
+   "lon": -52.8769,
+   "milho_t": 11104,
+   "soja_t": 15691
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Umuarama",
+   "codigo_ibge": 4128104,
+   "lat": -23.7656,
+   "lon": -53.3201,
+   "milho_t": 1880,
+   "soja_t": 5879
+  },
+  {
+   "uf": "PR",
+   "regiao": "Noroeste Paranaense",
+   "municipio": "Xambrê",
+   "codigo_ibge": 4128807,
+   "lat": -23.7364,
+   "lon": -53.4884,
+   "milho_t": 659,
+   "soja_t": 1324
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Alvorada do Sul",
+   "codigo_ibge": 4100806,
+   "lat": -22.7813,
+   "lon": -51.2297,
+   "milho_t": 105213,
+   "soja_t": 61051
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Apucarana",
+   "codigo_ibge": 4101408,
+   "lat": -23.55,
+   "lon": -51.4635,
+   "milho_t": 63560,
+   "soja_t": 75075
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Arapongas",
+   "codigo_ibge": 4101507,
+   "lat": -23.4153,
+   "lon": -51.4259,
+   "milho_t": 50578,
+   "soja_t": 74866
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Arapuã",
+   "codigo_ibge": 4101655,
+   "lat": -24.3132,
+   "lon": -51.7856,
+   "milho_t": 37609,
+   "soja_t": 31443
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ariranha do Ivaí",
+   "codigo_ibge": 4101853,
+   "lat": -24.3857,
+   "lon": -51.5839,
+   "milho_t": 39015,
+   "soja_t": 35508
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Astorga",
+   "codigo_ibge": 4102109,
+   "lat": -23.2318,
+   "lon": -51.6668,
+   "milho_t": 95705,
+   "soja_t": 85891
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Atalaia",
+   "codigo_ibge": 4102208,
+   "lat": -23.1517,
+   "lon": -52.0551,
+   "milho_t": 34158,
+   "soja_t": 19118
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Bela Vista do Paraíso",
+   "codigo_ibge": 4102802,
+   "lat": -22.9937,
+   "lon": -51.1927,
+   "milho_t": 77221,
+   "soja_t": 54463
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Bom Sucesso",
+   "codigo_ibge": 4103206,
+   "lat": -23.7063,
+   "lon": -51.7671,
+   "milho_t": 18035,
+   "soja_t": 22533
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Borrazópolis",
+   "codigo_ibge": 4103305,
+   "lat": -23.9366,
+   "lon": -51.5875,
+   "milho_t": 41055,
+   "soja_t": 36348
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Cafeara",
+   "codigo_ibge": 4103404,
+   "lat": -22.789,
+   "lon": -51.7142,
+   "milho_t": 5355,
+   "soja_t": 9667
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Califórnia",
+   "codigo_ibge": 4103503,
+   "lat": -23.6566,
+   "lon": -51.3574,
+   "milho_t": 13183,
+   "soja_t": 25382
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Cambira",
+   "codigo_ibge": 4103800,
+   "lat": -23.589,
+   "lon": -51.5792,
+   "milho_t": 14375,
+   "soja_t": 25597
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Cambé",
+   "codigo_ibge": 4103701,
+   "lat": -23.2766,
+   "lon": -51.2798,
+   "milho_t": 185999,
+   "soja_t": 122637
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Centenário do Sul",
+   "codigo_ibge": 4105102,
+   "lat": -22.8188,
+   "lon": -51.5973,
+   "milho_t": 26709,
+   "soja_t": 32123
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Colorado",
+   "codigo_ibge": 4105904,
+   "lat": -22.8374,
+   "lon": -51.9743,
+   "milho_t": 4462,
+   "soja_t": 5608
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Cruzmaltina",
+   "codigo_ibge": 4106852,
+   "lat": -24.0132,
+   "lon": -51.4563,
+   "milho_t": 37113,
+   "soja_t": 30513
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Cândido de Abreu",
+   "codigo_ibge": 4104402,
+   "lat": -24.5649,
+   "lon": -51.3372,
+   "milho_t": 22964,
+   "soja_t": 72702
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Doutor Camargo",
+   "codigo_ibge": 4107306,
+   "lat": -23.5582,
+   "lon": -52.2178,
+   "milho_t": 49685,
+   "soja_t": 26567
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Faxinal",
+   "codigo_ibge": 4107603,
+   "lat": -24.0077,
+   "lon": -51.3227,
+   "milho_t": 49263,
+   "soja_t": 52220
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Floraí",
+   "codigo_ibge": 4107801,
+   "lat": -23.3178,
+   "lon": -52.3029,
+   "milho_t": 68822,
+   "soja_t": 32044
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Floresta",
+   "codigo_ibge": 4107900,
+   "lat": -23.6031,
+   "lon": -52.0807,
+   "milho_t": 63271,
+   "soja_t": 32899
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Florestópolis",
+   "codigo_ibge": 4108007,
+   "lat": -22.8623,
+   "lon": -51.3882,
+   "milho_t": 39165,
+   "soja_t": 27464
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Flórida",
+   "codigo_ibge": 4108106,
+   "lat": -23.0847,
+   "lon": -51.9546,
+   "milho_t": 16331,
+   "soja_t": 10115
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Godoy Moreira",
+   "codigo_ibge": 4108551,
+   "lat": -24.173,
+   "lon": -51.9246,
+   "milho_t": 22809,
+   "soja_t": 17743
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Grandes Rios",
+   "codigo_ibge": 4108700,
+   "lat": -24.1466,
+   "lon": -51.5094,
+   "milho_t": 13277,
+   "soja_t": 13173
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Guaraci",
+   "codigo_ibge": 4109203,
+   "lat": -22.9694,
+   "lon": -51.6504,
+   "milho_t": 7997,
+   "soja_t": 8387
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ibiporã",
+   "codigo_ibge": 4109807,
+   "lat": -23.2659,
+   "lon": -51.0522,
+   "milho_t": 83080,
+   "soja_t": 58423
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Iguaraçu",
+   "codigo_ibge": 4110003,
+   "lat": -23.1949,
+   "lon": -51.8256,
+   "milho_t": 41731,
+   "soja_t": 29181
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Itaguajé",
+   "codigo_ibge": 4110904,
+   "lat": -22.6183,
+   "lon": -51.9674,
+   "milho_t": 2517,
+   "soja_t": 2027
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Itambé",
+   "codigo_ibge": 4111100,
+   "lat": -23.6601,
+   "lon": -51.9912,
+   "milho_t": 88866,
+   "soja_t": 44068
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ivaiporã",
+   "codigo_ibge": 4111506,
+   "lat": -24.2485,
+   "lon": -51.6754,
+   "milho_t": 48524,
+   "soja_t": 58119
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ivatuba",
+   "codigo_ibge": 4111605,
+   "lat": -23.6187,
+   "lon": -52.2203,
+   "milho_t": 41224,
+   "soja_t": 23151
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Jaguapitã",
+   "codigo_ibge": 4111902,
+   "lat": -23.1104,
+   "lon": -51.5342,
+   "milho_t": 53799,
+   "soja_t": 40263
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Jandaia do Sul",
+   "codigo_ibge": 4112108,
+   "lat": -23.6011,
+   "lon": -51.6448,
+   "milho_t": 8664,
+   "soja_t": 14518
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Jardim Alegre",
+   "codigo_ibge": 4112504,
+   "lat": -24.1809,
+   "lon": -51.6902,
+   "milho_t": 43585,
+   "soja_t": 36850
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Kaloré",
+   "codigo_ibge": 4113106,
+   "lat": -23.8188,
+   "lon": -51.6687,
+   "milho_t": 41583,
+   "soja_t": 33898
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Lidianópolis",
+   "codigo_ibge": 4113429,
+   "lat": -24.11,
+   "lon": -51.6506,
+   "milho_t": 23258,
+   "soja_t": 17938
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Lobato",
+   "codigo_ibge": 4113601,
+   "lat": -23.0058,
+   "lon": -51.9524,
+   "milho_t": 21986,
+   "soja_t": 17126
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Londrina",
+   "codigo_ibge": 4113700,
+   "lat": -23.304,
+   "lon": -51.1691,
+   "milho_t": 193858,
+   "soja_t": 245000
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Lunardelli",
+   "codigo_ibge": 4113759,
+   "lat": -24.0821,
+   "lon": -51.7368,
+   "milho_t": 15641,
+   "soja_t": 11980
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Lupionópolis",
+   "codigo_ibge": 4113809,
+   "lat": -22.755,
+   "lon": -51.6601,
+   "milho_t": 13230,
+   "soja_t": 12364
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Mandaguari",
+   "codigo_ibge": 4114203,
+   "lat": -23.5446,
+   "lon": -51.671,
+   "milho_t": 16601,
+   "soja_t": 21294
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Mandaguaçu",
+   "codigo_ibge": 4114104,
+   "lat": -23.3458,
+   "lon": -52.0944,
+   "milho_t": 35358,
+   "soja_t": 34466
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Manoel Ribas",
+   "codigo_ibge": 4114500,
+   "lat": -24.5144,
+   "lon": -51.6658,
+   "milho_t": 17055,
+   "soja_t": 105973
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Marialva",
+   "codigo_ibge": 4114807,
+   "lat": -23.4843,
+   "lon": -51.7928,
+   "milho_t": 83636,
+   "soja_t": 73350
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Marilândia do Sul",
+   "codigo_ibge": 4114906,
+   "lat": -23.7425,
+   "lon": -51.3137,
+   "milho_t": 32240,
+   "soja_t": 81290
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Maringá",
+   "codigo_ibge": 4115200,
+   "lat": -23.4205,
+   "lon": -51.9333,
+   "milho_t": 107488,
+   "soja_t": 66475
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Marumbi",
+   "codigo_ibge": 4115507,
+   "lat": -23.7058,
+   "lon": -51.6404,
+   "milho_t": 10817,
+   "soja_t": 14573
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Mauá da Serra",
+   "codigo_ibge": 4115754,
+   "lat": -23.8988,
+   "lon": -51.2277,
+   "milho_t": 7920,
+   "soja_t": 12593
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Miraselva",
+   "codigo_ibge": 4116000,
+   "lat": -22.9657,
+   "lon": -51.4846,
+   "milho_t": 1152,
+   "soja_t": 1872
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Munhoz de Melo",
+   "codigo_ibge": 4116307,
+   "lat": -23.1487,
+   "lon": -51.7737,
+   "milho_t": 24724,
+   "soja_t": 19287
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Nossa Senhora das Graças",
+   "codigo_ibge": 4116406,
+   "lat": -22.9129,
+   "lon": -51.7978,
+   "milho_t": 6340,
+   "soja_t": 4555
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Nova Esperança",
+   "codigo_ibge": 4116901,
+   "lat": -23.182,
+   "lon": -52.2031,
+   "milho_t": 18282,
+   "soja_t": 19763
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Nova Tebas",
+   "codigo_ibge": 4117271,
+   "lat": -24.438,
+   "lon": -51.9454,
+   "milho_t": 11373,
+   "soja_t": 40747
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Novo Itacolomi",
+   "codigo_ibge": 4117297,
+   "lat": -23.7631,
+   "lon": -51.5079,
+   "milho_t": 4638,
+   "soja_t": 12970
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ourizona",
+   "codigo_ibge": 4117404,
+   "lat": -23.4053,
+   "lon": -52.1964,
+   "milho_t": 60832,
+   "soja_t": 37214
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Paiçandu",
+   "codigo_ibge": 4117503,
+   "lat": -23.4555,
+   "lon": -52.046,
+   "milho_t": 44011,
+   "soja_t": 28767
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Pitangueiras",
+   "codigo_ibge": 4119657,
+   "lat": -23.2281,
+   "lon": -51.5873,
+   "milho_t": 44476,
+   "soja_t": 29949
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Porecatu",
+   "codigo_ibge": 4120002,
+   "lat": -22.7537,
+   "lon": -51.3795,
+   "milho_t": 10831,
+   "soja_t": 9918
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Prado Ferreira",
+   "codigo_ibge": 4120333,
+   "lat": -23.0357,
+   "lon": -51.4429,
+   "milho_t": 40298,
+   "soja_t": 23968
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Presidente Castelo Branco",
+   "codigo_ibge": 4120408,
+   "lat": -23.2782,
+   "lon": -52.1536,
+   "milho_t": 6443,
+   "soja_t": 6572
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Primeiro de Maio",
+   "codigo_ibge": 4120507,
+   "lat": -22.8517,
+   "lon": -51.0293,
+   "milho_t": 124587,
+   "soja_t": 79079
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Rio Bom",
+   "codigo_ibge": 4122107,
+   "lat": -23.7606,
+   "lon": -51.4122,
+   "milho_t": 15898,
+   "soja_t": 23385
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Rio Branco do Ivaí",
+   "codigo_ibge": 4122172,
+   "lat": -24.3244,
+   "lon": -51.3187,
+   "milho_t": 46317,
+   "soja_t": 32798
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Rolândia",
+   "codigo_ibge": 4122404,
+   "lat": -23.3101,
+   "lon": -51.3659,
+   "milho_t": 57384,
+   "soja_t": 113183
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Rosário do Ivaí",
+   "codigo_ibge": 4122651,
+   "lat": -24.2682,
+   "lon": -51.272,
+   "milho_t": 10076,
+   "soja_t": 10863
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Sabáudia",
+   "codigo_ibge": 4122701,
+   "lat": -23.3155,
+   "lon": -51.555,
+   "milho_t": 38792,
+   "soja_t": 34205
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Santa Fé",
+   "codigo_ibge": 4123402,
+   "lat": -23.04,
+   "lon": -51.808,
+   "milho_t": 33833,
+   "soja_t": 21575
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Santa Inês",
+   "codigo_ibge": 4123600,
+   "lat": -22.6376,
+   "lon": -51.9024,
+   "milho_t": 1943,
+   "soja_t": 1920
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Santo Inácio",
+   "codigo_ibge": 4124509,
+   "lat": -22.6957,
+   "lon": -51.7969,
+   "milho_t": 5351,
+   "soja_t": 8608
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Sarandi",
+   "codigo_ibge": 4126256,
+   "lat": -23.4441,
+   "lon": -51.876,
+   "milho_t": 19361,
+   "soja_t": 16722
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Sertanópolis",
+   "codigo_ibge": 4126504,
+   "lat": -23.0571,
+   "lon": -51.0399,
+   "milho_t": 167448,
+   "soja_t": 89350
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "São Jorge do Ivaí",
+   "codigo_ibge": 4125308,
+   "lat": -23.4336,
+   "lon": -52.2929,
+   "milho_t": 121887,
+   "soja_t": 78959
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "São João do Ivaí",
+   "codigo_ibge": 4125001,
+   "lat": -23.9833,
+   "lon": -51.8215,
+   "milho_t": 93221,
+   "soja_t": 55219
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "São Pedro do Ivaí",
+   "codigo_ibge": 4125803,
+   "lat": -23.8634,
+   "lon": -51.8568,
+   "milho_t": 64430,
+   "soja_t": 51270
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Tamarana",
+   "codigo_ibge": 4126678,
+   "lat": -23.7204,
+   "lon": -51.0991,
+   "milho_t": 26156,
+   "soja_t": 58483
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Uniflor",
+   "codigo_ibge": 4128302,
+   "lat": -23.0868,
+   "lon": -52.1573,
+   "milho_t": 10444,
+   "soja_t": 10353
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Central Paranaense",
+   "municipio": "Ângulo",
+   "codigo_ibge": 4101150,
+   "lat": -23.1946,
+   "lon": -51.9154,
+   "milho_t": 30447,
+   "soja_t": 18901
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Abatiá",
+   "codigo_ibge": 4100103,
+   "lat": -23.3049,
+   "lon": -50.3133,
+   "milho_t": 36242,
+   "soja_t": 35827
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Andirá",
+   "codigo_ibge": 4101101,
+   "lat": -23.0533,
+   "lon": -50.2304,
+   "milho_t": 56479,
+   "soja_t": 56100
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Assaí",
+   "codigo_ibge": 4101903,
+   "lat": -23.3697,
+   "lon": -50.8459,
+   "milho_t": 58680,
+   "soja_t": 73566
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Bandeirantes",
+   "codigo_ibge": 4102406,
+   "lat": -23.1078,
+   "lon": -50.3704,
+   "milho_t": 53153,
+   "soja_t": 51134
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Barra do Jacaré",
+   "codigo_ibge": 4102703,
+   "lat": -23.116,
+   "lon": -50.1842,
+   "milho_t": 23977,
+   "soja_t": 20408
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Cambará",
+   "codigo_ibge": 4103602,
+   "lat": -23.0423,
+   "lon": -50.0753,
+   "milho_t": 92940,
+   "soja_t": 61320
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Carlópolis",
+   "codigo_ibge": 4104709,
+   "lat": -23.4269,
+   "lon": -49.7235,
+   "milho_t": 11478,
+   "soja_t": 9095
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Congonhinhas",
+   "codigo_ibge": 4106001,
+   "lat": -23.5493,
+   "lon": -50.5569,
+   "milho_t": 29903,
+   "soja_t": 49985
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Conselheiro Mairinck",
+   "codigo_ibge": 4106100,
+   "lat": -23.623,
+   "lon": -50.1707,
+   "milho_t": 33407,
+   "soja_t": 26255
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Cornélio Procópio",
+   "codigo_ibge": 4106407,
+   "lat": -23.1829,
+   "lon": -50.6498,
+   "milho_t": 87653,
+   "soja_t": 84983
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Curiúva",
+   "codigo_ibge": 4107009,
+   "lat": -24.0362,
+   "lon": -50.4576,
+   "milho_t": 14306,
+   "soja_t": 26336
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Figueira",
+   "codigo_ibge": 4107751,
+   "lat": -23.8455,
+   "lon": -50.4031,
+   "milho_t": 4267,
+   "soja_t": 6629
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Guapirama",
+   "codigo_ibge": 4109005,
+   "lat": -23.5203,
+   "lon": -50.0407,
+   "milho_t": 23440,
+   "soja_t": 22416
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Ibaiti",
+   "codigo_ibge": 4109708,
+   "lat": -23.8478,
+   "lon": -50.1932,
+   "milho_t": 29287,
+   "soja_t": 43712
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Itambaracá",
+   "codigo_ibge": 4111001,
+   "lat": -23.0181,
+   "lon": -50.4097,
+   "milho_t": 48662,
+   "soja_t": 41025
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Jaboti",
+   "codigo_ibge": 4111704,
+   "lat": -23.7435,
+   "lon": -50.0729,
+   "milho_t": 11612,
+   "soja_t": 8040
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Jacarezinho",
+   "codigo_ibge": 4111803,
+   "lat": -23.1591,
+   "lon": -49.9739,
+   "milho_t": 24703,
+   "soja_t": 21866
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Japira",
+   "codigo_ibge": 4112306,
+   "lat": -23.8142,
+   "lon": -50.1422,
+   "milho_t": 23289,
+   "soja_t": 17081
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Jataizinho",
+   "codigo_ibge": 4112702,
+   "lat": -23.2578,
+   "lon": -50.9777,
+   "milho_t": 24855,
+   "soja_t": 22539
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Joaquim Távora",
+   "codigo_ibge": 4112801,
+   "lat": -23.4987,
+   "lon": -49.909,
+   "milho_t": 12048,
+   "soja_t": 9367
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Jundiaí do Sul",
+   "codigo_ibge": 4112900,
+   "lat": -23.4357,
+   "lon": -50.2496,
+   "milho_t": 31640,
+   "soja_t": 30415
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Leópolis",
+   "codigo_ibge": 4113403,
+   "lat": -23.0818,
+   "lon": -50.7511,
+   "milho_t": 68952,
+   "soja_t": 50176
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Nova América da Colina",
+   "codigo_ibge": 4116604,
+   "lat": -23.3308,
+   "lon": -50.7168,
+   "milho_t": 14201,
+   "soja_t": 16691
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Nova Fátima",
+   "codigo_ibge": 4117008,
+   "lat": -23.4324,
+   "lon": -50.5665,
+   "milho_t": 22360,
+   "soja_t": 47411
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Nova Santa Bárbara",
+   "codigo_ibge": 4117214,
+   "lat": -23.5865,
+   "lon": -50.7598,
+   "milho_t": 4146,
+   "soja_t": 14744
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Pinhalão",
+   "codigo_ibge": 4119202,
+   "lat": -23.7982,
+   "lon": -50.0536,
+   "milho_t": 20363,
+   "soja_t": 15697
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Quatiguá",
+   "codigo_ibge": 4120705,
+   "lat": -23.5671,
+   "lon": -49.916,
+   "milho_t": 14357,
+   "soja_t": 2079
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Rancho Alegre",
+   "codigo_ibge": 4121307,
+   "lat": -23.0676,
+   "lon": -50.9145,
+   "milho_t": 49599,
+   "soja_t": 31808
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Ribeirão Claro",
+   "codigo_ibge": 4121802,
+   "lat": -23.1941,
+   "lon": -49.7597,
+   "milho_t": 11772,
+   "soja_t": 6930
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Ribeirão do Pinhal",
+   "codigo_ibge": 4121901,
+   "lat": -23.4091,
+   "lon": -50.3601,
+   "milho_t": 75438,
+   "soja_t": 44043
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Salto do Itararé",
+   "codigo_ibge": 4122909,
+   "lat": -23.6074,
+   "lon": -49.6354,
+   "milho_t": 11433,
+   "soja_t": 11907
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santa Amélia",
+   "codigo_ibge": 4123105,
+   "lat": -23.2654,
+   "lon": -50.4288,
+   "milho_t": 8090,
+   "soja_t": 11923
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santa Cecília do Pavão",
+   "codigo_ibge": 4123204,
+   "lat": -23.5201,
+   "lon": -50.7835,
+   "milho_t": 3656,
+   "soja_t": 17289
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santa Mariana",
+   "codigo_ibge": 4123907,
+   "lat": -23.1465,
+   "lon": -50.5167,
+   "milho_t": 104425,
+   "soja_t": 77240
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santana do Itararé",
+   "codigo_ibge": 4124004,
+   "lat": -23.7587,
+   "lon": -49.6293,
+   "milho_t": 28636,
+   "soja_t": 33695
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santo Antônio da Platina",
+   "codigo_ibge": 4124103,
+   "lat": -23.2959,
+   "lon": -50.0815,
+   "milho_t": 50460,
+   "soja_t": 59087
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Santo Antônio do Paraíso",
+   "codigo_ibge": 4124301,
+   "lat": -23.4969,
+   "lon": -50.6455,
+   "milho_t": 6767,
+   "soja_t": 23752
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Sapopema",
+   "codigo_ibge": 4126207,
+   "lat": -23.9078,
+   "lon": -50.5801,
+   "milho_t": 413,
+   "soja_t": 10020
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Sertaneja",
+   "codigo_ibge": 4126405,
+   "lat": -23.0361,
+   "lon": -50.8317,
+   "milho_t": 134380,
+   "soja_t": 79185
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Siqueira Campos",
+   "codigo_ibge": 4126603,
+   "lat": -23.6875,
+   "lon": -49.8304,
+   "milho_t": 19253,
+   "soja_t": 18074
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "São Jerônimo da Serra",
+   "codigo_ibge": 4124707,
+   "lat": -23.7218,
+   "lon": -50.7475,
+   "milho_t": 13379,
+   "soja_t": 64542
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "São José da Boa Vista",
+   "codigo_ibge": 4125407,
+   "lat": -23.9122,
+   "lon": -49.6577,
+   "milho_t": 37247,
+   "soja_t": 53331
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "São Sebastião da Amoreira",
+   "codigo_ibge": 4126009,
+   "lat": -23.4656,
+   "lon": -50.7625,
+   "milho_t": 30403,
+   "soja_t": 45569
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Tomazina",
+   "codigo_ibge": 4127809,
+   "lat": -23.7796,
+   "lon": -49.9499,
+   "milho_t": 26691,
+   "soja_t": 45195
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Uraí",
+   "codigo_ibge": 4128401,
+   "lat": -23.2,
+   "lon": -50.7939,
+   "milho_t": 43527,
+   "soja_t": 30790
+  },
+  {
+   "uf": "PR",
+   "regiao": "Norte Pioneiro Paranaense",
+   "municipio": "Wenceslau Braz",
+   "codigo_ibge": 4128500,
+   "lat": -23.8742,
+   "lon": -49.8032,
+   "milho_t": 33918,
+   "soja_t": 55355
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Anahy",
+   "codigo_ibge": 4101051,
+   "lat": -24.6449,
+   "lon": -53.1332,
+   "milho_t": 21017,
+   "soja_t": 15013
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Assis Chateaubriand",
+   "codigo_ibge": 4102000,
+   "lat": -24.4168,
+   "lon": -53.5213,
+   "milho_t": 417984,
+   "soja_t": 174560
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Boa Vista da Aparecida",
+   "codigo_ibge": 4103057,
+   "lat": -25.4308,
+   "lon": -53.4117,
+   "milho_t": 6899,
+   "soja_t": 13506
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Braganey",
+   "codigo_ibge": 4103354,
+   "lat": -24.8173,
+   "lon": -53.1218,
+   "milho_t": 45870,
+   "soja_t": 55292
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Cafelândia",
+   "codigo_ibge": 4103453,
+   "lat": -24.6189,
+   "lon": -53.3207,
+   "milho_t": 137950,
+   "soja_t": 76302
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Campo Bonito",
+   "codigo_ibge": 4104055,
+   "lat": -25.0294,
+   "lon": -52.9939,
+   "milho_t": 30402,
+   "soja_t": 50811
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Capitão Leônidas Marques",
+   "codigo_ibge": 4104600,
+   "lat": -25.4816,
+   "lon": -53.6112,
+   "milho_t": 25416,
+   "soja_t": 21937
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Cascavel",
+   "codigo_ibge": 4104808,
+   "lat": -24.9573,
+   "lon": -53.459,
+   "milho_t": 294064,
+   "soja_t": 282528
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Catanduvas",
+   "codigo_ibge": 4105003,
+   "lat": -25.2044,
+   "lon": -53.1548,
+   "milho_t": 32557,
+   "soja_t": 62970
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Corbélia",
+   "codigo_ibge": 4106308,
+   "lat": -24.7971,
+   "lon": -53.3006,
+   "milho_t": 125762,
+   "soja_t": 120827
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Céu Azul",
+   "codigo_ibge": 4105300,
+   "lat": -25.1489,
+   "lon": -53.8415,
+   "milho_t": 62059,
+   "soja_t": 48518
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Diamante D'Oeste",
+   "codigo_ibge": 4107157,
+   "lat": -24.9419,
+   "lon": -54.1052,
+   "milho_t": 17181,
+   "soja_t": 10735
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Diamante do Sul",
+   "codigo_ibge": 4107124,
+   "lat": -25.035,
+   "lon": -52.6768,
+   "milho_t": 5361,
+   "soja_t": 9498
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Entre Rios do Oeste",
+   "codigo_ibge": 4107538,
+   "lat": -24.7042,
+   "lon": -54.2385,
+   "milho_t": 27810,
+   "soja_t": 11858
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Formosa do Oeste",
+   "codigo_ibge": 4108205,
+   "lat": -24.2951,
+   "lon": -53.3114,
+   "milho_t": 87564,
+   "soja_t": 61276
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Foz do Iguaçu",
+   "codigo_ibge": 4108304,
+   "lat": -25.5427,
+   "lon": -54.5827,
+   "milho_t": 60504,
+   "soja_t": 17541
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Guaraniaçu",
+   "codigo_ibge": 4109302,
+   "lat": -25.0968,
+   "lon": -52.8755,
+   "milho_t": 29624,
+   "soja_t": 94440
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Guaíra",
+   "codigo_ibge": 4108809,
+   "lat": -24.085,
+   "lon": -54.2573,
+   "milho_t": 154896,
+   "soja_t": 69219
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Ibema",
+   "codigo_ibge": 4109757,
+   "lat": -25.1193,
+   "lon": -53.0072,
+   "milho_t": 8543,
+   "soja_t": 16107
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Iguatu",
+   "codigo_ibge": 4110052,
+   "lat": -24.7153,
+   "lon": -53.0827,
+   "milho_t": 14093,
+   "soja_t": 12635
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Iracema do Oeste",
+   "codigo_ibge": 4110656,
+   "lat": -24.4262,
+   "lon": -53.3528,
+   "milho_t": 37600,
+   "soja_t": 17044
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Itaipulândia",
+   "codigo_ibge": 4110953,
+   "lat": -25.1366,
+   "lon": -54.3001,
+   "milho_t": 60314,
+   "soja_t": 16923
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Jesuítas",
+   "codigo_ibge": 4112751,
+   "lat": -24.3839,
+   "lon": -53.3849,
+   "milho_t": 78130,
+   "soja_t": 41753
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Lindoeste",
+   "codigo_ibge": 4113452,
+   "lat": -25.2596,
+   "lon": -53.5733,
+   "milho_t": 24465,
+   "soja_t": 22289
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Marechal Cândido Rondon",
+   "codigo_ibge": 4114609,
+   "lat": -24.557,
+   "lon": -54.0571,
+   "milho_t": 139305,
+   "soja_t": 67623
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Maripá",
+   "codigo_ibge": 4115358,
+   "lat": -24.42,
+   "lon": -53.8286,
+   "milho_t": 116012,
+   "soja_t": 52200
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Matelândia",
+   "codigo_ibge": 4115606,
+   "lat": -25.2496,
+   "lon": -53.9935,
+   "milho_t": 46059,
+   "soja_t": 32183
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Medianeira",
+   "codigo_ibge": 4115804,
+   "lat": -25.2977,
+   "lon": -54.0943,
+   "milho_t": 69519,
+   "soja_t": 31980
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Mercedes",
+   "codigo_ibge": 4115853,
+   "lat": -24.4538,
+   "lon": -54.1618,
+   "milho_t": 33704,
+   "soja_t": 15237
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Missal",
+   "codigo_ibge": 4116059,
+   "lat": -25.0919,
+   "lon": -54.2477,
+   "milho_t": 82385,
+   "soja_t": 24503
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Nova Aurora",
+   "codigo_ibge": 4116703,
+   "lat": -24.5289,
+   "lon": -53.2575,
+   "milho_t": 168875,
+   "soja_t": 97873
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Nova Santa Rosa",
+   "codigo_ibge": 4117222,
+   "lat": -24.4693,
+   "lon": -53.9552,
+   "milho_t": 88900,
+   "soja_t": 29669
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Ouro Verde do Oeste",
+   "codigo_ibge": 4117453,
+   "lat": -24.7933,
+   "lon": -53.9043,
+   "milho_t": 65236,
+   "soja_t": 30582
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Palotina",
+   "codigo_ibge": 4117909,
+   "lat": -24.2868,
+   "lon": -53.8404,
+   "milho_t": 252178,
+   "soja_t": 99426
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Pato Bragado",
+   "codigo_ibge": 4118451,
+   "lat": -24.6271,
+   "lon": -54.2265,
+   "milho_t": 27537,
+   "soja_t": 10340
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Quatro Pontes",
+   "codigo_ibge": 4120853,
+   "lat": -24.5752,
+   "lon": -53.9759,
+   "milho_t": 33277,
+   "soja_t": 17739
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Ramilândia",
+   "codigo_ibge": 4121257,
+   "lat": -25.1195,
+   "lon": -54.023,
+   "milho_t": 14765,
+   "soja_t": 11666
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Santa Helena",
+   "codigo_ibge": 4123501,
+   "lat": -24.8585,
+   "lon": -54.336,
+   "milho_t": 157801,
+   "soja_t": 60172
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Santa Lúcia",
+   "codigo_ibge": 4123824,
+   "lat": -25.4104,
+   "lon": -53.5638,
+   "milho_t": 16194,
+   "soja_t": 14805
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Santa Tereza do Oeste",
+   "codigo_ibge": 4124020,
+   "lat": -25.0543,
+   "lon": -53.6274,
+   "milho_t": 68718,
+   "soja_t": 64791
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Santa Terezinha de Itaipu",
+   "codigo_ibge": 4124053,
+   "lat": -25.4391,
+   "lon": -54.402,
+   "milho_t": 99201,
+   "soja_t": 35835
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Serranópolis do Iguaçu",
+   "codigo_ibge": 4126355,
+   "lat": -25.3799,
+   "lon": -54.0518,
+   "milho_t": 69531,
+   "soja_t": 26288
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "São José das Palmeiras",
+   "codigo_ibge": 4125456,
+   "lat": -24.8369,
+   "lon": -54.0572,
+   "milho_t": 13611,
+   "soja_t": 5852
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "São Miguel do Iguaçu",
+   "codigo_ibge": 4125704,
+   "lat": -25.3492,
+   "lon": -54.2405,
+   "milho_t": 302493,
+   "soja_t": 92914
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "São Pedro do Iguaçu",
+   "codigo_ibge": 4125753,
+   "lat": -24.9373,
+   "lon": -53.8521,
+   "milho_t": 47842,
+   "soja_t": 38250
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Terra Roxa",
+   "codigo_ibge": 4127403,
+   "lat": -24.1575,
+   "lon": -54.0988,
+   "milho_t": 247775,
+   "soja_t": 93870
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Toledo",
+   "codigo_ibge": 4127700,
+   "lat": -24.7246,
+   "lon": -53.7412,
+   "milho_t": 442870,
+   "soja_t": 180341
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Três Barras do Paraná",
+   "codigo_ibge": 4127858,
+   "lat": -25.4185,
+   "lon": -53.1833,
+   "milho_t": 15527,
+   "soja_t": 49570
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Tupãssi",
+   "codigo_ibge": 4127957,
+   "lat": -24.5879,
+   "lon": -53.5105,
+   "milho_t": 168417,
+   "soja_t": 64474
+  },
+  {
+   "uf": "PR",
+   "regiao": "Oeste Paranaense",
+   "municipio": "Vera Cruz do Oeste",
+   "codigo_ibge": 4128559,
+   "lat": -25.0577,
+   "lon": -53.8771,
+   "milho_t": 55673,
+   "soja_t": 55785
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Antônio Olinto",
+   "codigo_ibge": 4101309,
+   "lat": -25.9804,
+   "lon": -50.1972,
+   "milho_t": 11213,
+   "soja_t": 21400
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Bituruna",
+   "codigo_ibge": 4102901,
+   "lat": -26.1607,
+   "lon": -51.5518,
+   "milho_t": 9667,
+   "soja_t": 10700
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Cruz Machado",
+   "codigo_ibge": 4106803,
+   "lat": -26.0166,
+   "lon": -51.343,
+   "milho_t": 31841,
+   "soja_t": 10707
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Fernandes Pinheiro",
+   "codigo_ibge": 4107736,
+   "lat": -25.4107,
+   "lon": -50.5456,
+   "milho_t": 19007,
+   "soja_t": 60000
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "General Carneiro",
+   "codigo_ibge": 4108502,
+   "lat": -26.425,
+   "lon": -51.3172,
+   "milho_t": 4333,
+   "soja_t": 9490
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Guamiranga",
+   "codigo_ibge": 4108957,
+   "lat": -25.1912,
+   "lon": -50.8021,
+   "milho_t": 9387,
+   "soja_t": 27050
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Imbituva",
+   "codigo_ibge": 4110102,
+   "lat": -25.2285,
+   "lon": -50.5989,
+   "milho_t": 49230,
+   "soja_t": 118067
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Ipiranga",
+   "codigo_ibge": 4110508,
+   "lat": -25.0238,
+   "lon": -50.5794,
+   "milho_t": 26267,
+   "soja_t": 118157
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Irati",
+   "codigo_ibge": 4110706,
+   "lat": -25.4697,
+   "lon": -50.6493,
+   "milho_t": 49183,
+   "soja_t": 134263
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Ivaí",
+   "codigo_ibge": 4111407,
+   "lat": -25.0067,
+   "lon": -50.857,
+   "milho_t": 41693,
+   "soja_t": 60535
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Mallet",
+   "codigo_ibge": 4113908,
+   "lat": -25.8806,
+   "lon": -50.8173,
+   "milho_t": 22357,
+   "soja_t": 59080
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Paula Freitas",
+   "codigo_ibge": 4118600,
+   "lat": -26.2105,
+   "lon": -50.931,
+   "milho_t": 6767,
+   "soja_t": 59133
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Paulo Frontin",
+   "codigo_ibge": 4118709,
+   "lat": -26.0466,
+   "lon": -50.8304,
+   "milho_t": 9717,
+   "soja_t": 51887
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Porto Vitória",
+   "codigo_ibge": 4120309,
+   "lat": -26.1674,
+   "lon": -51.231,
+   "milho_t": 5767,
+   "soja_t": 1113
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Prudentópolis",
+   "codigo_ibge": 4120606,
+   "lat": -25.2111,
+   "lon": -50.9754,
+   "milho_t": 95858,
+   "soja_t": 140067
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Rebouças",
+   "codigo_ibge": 4121505,
+   "lat": -25.6232,
+   "lon": -50.6877,
+   "milho_t": 24127,
+   "soja_t": 80736
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Rio Azul",
+   "codigo_ibge": 4122008,
+   "lat": -25.7306,
+   "lon": -50.7985,
+   "milho_t": 33904,
+   "soja_t": 65240
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "São João do Triunfo",
+   "codigo_ibge": 4125100,
+   "lat": -25.683,
+   "lon": -50.2949,
+   "milho_t": 17150,
+   "soja_t": 36513
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "São Mateus do Sul",
+   "codigo_ibge": 4125605,
+   "lat": -25.8677,
+   "lon": -50.384,
+   "milho_t": 23833,
+   "soja_t": 118090
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "Teixeira Soares",
+   "codigo_ibge": 4127007,
+   "lat": -25.3701,
+   "lon": -50.4571,
+   "milho_t": 67293,
+   "soja_t": 151150
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudeste Paranaense",
+   "municipio": "União da Vitória",
+   "codigo_ibge": 4128203,
+   "lat": -26.2273,
+   "lon": -51.0873,
+   "milho_t": 4700,
+   "soja_t": 12800
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Ampére",
+   "codigo_ibge": 4101002,
+   "lat": -25.9168,
+   "lon": -53.4686,
+   "milho_t": 14767,
+   "soja_t": 25434
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Barracão",
+   "codigo_ibge": 4102604,
+   "lat": -26.2502,
+   "lon": -53.6324,
+   "milho_t": 7020,
+   "soja_t": 11389
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Bela Vista da Caroba",
+   "codigo_ibge": 4102752,
+   "lat": -25.8842,
+   "lon": -53.6725,
+   "milho_t": 3431,
+   "soja_t": 15172
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Boa Esperança do Iguaçu",
+   "codigo_ibge": 4103024,
+   "lat": -25.6324,
+   "lon": -53.2108,
+   "milho_t": 4833,
+   "soja_t": 16023
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Bom Jesus do Sul",
+   "codigo_ibge": 4103156,
+   "lat": -26.1958,
+   "lon": -53.5955,
+   "milho_t": 8033,
+   "soja_t": 15087
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Bom Sucesso do Sul",
+   "codigo_ibge": 4103222,
+   "lat": -26.0731,
+   "lon": -52.8353,
+   "milho_t": 53016,
+   "soja_t": 48270
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Capanema",
+   "codigo_ibge": 4104501,
+   "lat": -25.6691,
+   "lon": -53.8055,
+   "milho_t": 40983,
+   "soja_t": 49523
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Chopinzinho",
+   "codigo_ibge": 4105409,
+   "lat": -25.8515,
+   "lon": -52.5173,
+   "milho_t": 22183,
+   "soja_t": 92793
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Coronel Vivida",
+   "codigo_ibge": 4106506,
+   "lat": -25.9767,
+   "lon": -52.5641,
+   "milho_t": 26207,
+   "soja_t": 94285
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Cruzeiro do Iguaçu",
+   "codigo_ibge": 4106571,
+   "lat": -25.6192,
+   "lon": -53.1285,
+   "milho_t": 5080,
+   "soja_t": 16747
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Dois Vizinhos",
+   "codigo_ibge": 4107207,
+   "lat": -25.7407,
+   "lon": -53.057,
+   "milho_t": 17573,
+   "soja_t": 60907
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Enéas Marques",
+   "codigo_ibge": 4107405,
+   "lat": -25.9445,
+   "lon": -53.1659,
+   "milho_t": 4707,
+   "soja_t": 9835
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Flor da Serra do Sul",
+   "codigo_ibge": 4107850,
+   "lat": -26.2523,
+   "lon": -53.3092,
+   "milho_t": 9240,
+   "soja_t": 21788
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Francisco Beltrão",
+   "codigo_ibge": 4108403,
+   "lat": -26.0817,
+   "lon": -53.0535,
+   "milho_t": 25933,
+   "soja_t": 75463
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Itapejara d'Oeste",
+   "codigo_ibge": 4111209,
+   "lat": -25.9619,
+   "lon": -52.8152,
+   "milho_t": 36653,
+   "soja_t": 52042
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Manfrinópolis",
+   "codigo_ibge": 4114351,
+   "lat": -26.1441,
+   "lon": -53.3113,
+   "milho_t": 4082,
+   "soja_t": 3713
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Mariópolis",
+   "codigo_ibge": 4115309,
+   "lat": -26.355,
+   "lon": -52.5532,
+   "milho_t": 27420,
+   "soja_t": 48935
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Marmeleiro",
+   "codigo_ibge": 4115408,
+   "lat": -26.1472,
+   "lon": -53.0267,
+   "milho_t": 16360,
+   "soja_t": 52420
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Nova Esperança do Sudoeste",
+   "codigo_ibge": 4116950,
+   "lat": -25.9004,
+   "lon": -53.2618,
+   "milho_t": 4460,
+   "soja_t": 7695
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Nova Prata do Iguaçu",
+   "codigo_ibge": 4117255,
+   "lat": -25.6309,
+   "lon": -53.3469,
+   "milho_t": 12027,
+   "soja_t": 49697
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Pato Branco",
+   "codigo_ibge": 4118501,
+   "lat": -26.2292,
+   "lon": -52.6706,
+   "milho_t": 85383,
+   "soja_t": 83612
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Pinhal de São Bento",
+   "codigo_ibge": 4119251,
+   "lat": -26.0324,
+   "lon": -53.482,
+   "milho_t": 5058,
+   "soja_t": 7490
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Planalto",
+   "codigo_ibge": 4119806,
+   "lat": -25.7211,
+   "lon": -53.7642,
+   "milho_t": 14233,
+   "soja_t": 39672
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Pranchita",
+   "codigo_ibge": 4120358,
+   "lat": -26.0209,
+   "lon": -53.7397,
+   "milho_t": 27560,
+   "soja_t": 41043
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Pérola d'Oeste",
+   "codigo_ibge": 4119004,
+   "lat": -25.8278,
+   "lon": -53.7433,
+   "milho_t": 17640,
+   "soja_t": 39015
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Realeza",
+   "codigo_ibge": 4121406,
+   "lat": -25.7711,
+   "lon": -53.526,
+   "milho_t": 23567,
+   "soja_t": 50263
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Renascença",
+   "codigo_ibge": 4121604,
+   "lat": -26.1588,
+   "lon": -52.9703,
+   "milho_t": 37267,
+   "soja_t": 76108
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Salgado Filho",
+   "codigo_ibge": 4122800,
+   "lat": -26.1777,
+   "lon": -53.3631,
+   "milho_t": 12577,
+   "soja_t": 9217
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Salto do Lontra",
+   "codigo_ibge": 4123006,
+   "lat": -25.7813,
+   "lon": -53.3135,
+   "milho_t": 12537,
+   "soja_t": 40132
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Santa Izabel do Oeste",
+   "codigo_ibge": 4123808,
+   "lat": -25.8217,
+   "lon": -53.4801,
+   "milho_t": 17133,
+   "soja_t": 47590
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Santo Antônio do Sudoeste",
+   "codigo_ibge": 4124400,
+   "lat": -26.0737,
+   "lon": -53.7251,
+   "milho_t": 16661,
+   "soja_t": 39580
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Saudade do Iguaçu",
+   "codigo_ibge": 4126272,
+   "lat": -25.6917,
+   "lon": -52.6184,
+   "milho_t": 2183,
+   "soja_t": 10893
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Sulina",
+   "codigo_ibge": 4126652,
+   "lat": -25.7066,
+   "lon": -52.7299,
+   "milho_t": 2322,
+   "soja_t": 19705
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "São Jorge d'Oeste",
+   "codigo_ibge": 4125209,
+   "lat": -25.7085,
+   "lon": -52.9204,
+   "milho_t": 11993,
+   "soja_t": 29477
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "São João",
+   "codigo_ibge": 4124806,
+   "lat": -25.8214,
+   "lon": -52.7252,
+   "milho_t": 29110,
+   "soja_t": 75796
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Verê",
+   "codigo_ibge": 4128609,
+   "lat": -25.8772,
+   "lon": -52.9051,
+   "milho_t": 24580,
+   "soja_t": 59338
+  },
+  {
+   "uf": "PR",
+   "regiao": "Sudoeste Paranaense",
+   "municipio": "Vitorino",
+   "codigo_ibge": 4128708,
+   "lat": -26.2683,
+   "lon": -52.7843,
+   "milho_t": 38953,
+   "soja_t": 72498
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Alcinópolis",
+   "codigo_ibge": 5000252,
+   "lat": -18.3255,
+   "lon": -53.7042,
+   "milho_t": 55994,
+   "soja_t": 36176
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Bandeirantes",
+   "codigo_ibge": 5001508,
+   "lat": -19.9275,
+   "lon": -54.3585,
+   "milho_t": 114208,
+   "soja_t": 282449
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Camapuã",
+   "codigo_ibge": 5002605,
+   "lat": -19.5347,
+   "lon": -54.0431,
+   "milho_t": 24211,
+   "soja_t": 120900
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Campo Grande",
+   "codigo_ibge": 5002704,
+   "lat": -20.4486,
+   "lon": -54.6295,
+   "milho_t": 247797,
+   "soja_t": 376949
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Corguinho",
+   "codigo_ibge": 5003108,
+   "lat": -19.8243,
+   "lon": -54.8281,
+   "milho_t": 70,
+   "soja_t": 1343
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Coxim",
+   "codigo_ibge": 5003306,
+   "lat": -18.5013,
+   "lon": -54.751,
+   "milho_t": 46731,
+   "soja_t": 48803
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Figueirão",
+   "codigo_ibge": 5003900,
+   "lat": -18.6782,
+   "lon": -53.638,
+   "milho_t": 1015,
+   "soja_t": 9428
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Jaraguari",
+   "codigo_ibge": 5004908,
+   "lat": -20.1386,
+   "lon": -54.3996,
+   "milho_t": 47053,
+   "soja_t": 143610
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Pedro Gomes",
+   "codigo_ibge": 5006408,
+   "lat": -18.0996,
+   "lon": -54.5507,
+   "milho_t": 22138,
+   "soja_t": 74467
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Rio Negro",
+   "codigo_ibge": 5007307,
+   "lat": -19.447,
+   "lon": -54.9859,
+   "milho_t": 10574,
+   "soja_t": 11270
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Rio Verde de Mato Grosso",
+   "codigo_ibge": 5007406,
+   "lat": -18.9249,
+   "lon": -54.8434,
+   "milho_t": 69814,
+   "soja_t": 118239
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Rochedo",
+   "codigo_ibge": 5007505,
+   "lat": -19.9565,
+   "lon": -54.8848,
+   "milho_t": 14423,
+   "soja_t": 29841
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Sidrolândia",
+   "codigo_ibge": 5007901,
+   "lat": -20.9302,
+   "lon": -54.9692,
+   "milho_t": 945360,
+   "soja_t": 755040
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Sonora",
+   "codigo_ibge": 5007935,
+   "lat": -17.5698,
+   "lon": -54.7551,
+   "milho_t": 189313,
+   "soja_t": 234640
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "São Gabriel do Oeste",
+   "codigo_ibge": 5007695,
+   "lat": -19.3889,
+   "lon": -54.5507,
+   "milho_t": 496200,
+   "soja_t": 514971
+  },
+  {
+   "uf": "MS",
+   "regiao": "Centro Norte de Mato Grosso do Sul",
+   "municipio": "Terenos",
+   "codigo_ibge": 5008008,
+   "lat": -20.4378,
+   "lon": -54.8647,
+   "milho_t": 60500,
+   "soja_t": 126554
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Anaurilândia",
+   "codigo_ibge": 5000807,
+   "lat": -22.1852,
+   "lon": -52.7191,
+   "milho_t": 29772,
+   "soja_t": 91970
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Aparecida do Taboado",
+   "codigo_ibge": 5001003,
+   "lat": -20.0873,
+   "lon": -51.0961,
+   "milho_t": 705,
+   "soja_t": 7744
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Bataguassu",
+   "codigo_ibge": 5001904,
+   "lat": -21.7159,
+   "lon": -52.4221,
+   "milho_t": 26085,
+   "soja_t": 35129
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Batayporã",
+   "codigo_ibge": 5002001,
+   "lat": -22.2944,
+   "lon": -53.2705,
+   "milho_t": 56160,
+   "soja_t": 67229
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Brasilândia",
+   "codigo_ibge": 5002308,
+   "lat": -21.2544,
+   "lon": -52.0365,
+   "milho_t": 1334,
+   "soja_t": 10461
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Cassilândia",
+   "codigo_ibge": 5002902,
+   "lat": -19.1179,
+   "lon": -51.7313,
+   "milho_t": 30068,
+   "soja_t": 53353
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Chapadão do Sul",
+   "codigo_ibge": 5002951,
+   "lat": -18.788,
+   "lon": -52.6263,
+   "milho_t": 336233,
+   "soja_t": 454660
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Costa Rica",
+   "codigo_ibge": 5003256,
+   "lat": -18.5432,
+   "lon": -53.1287,
+   "milho_t": 372665,
+   "soja_t": 362807
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Inocência",
+   "codigo_ibge": 5004403,
+   "lat": -19.7277,
+   "lon": -51.9281,
+   "milho_t": 0,
+   "soja_t": 4964
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Nova Andradina",
+   "codigo_ibge": 5006200,
+   "lat": -22.238,
+   "lon": -53.3437,
+   "milho_t": 69796,
+   "soja_t": 115198
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Paranaíba",
+   "codigo_ibge": 5006309,
+   "lat": -19.6746,
+   "lon": -51.1909,
+   "milho_t": 9613,
+   "soja_t": 13135
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Paraíso das Águas",
+   "codigo_ibge": 5006275,
+   "lat": -19.0216,
+   "lon": -53.0116,
+   "milho_t": 36321,
+   "soja_t": 332173
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Ribas do Rio Pardo",
+   "codigo_ibge": 5007109,
+   "lat": -20.4445,
+   "lon": -53.7588,
+   "milho_t": 20265,
+   "soja_t": 94881
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Santa Rita do Pardo",
+   "codigo_ibge": 5007554,
+   "lat": -21.3016,
+   "lon": -52.8333,
+   "milho_t": 5919,
+   "soja_t": 16138
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Selvíria",
+   "codigo_ibge": 5007802,
+   "lat": -20.3637,
+   "lon": -51.4192,
+   "milho_t": 3571,
+   "soja_t": 11282
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Taquarussu",
+   "codigo_ibge": 5007976,
+   "lat": -22.4898,
+   "lon": -53.3519,
+   "milho_t": 9334,
+   "soja_t": 15866
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Três Lagoas",
+   "codigo_ibge": 5008305,
+   "lat": -20.7849,
+   "lon": -51.7007,
+   "milho_t": 0,
+   "soja_t": 1350
+  },
+  {
+   "uf": "MS",
+   "regiao": "Leste de Mato Grosso do Sul",
+   "municipio": "Água Clara",
+   "codigo_ibge": 5000203,
+   "lat": -20.4452,
+   "lon": -52.879,
+   "milho_t": 689,
+   "soja_t": 16314
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Anastácio",
+   "codigo_ibge": 5000708,
+   "lat": -20.4823,
+   "lon": -55.8104,
+   "milho_t": 33002,
+   "soja_t": 47665
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Aquidauana",
+   "codigo_ibge": 5001102,
+   "lat": -20.4666,
+   "lon": -55.7868,
+   "milho_t": 115,
+   "soja_t": 3060
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Corumbá",
+   "codigo_ibge": 5003207,
+   "lat": -19.0077,
+   "lon": -57.651,
+   "milho_t": 13091,
+   "soja_t": 9434
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Dois Irmãos do Buriti",
+   "codigo_ibge": 5003488,
+   "lat": -20.6848,
+   "lon": -55.2915,
+   "milho_t": 47650,
+   "soja_t": 52495
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Ladário",
+   "codigo_ibge": 5005202,
+   "lat": -19.0089,
+   "lon": -57.5973,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Miranda",
+   "codigo_ibge": 5005608,
+   "lat": -20.2355,
+   "lon": -56.3746,
+   "milho_t": 7934,
+   "soja_t": 27401
+  },
+  {
+   "uf": "MS",
+   "regiao": "Pantanais Sul Mato-grossense",
+   "municipio": "Porto Murtinho",
+   "codigo_ibge": 5006903,
+   "lat": -21.6981,
+   "lon": -57.8836,
+   "milho_t": 14763,
+   "soja_t": 20830
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Amambai",
+   "codigo_ibge": 5000609,
+   "lat": -23.1058,
+   "lon": -55.2253,
+   "milho_t": 332173,
+   "soja_t": 324080
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Angélica",
+   "codigo_ibge": 5000856,
+   "lat": -22.1527,
+   "lon": -53.7708,
+   "milho_t": 45480,
+   "soja_t": 44580
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Antônio João",
+   "codigo_ibge": 5000906,
+   "lat": -22.1927,
+   "lon": -55.9517,
+   "milho_t": 107760,
+   "soja_t": 134600
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Aral Moreira",
+   "codigo_ibge": 5001243,
+   "lat": -22.9385,
+   "lon": -55.6334,
+   "milho_t": 473733,
+   "soja_t": 344700
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Bela Vista",
+   "codigo_ibge": 5002100,
+   "lat": -22.1073,
+   "lon": -56.5263,
+   "milho_t": 76749,
+   "soja_t": 183372
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Bodoquena",
+   "codigo_ibge": 5002159,
+   "lat": -20.537,
+   "lon": -56.7127,
+   "milho_t": 16505,
+   "soja_t": 28050
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Bonito",
+   "codigo_ibge": 5002209,
+   "lat": -21.1261,
+   "lon": -56.4836,
+   "milho_t": 163938,
+   "soja_t": 184493
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Caarapó",
+   "codigo_ibge": 5002407,
+   "lat": -22.6368,
+   "lon": -54.8209,
+   "milho_t": 441760,
+   "soja_t": 280056
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Caracol",
+   "codigo_ibge": 5002803,
+   "lat": -22.011,
+   "lon": -57.0277,
+   "milho_t": 26193,
+   "soja_t": 32905
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Coronel Sapucaia",
+   "codigo_ibge": 5003157,
+   "lat": -23.2724,
+   "lon": -55.5278,
+   "milho_t": 40963,
+   "soja_t": 61093
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Deodápolis",
+   "codigo_ibge": 5003454,
+   "lat": -22.2763,
+   "lon": -54.1682,
+   "milho_t": 51800,
+   "soja_t": 41071
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Douradina",
+   "codigo_ibge": 5003504,
+   "lat": -22.0405,
+   "lon": -54.6158,
+   "milho_t": 66663,
+   "soja_t": 37964
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Dourados",
+   "codigo_ibge": 5003702,
+   "lat": -22.2231,
+   "lon": -54.812,
+   "milho_t": 927073,
+   "soja_t": 615000
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Eldorado",
+   "codigo_ibge": 5003751,
+   "lat": -23.7868,
+   "lon": -54.2838,
+   "milho_t": 24960,
+   "soja_t": 45405
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Fátima do Sul",
+   "codigo_ibge": 5003801,
+   "lat": -22.3789,
+   "lon": -54.5131,
+   "milho_t": 51727,
+   "soja_t": 26895
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Glória de Dourados",
+   "codigo_ibge": 5004007,
+   "lat": -22.4136,
+   "lon": -54.2335,
+   "milho_t": 12465,
+   "soja_t": 9493
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Guia Lopes da Laguna",
+   "codigo_ibge": 5004106,
+   "lat": -21.4583,
+   "lon": -56.1117,
+   "milho_t": 68490,
+   "soja_t": 72443
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Iguatemi",
+   "codigo_ibge": 5004304,
+   "lat": -23.6736,
+   "lon": -54.5637,
+   "milho_t": 108513,
+   "soja_t": 70567
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Itaporã",
+   "codigo_ibge": 5004502,
+   "lat": -22.08,
+   "lon": -54.7934,
+   "milho_t": 486993,
+   "soja_t": 248319
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Itaquiraí",
+   "codigo_ibge": 5004601,
+   "lat": -23.4779,
+   "lon": -54.187,
+   "milho_t": 133095,
+   "soja_t": 132533
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Ivinhema",
+   "codigo_ibge": 5004700,
+   "lat": -22.3046,
+   "lon": -53.8184,
+   "milho_t": 59226,
+   "soja_t": 63260
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Japorã",
+   "codigo_ibge": 5004809,
+   "lat": -23.8903,
+   "lon": -54.4059,
+   "milho_t": 4211,
+   "soja_t": 5040
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Jardim",
+   "codigo_ibge": 5005004,
+   "lat": -21.4799,
+   "lon": -56.1489,
+   "milho_t": 67677,
+   "soja_t": 70257
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Jateí",
+   "codigo_ibge": 5005103,
+   "lat": -22.4806,
+   "lon": -54.3079,
+   "milho_t": 111000,
+   "soja_t": 68767
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Juti",
+   "codigo_ibge": 5005152,
+   "lat": -22.8596,
+   "lon": -54.6061,
+   "milho_t": 45247,
+   "soja_t": 53493
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Laguna Carapã",
+   "codigo_ibge": 5005251,
+   "lat": -22.5448,
+   "lon": -55.1502,
+   "milho_t": 341924,
+   "soja_t": 330823
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Maracaju",
+   "codigo_ibge": 5005400,
+   "lat": -21.6105,
+   "lon": -55.1678,
+   "milho_t": 1497000,
+   "soja_t": 1053457
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Mundo Novo",
+   "codigo_ibge": 5005681,
+   "lat": -23.9355,
+   "lon": -54.281,
+   "milho_t": 8836,
+   "soja_t": 13493
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Naviraí",
+   "codigo_ibge": 5005707,
+   "lat": -23.0618,
+   "lon": -54.1995,
+   "milho_t": 316590,
+   "soja_t": 270120
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Nioaque",
+   "codigo_ibge": 5005806,
+   "lat": -21.1419,
+   "lon": -55.8296,
+   "milho_t": 30549,
+   "soja_t": 37700
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Nova Alvorada do Sul",
+   "codigo_ibge": 5006002,
+   "lat": -21.4657,
+   "lon": -54.3825,
+   "milho_t": 145839,
+   "soja_t": 230642
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Novo Horizonte do Sul",
+   "codigo_ibge": 5006259,
+   "lat": -22.6693,
+   "lon": -53.8601,
+   "milho_t": 31269,
+   "soja_t": 27543
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Paranhos",
+   "codigo_ibge": 5006358,
+   "lat": -23.8911,
+   "lon": -55.429,
+   "milho_t": 31398,
+   "soja_t": 52850
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Ponta Porã",
+   "codigo_ibge": 5006606,
+   "lat": -22.5296,
+   "lon": -55.7203,
+   "milho_t": 891502,
+   "soja_t": 853000
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Rio Brilhante",
+   "codigo_ibge": 5007208,
+   "lat": -21.8033,
+   "lon": -54.5427,
+   "milho_t": 525833,
+   "soja_t": 388800
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Sete Quedas",
+   "codigo_ibge": 5007703,
+   "lat": -23.9705,
+   "lon": -55.0398,
+   "milho_t": 96627,
+   "soja_t": 94795
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Tacuru",
+   "codigo_ibge": 5007950,
+   "lat": -23.636,
+   "lon": -55.0141,
+   "milho_t": 34073,
+   "soja_t": 46572
+  },
+  {
+   "uf": "MS",
+   "regiao": "Sudoeste de Mato Grosso do Sul",
+   "municipio": "Vicentina",
+   "codigo_ibge": 5008404,
+   "lat": -22.4098,
+   "lon": -54.4415,
+   "milho_t": 32006,
+   "soja_t": 16717
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Abadia de Goiás",
+   "codigo_ibge": 5200050,
+   "lat": -16.7573,
+   "lon": -49.4412,
+   "milho_t": 997,
+   "soja_t": 3675
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Adelândia",
+   "codigo_ibge": 5200159,
+   "lat": -16.4127,
+   "lon": -50.1657,
+   "milho_t": 1340,
+   "soja_t": 1127
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Americano do Brasil",
+   "codigo_ibge": 5200852,
+   "lat": -16.2514,
+   "lon": -49.9831,
+   "milho_t": 5370,
+   "soja_t": 2103
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Amorinópolis",
+   "codigo_ibge": 5200902,
+   "lat": -16.6151,
+   "lon": -51.0919,
+   "milho_t": 17836,
+   "soja_t": 23000
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Anicuns",
+   "codigo_ibge": 5201306,
+   "lat": -16.4642,
+   "lon": -49.9617,
+   "milho_t": 20852,
+   "soja_t": 16837
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Anápolis",
+   "codigo_ibge": 5201108,
+   "lat": -16.3281,
+   "lon": -48.953,
+   "milho_t": 9990,
+   "soja_t": 29614
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Aparecida de Goiânia",
+   "codigo_ibge": 5201405,
+   "lat": -16.8198,
+   "lon": -49.2469,
+   "milho_t": 269,
+   "soja_t": 654
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Aragoiânia",
+   "codigo_ibge": 5201801,
+   "lat": -16.9087,
+   "lon": -49.4476,
+   "milho_t": 1510,
+   "soja_t": 5677
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Araçu",
+   "codigo_ibge": 5201603,
+   "lat": -16.3563,
+   "lon": -49.6804,
+   "milho_t": 1807,
+   "soja_t": 2979
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Aurilândia",
+   "codigo_ibge": 5202601,
+   "lat": -16.6773,
+   "lon": -50.4641,
+   "milho_t": 0,
+   "soja_t": 2116
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Avelinópolis",
+   "codigo_ibge": 5202809,
+   "lat": -16.4672,
+   "lon": -49.7579,
+   "milho_t": 5147,
+   "soja_t": 4327
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Barro Alto",
+   "codigo_ibge": 5203203,
+   "lat": -14.9658,
+   "lon": -48.9086,
+   "milho_t": 4542,
+   "soja_t": 11534
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Bela Vista de Goiás",
+   "codigo_ibge": 5203302,
+   "lat": -16.9693,
+   "lon": -48.9513,
+   "milho_t": 61221,
+   "soja_t": 94887
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Bonfinópolis",
+   "codigo_ibge": 5203559,
+   "lat": -16.6173,
+   "lon": -48.9616,
+   "milho_t": 1075,
+   "soja_t": 1881
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Brazabrantes",
+   "codigo_ibge": 5203609,
+   "lat": -16.4281,
+   "lon": -49.3863,
+   "milho_t": 1111,
+   "soja_t": 794
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Buriti de Goiás",
+   "codigo_ibge": 5203939,
+   "lat": -16.1792,
+   "lon": -50.4302,
+   "milho_t": 847,
+   "soja_t": 1093
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Cachoeira de Goiás",
+   "codigo_ibge": 5204201,
+   "lat": -16.6635,
+   "lon": -50.646,
+   "milho_t": 0,
+   "soja_t": 1800
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Caldazinha",
+   "codigo_ibge": 5204557,
+   "lat": -16.7117,
+   "lon": -49.0013,
+   "milho_t": 916,
+   "soja_t": 1302
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Campo Limpo de Goiás",
+   "codigo_ibge": 5204854,
+   "lat": -16.2971,
+   "lon": -49.0895,
+   "milho_t": 2491,
+   "soja_t": 1410
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Carmo do Rio Verde",
+   "codigo_ibge": 5205000,
+   "lat": -15.3549,
+   "lon": -49.708,
+   "milho_t": 3704,
+   "soja_t": 720
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Caturaí",
+   "codigo_ibge": 5205208,
+   "lat": -16.4447,
+   "lon": -49.4936,
+   "milho_t": 5731,
+   "soja_t": 4685
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Ceres",
+   "codigo_ibge": 5205406,
+   "lat": -15.3061,
+   "lon": -49.6,
+   "milho_t": 4962,
+   "soja_t": 816
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Córrego do Ouro",
+   "codigo_ibge": 5205703,
+   "lat": -16.2918,
+   "lon": -50.5503,
+   "milho_t": 615,
+   "soja_t": 361
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Damolândia",
+   "codigo_ibge": 5206800,
+   "lat": -16.2544,
+   "lon": -49.3631,
+   "milho_t": 952,
+   "soja_t": 212
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Fazenda Nova",
+   "codigo_ibge": 5207600,
+   "lat": -16.1834,
+   "lon": -50.7781,
+   "milho_t": 0,
+   "soja_t": 12320
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Firminópolis",
+   "codigo_ibge": 5207808,
+   "lat": -16.5778,
+   "lon": -50.304,
+   "milho_t": 48000,
+   "soja_t": 57980
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Goianira",
+   "codigo_ibge": 5208806,
+   "lat": -16.4947,
+   "lon": -49.427,
+   "milho_t": 7357,
+   "soja_t": 7980
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Goianápolis",
+   "codigo_ibge": 5208400,
+   "lat": -16.5098,
+   "lon": -49.0234,
+   "milho_t": 5319,
+   "soja_t": 6840
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Goianésia",
+   "codigo_ibge": 5208608,
+   "lat": -15.3118,
+   "lon": -49.1162,
+   "milho_t": 9280,
+   "soja_t": 9975
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Goiânia",
+   "codigo_ibge": 5208707,
+   "lat": -16.6864,
+   "lon": -49.2643,
+   "milho_t": 3373,
+   "soja_t": 7455
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Guapó",
+   "codigo_ibge": 5209200,
+   "lat": -16.8297,
+   "lon": -49.5345,
+   "milho_t": 4651,
+   "soja_t": 15253
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Guaraíta",
+   "codigo_ibge": 5209291,
+   "lat": -15.6121,
+   "lon": -50.0265,
+   "milho_t": 633,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Guarinos",
+   "codigo_ibge": 5209457,
+   "lat": -14.7292,
+   "lon": -49.7006,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Heitoraí",
+   "codigo_ibge": 5209606,
+   "lat": -15.719,
+   "lon": -49.8268,
+   "milho_t": 3482,
+   "soja_t": 3640
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Hidrolina",
+   "codigo_ibge": 5209804,
+   "lat": -14.7261,
+   "lon": -49.4634,
+   "milho_t": 1292,
+   "soja_t": 12673
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Hidrolândia",
+   "codigo_ibge": 5209705,
+   "lat": -16.9626,
+   "lon": -49.2265,
+   "milho_t": 11140,
+   "soja_t": 38533
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Inhumas",
+   "codigo_ibge": 5210000,
+   "lat": -16.3611,
+   "lon": -49.5001,
+   "milho_t": 11943,
+   "soja_t": 9033
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Ipiranga de Goiás",
+   "codigo_ibge": 5210158,
+   "lat": -15.1689,
+   "lon": -49.6695,
+   "milho_t": 1504,
+   "soja_t": 756
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Iporá",
+   "codigo_ibge": 5210208,
+   "lat": -16.4398,
+   "lon": -51.118,
+   "milho_t": 27020,
+   "soja_t": 44000
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Israelândia",
+   "codigo_ibge": 5210307,
+   "lat": -16.3144,
+   "lon": -50.9087,
+   "milho_t": 0,
+   "soja_t": 7208
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itaberaí",
+   "codigo_ibge": 5210406,
+   "lat": -16.0206,
+   "lon": -49.806,
+   "milho_t": 115403,
+   "soja_t": 112397
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itaguari",
+   "codigo_ibge": 5210562,
+   "lat": -15.918,
+   "lon": -49.6071,
+   "milho_t": 5222,
+   "soja_t": 3887
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itaguaru",
+   "codigo_ibge": 5210604,
+   "lat": -15.7565,
+   "lon": -49.6354,
+   "milho_t": 2187,
+   "soja_t": 1600
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itapaci",
+   "codigo_ibge": 5210901,
+   "lat": -14.9522,
+   "lon": -49.5511,
+   "milho_t": 3847,
+   "soja_t": 4670
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itapuranga",
+   "codigo_ibge": 5211206,
+   "lat": -15.5606,
+   "lon": -49.949,
+   "milho_t": 1783,
+   "soja_t": 651
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Itauçu",
+   "codigo_ibge": 5211404,
+   "lat": -16.2029,
+   "lon": -49.6109,
+   "milho_t": 7597,
+   "soja_t": 5621
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Ivolândia",
+   "codigo_ibge": 5211602,
+   "lat": -16.5995,
+   "lon": -50.7921,
+   "milho_t": 0,
+   "soja_t": 12060
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Jaraguá",
+   "codigo_ibge": 5211800,
+   "lat": -15.7529,
+   "lon": -49.3344,
+   "milho_t": 3837,
+   "soja_t": 11105
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Jaupaci",
+   "codigo_ibge": 5212006,
+   "lat": -16.1773,
+   "lon": -50.9508,
+   "milho_t": 0,
+   "soja_t": 16780
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Jesúpolis",
+   "codigo_ibge": 5212055,
+   "lat": -15.9484,
+   "lon": -49.3739,
+   "milho_t": 440,
+   "soja_t": 1529
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Leopoldo de Bulhões",
+   "codigo_ibge": 5212303,
+   "lat": -16.619,
+   "lon": -48.7428,
+   "milho_t": 40900,
+   "soja_t": 44840
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Moiporá",
+   "codigo_ibge": 5213400,
+   "lat": -16.5434,
+   "lon": -50.739,
+   "milho_t": 0,
+   "soja_t": 4532
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Morro Agudo de Goiás",
+   "codigo_ibge": 5213855,
+   "lat": -15.3184,
+   "lon": -50.0553,
+   "milho_t": 770,
+   "soja_t": 11
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Mossâmedes",
+   "codigo_ibge": 5213905,
+   "lat": -16.124,
+   "lon": -50.2136,
+   "milho_t": 6007,
+   "soja_t": 11680
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Nazário",
+   "codigo_ibge": 5214408,
+   "lat": -16.5808,
+   "lon": -49.8817,
+   "milho_t": 2542,
+   "soja_t": 7771
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Nerópolis",
+   "codigo_ibge": 5214507,
+   "lat": -16.4047,
+   "lon": -49.2227,
+   "milho_t": 2367,
+   "soja_t": 3830
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Nova América",
+   "codigo_ibge": 5214705,
+   "lat": -15.0206,
+   "lon": -49.8953,
+   "milho_t": 270,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Nova Glória",
+   "codigo_ibge": 5214861,
+   "lat": -15.145,
+   "lon": -49.5737,
+   "milho_t": 5077,
+   "soja_t": 2235
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Nova Veneza",
+   "codigo_ibge": 5215009,
+   "lat": -16.3695,
+   "lon": -49.3168,
+   "milho_t": 388,
+   "soja_t": 621
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Novo Brasil",
+   "codigo_ibge": 5215207,
+   "lat": -16.0313,
+   "lon": -50.7113,
+   "milho_t": 765,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Ouro Verde de Goiás",
+   "codigo_ibge": 5215405,
+   "lat": -16.2181,
+   "lon": -49.1942,
+   "milho_t": 3451,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Petrolina de Goiás",
+   "codigo_ibge": 5216809,
+   "lat": -16.0968,
+   "lon": -49.3364,
+   "milho_t": 557,
+   "soja_t": 5438
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Pilar de Goiás",
+   "codigo_ibge": 5216908,
+   "lat": -14.7608,
+   "lon": -49.5784,
+   "milho_t": 251,
+   "soja_t": 10
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Rialma",
+   "codigo_ibge": 5218607,
+   "lat": -15.3145,
+   "lon": -49.5814,
+   "milho_t": 2764,
+   "soja_t": 3732
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Rianápolis",
+   "codigo_ibge": 5218706,
+   "lat": -15.4456,
+   "lon": -49.5114,
+   "milho_t": 699,
+   "soja_t": 1418
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Rubiataba",
+   "codigo_ibge": 5218904,
+   "lat": -15.1617,
+   "lon": -49.8048,
+   "milho_t": 1811,
+   "soja_t": 69
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Sanclerlândia",
+   "codigo_ibge": 5219001,
+   "lat": -16.197,
+   "lon": -50.3124,
+   "milho_t": 1558,
+   "soja_t": 3480
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Santa Bárbara de Goiás",
+   "codigo_ibge": 5219100,
+   "lat": -16.5714,
+   "lon": -49.6954,
+   "milho_t": 6316,
+   "soja_t": 6766
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Santa Isabel",
+   "codigo_ibge": 5219357,
+   "lat": -15.2958,
+   "lon": -49.4259,
+   "milho_t": 1785,
+   "soja_t": 2667
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Santa Rita do Novo Destino",
+   "codigo_ibge": 5219456,
+   "lat": -15.1351,
+   "lon": -49.1203,
+   "milho_t": 3156,
+   "soja_t": 34375
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Santa Rosa de Goiás",
+   "codigo_ibge": 5219506,
+   "lat": -16.084,
+   "lon": -49.4953,
+   "milho_t": 5162,
+   "soja_t": 9092
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Santo Antônio de Goiás",
+   "codigo_ibge": 5219738,
+   "lat": -16.4815,
+   "lon": -49.3096,
+   "milho_t": 2586,
+   "soja_t": 3365
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Senador Canedo",
+   "codigo_ibge": 5220454,
+   "lat": -16.7084,
+   "lon": -49.0914,
+   "milho_t": 3153,
+   "soja_t": 4015
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "São Francisco de Goiás",
+   "codigo_ibge": 5219902,
+   "lat": -15.9256,
+   "lon": -49.2605,
+   "milho_t": 3676,
+   "soja_t": 6330
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "São Luiz do Norte",
+   "codigo_ibge": 5220157,
+   "lat": -14.8608,
+   "lon": -49.3285,
+   "milho_t": 1495,
+   "soja_t": 12706
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "São Luís de Montes Belos",
+   "codigo_ibge": 5220108,
+   "lat": -16.5211,
+   "lon": -50.3726,
+   "milho_t": 0,
+   "soja_t": 18640
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "São Patrício",
+   "codigo_ibge": 5220280,
+   "lat": -15.35,
+   "lon": -49.818,
+   "milho_t": 1643,
+   "soja_t": 26
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Taquaral de Goiás",
+   "codigo_ibge": 5221007,
+   "lat": -16.0521,
+   "lon": -49.6039,
+   "milho_t": 2108,
+   "soja_t": 2334
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Terezópolis de Goiás",
+   "codigo_ibge": 5221197,
+   "lat": -16.3945,
+   "lon": -49.0797,
+   "milho_t": 4769,
+   "soja_t": 3947
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Trindade",
+   "codigo_ibge": 5221403,
+   "lat": -16.6517,
+   "lon": -49.4927,
+   "milho_t": 22441,
+   "soja_t": 19718
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Turvânia",
+   "codigo_ibge": 5221502,
+   "lat": -16.6125,
+   "lon": -50.1369,
+   "milho_t": 69200,
+   "soja_t": 95400
+  },
+  {
+   "uf": "GO",
+   "regiao": "Centro Goiano",
+   "municipio": "Uruana",
+   "codigo_ibge": 5221700,
+   "lat": -15.4993,
+   "lon": -49.6861,
+   "milho_t": 11250,
+   "soja_t": 9900
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Abadiânia",
+   "codigo_ibge": 5200100,
+   "lat": -16.197,
+   "lon": -48.7057,
+   "milho_t": 8766,
+   "soja_t": 23567
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Alexânia",
+   "codigo_ibge": 5200308,
+   "lat": -16.0834,
+   "lon": -48.5076,
+   "milho_t": 24964,
+   "soja_t": 18375
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Alvorada do Norte",
+   "codigo_ibge": 5200803,
+   "lat": -14.4797,
+   "lon": -46.491,
+   "milho_t": 4363,
+   "soja_t": 9142
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Buritinópolis",
+   "codigo_ibge": 5203962,
+   "lat": -14.4772,
+   "lon": -46.4076,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Cabeceiras",
+   "codigo_ibge": 5204003,
+   "lat": -15.7995,
+   "lon": -46.9265,
+   "milho_t": 143615,
+   "soja_t": 122382
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Cidade Ocidental",
+   "codigo_ibge": 5205497,
+   "lat": -16.0765,
+   "lon": -47.9252,
+   "milho_t": 31265,
+   "soja_t": 23261
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Cocalzinho de Goiás",
+   "codigo_ibge": 5205513,
+   "lat": -15.7914,
+   "lon": -48.7747,
+   "milho_t": 31069,
+   "soja_t": 39650
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Corumbá de Goiás",
+   "codigo_ibge": 5205802,
+   "lat": -15.9245,
+   "lon": -48.8117,
+   "milho_t": 12605,
+   "soja_t": 29694
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Cristalina",
+   "codigo_ibge": 5206206,
+   "lat": -16.7676,
+   "lon": -47.6131,
+   "milho_t": 550855,
+   "soja_t": 1256600
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Damianópolis",
+   "codigo_ibge": 5206701,
+   "lat": -14.5604,
+   "lon": -46.178,
+   "milho_t": 0,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Divinópolis de Goiás",
+   "codigo_ibge": 5208301,
+   "lat": -13.2853,
+   "lon": -46.3999,
+   "milho_t": 0,
+   "soja_t": 153
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Flores de Goiás",
+   "codigo_ibge": 5207907,
+   "lat": -14.4451,
+   "lon": -47.0417,
+   "milho_t": 33306,
+   "soja_t": 16059
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Formosa",
+   "codigo_ibge": 5208004,
+   "lat": -15.54,
+   "lon": -47.337,
+   "milho_t": 66643,
+   "soja_t": 94582
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Guarani de Goiás",
+   "codigo_ibge": 5209408,
+   "lat": -13.9421,
+   "lon": -46.4868,
+   "milho_t": 210,
+   "soja_t": 745
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Iaciara",
+   "codigo_ibge": 5209903,
+   "lat": -14.1011,
+   "lon": -46.6335,
+   "milho_t": 1571,
+   "soja_t": 7667
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Luziânia",
+   "codigo_ibge": 5212501,
+   "lat": -16.253,
+   "lon": -47.95,
+   "milho_t": 186257,
+   "soja_t": 260679
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Mambaí",
+   "codigo_ibge": 5212709,
+   "lat": -14.4823,
+   "lon": -46.1165,
+   "milho_t": 0,
+   "soja_t": 141
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Mimoso de Goiás",
+   "codigo_ibge": 5213053,
+   "lat": -15.0515,
+   "lon": -48.1611,
+   "milho_t": 45678,
+   "soja_t": 82478
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Novo Gama",
+   "codigo_ibge": 5215231,
+   "lat": -16.0592,
+   "lon": -48.0417,
+   "milho_t": 2345,
+   "soja_t": 1110
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Padre Bernardo",
+   "codigo_ibge": 5215603,
+   "lat": -15.1605,
+   "lon": -48.2833,
+   "milho_t": 154167,
+   "soja_t": 238082
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Pirenópolis",
+   "codigo_ibge": 5217302,
+   "lat": -15.8507,
+   "lon": -48.9584,
+   "milho_t": 5236,
+   "soja_t": 15456
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Planaltina",
+   "codigo_ibge": 5217609,
+   "lat": -15.452,
+   "lon": -47.6089,
+   "milho_t": 54904,
+   "soja_t": 97592
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Posse",
+   "codigo_ibge": 5218300,
+   "lat": -14.0859,
+   "lon": -46.3704,
+   "milho_t": 4620,
+   "soja_t": 7082
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Santo Antônio do Descoberto",
+   "codigo_ibge": 5219753,
+   "lat": -15.9412,
+   "lon": -48.2578,
+   "milho_t": 4931,
+   "soja_t": 5349
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Simolândia",
+   "codigo_ibge": 5220686,
+   "lat": -14.4644,
+   "lon": -46.4847,
+   "milho_t": 1224,
+   "soja_t": 3334
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "São Domingos",
+   "codigo_ibge": 5219803,
+   "lat": -13.621,
+   "lon": -46.7415,
+   "milho_t": 12684,
+   "soja_t": 27356
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Sítio d'Abadia",
+   "codigo_ibge": 5220702,
+   "lat": -14.7992,
+   "lon": -46.2506,
+   "milho_t": 6695,
+   "soja_t": 26583
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Valparaíso de Goiás",
+   "codigo_ibge": 5221858,
+   "lat": -16.0651,
+   "lon": -47.9757,
+   "milho_t": 0,
+   "soja_t": 295
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Vila Boa",
+   "codigo_ibge": 5222203,
+   "lat": -15.0387,
+   "lon": -47.052,
+   "milho_t": 3452,
+   "soja_t": 1759
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Vila Propício",
+   "codigo_ibge": 5222302,
+   "lat": -15.4542,
+   "lon": -48.8819,
+   "milho_t": 35100,
+   "soja_t": 57050
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Água Fria de Goiás",
+   "codigo_ibge": 5200175,
+   "lat": -14.9778,
+   "lon": -47.7823,
+   "milho_t": 166567,
+   "soja_t": 144520
+  },
+  {
+   "uf": "GO",
+   "regiao": "Leste Goiano",
+   "municipio": "Águas Lindas de Goiás",
+   "codigo_ibge": 5200258,
+   "lat": -15.7617,
+   "lon": -48.2816,
+   "milho_t": 2090,
+   "soja_t": 1863
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Aragarças",
+   "codigo_ibge": 5201702,
+   "lat": -15.8955,
+   "lon": -52.2372,
+   "milho_t": 0,
+   "soja_t": 1155
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Araguapaz",
+   "codigo_ibge": 5202155,
+   "lat": -15.0909,
+   "lon": -50.6315,
+   "milho_t": 640,
+   "soja_t": 14507
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Arenópolis",
+   "codigo_ibge": 5202353,
+   "lat": -16.3837,
+   "lon": -51.5563,
+   "milho_t": 0,
+   "soja_t": 53720
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Aruanã",
+   "codigo_ibge": 5202502,
+   "lat": -14.9166,
+   "lon": -51.075,
+   "milho_t": 2197,
+   "soja_t": 42640
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Baliza",
+   "codigo_ibge": 5203104,
+   "lat": -16.1966,
+   "lon": -52.5393,
+   "milho_t": 8360,
+   "soja_t": 35560
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Bom Jardim de Goiás",
+   "codigo_ibge": 5203401,
+   "lat": -16.2063,
+   "lon": -52.1728,
+   "milho_t": 0,
+   "soja_t": 63540
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Britânia",
+   "codigo_ibge": 5203807,
+   "lat": -15.2428,
+   "lon": -51.1602,
+   "milho_t": 532,
+   "soja_t": 20644
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Crixás",
+   "codigo_ibge": 5206404,
+   "lat": -14.5412,
+   "lon": -49.974,
+   "milho_t": 2290,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Diorama",
+   "codigo_ibge": 5207105,
+   "lat": -16.2329,
+   "lon": -51.2543,
+   "milho_t": 15000,
+   "soja_t": 20880
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Faina",
+   "codigo_ibge": 5207535,
+   "lat": -15.4473,
+   "lon": -50.3622,
+   "milho_t": 564,
+   "soja_t": 173
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Goiás",
+   "codigo_ibge": 5208905,
+   "lat": -15.9333,
+   "lon": -50.14,
+   "milho_t": 16040,
+   "soja_t": 25067
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Itapirapuã",
+   "codigo_ibge": 5211008,
+   "lat": -15.8205,
+   "lon": -50.6094,
+   "milho_t": 1041,
+   "soja_t": 16320
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Jussara",
+   "codigo_ibge": 5212204,
+   "lat": -15.8659,
+   "lon": -50.8668,
+   "milho_t": 4367,
+   "soja_t": 47733
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Matrinchã",
+   "codigo_ibge": 5212956,
+   "lat": -15.4342,
+   "lon": -50.7456,
+   "milho_t": 6750,
+   "soja_t": 37733
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Montes Claros de Goiás",
+   "codigo_ibge": 5213707,
+   "lat": -16.0059,
+   "lon": -51.3979,
+   "milho_t": 19200,
+   "soja_t": 174080
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Mozarlândia",
+   "codigo_ibge": 5214002,
+   "lat": -14.7457,
+   "lon": -50.5713,
+   "milho_t": 1600,
+   "soja_t": 12480
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Mundo Novo",
+   "codigo_ibge": 5214051,
+   "lat": -13.7729,
+   "lon": -50.2814,
+   "milho_t": 3577,
+   "soja_t": 49649
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Nova Crixás",
+   "codigo_ibge": 5214838,
+   "lat": -14.0957,
+   "lon": -50.33,
+   "milho_t": 16233,
+   "soja_t": 135483
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Novo Planalto",
+   "codigo_ibge": 5215256,
+   "lat": -13.2424,
+   "lon": -49.506,
+   "milho_t": 1308,
+   "soja_t": 35774
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Piranhas",
+   "codigo_ibge": 5217203,
+   "lat": -16.4258,
+   "lon": -51.8235,
+   "milho_t": 0,
+   "soja_t": 156746
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Santa Fé de Goiás",
+   "codigo_ibge": 5219258,
+   "lat": -15.7664,
+   "lon": -51.1037,
+   "milho_t": 1667,
+   "soja_t": 21107
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "São Miguel do Araguaia",
+   "codigo_ibge": 5220207,
+   "lat": -13.2731,
+   "lon": -50.1634,
+   "milho_t": 1294,
+   "soja_t": 12982
+  },
+  {
+   "uf": "GO",
+   "regiao": "Noroeste Goiano",
+   "municipio": "Uirapuru",
+   "codigo_ibge": 5221577,
+   "lat": -14.2835,
+   "lon": -49.9201,
+   "milho_t": 677,
+   "soja_t": 4997
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Alto Horizonte",
+   "codigo_ibge": 5200555,
+   "lat": -14.1978,
+   "lon": -49.3378,
+   "milho_t": 331,
+   "soja_t": 1651
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Alto Paraíso de Goiás",
+   "codigo_ibge": 5200605,
+   "lat": -14.1305,
+   "lon": -47.51,
+   "milho_t": 43048,
+   "soja_t": 51513
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Amaralina",
+   "codigo_ibge": 5200829,
+   "lat": -13.9236,
+   "lon": -49.2962,
+   "milho_t": 1033,
+   "soja_t": 12023
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Bonópolis",
+   "codigo_ibge": 5203575,
+   "lat": -13.6329,
+   "lon": -49.8106,
+   "milho_t": 2674,
+   "soja_t": 77996
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Campinaçu",
+   "codigo_ibge": 5204656,
+   "lat": -13.787,
+   "lon": -48.5704,
+   "milho_t": 1025,
+   "soja_t": 8577
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Campinorte",
+   "codigo_ibge": 5204706,
+   "lat": -14.3137,
+   "lon": -49.1511,
+   "milho_t": 14215,
+   "soja_t": 38293
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Campos Belos",
+   "codigo_ibge": 5204904,
+   "lat": -13.035,
+   "lon": -46.7681,
+   "milho_t": 0,
+   "soja_t": 306
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Campos Verdes",
+   "codigo_ibge": 5204953,
+   "lat": -14.2442,
+   "lon": -49.6528,
+   "milho_t": 348,
+   "soja_t": 320
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Cavalcante",
+   "codigo_ibge": 5205307,
+   "lat": -13.7976,
+   "lon": -47.4566,
+   "milho_t": 0,
+   "soja_t": 5946
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Colinas do Sul",
+   "codigo_ibge": 5205521,
+   "lat": -14.1528,
+   "lon": -48.076,
+   "milho_t": 283,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Estrela do Norte",
+   "codigo_ibge": 5207501,
+   "lat": -13.8665,
+   "lon": -49.0716,
+   "milho_t": 1758,
+   "soja_t": 4826
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Formoso",
+   "codigo_ibge": 5208103,
+   "lat": -13.6499,
+   "lon": -48.8775,
+   "milho_t": 2184,
+   "soja_t": 173
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Mara Rosa",
+   "codigo_ibge": 5212808,
+   "lat": -14.0148,
+   "lon": -49.1777,
+   "milho_t": 5085,
+   "soja_t": 22298
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Minaçu",
+   "codigo_ibge": 5213087,
+   "lat": -13.5304,
+   "lon": -48.2206,
+   "milho_t": 1255,
+   "soja_t": 6535
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Monte Alegre de Goiás",
+   "codigo_ibge": 5213509,
+   "lat": -13.2552,
+   "lon": -46.8928,
+   "milho_t": 300,
+   "soja_t": 5582
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Montividiu do Norte",
+   "codigo_ibge": 5213772,
+   "lat": -13.3485,
+   "lon": -48.6853,
+   "milho_t": 1097,
+   "soja_t": 10695
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Mutunópolis",
+   "codigo_ibge": 5214101,
+   "lat": -13.7303,
+   "lon": -49.2745,
+   "milho_t": 1255,
+   "soja_t": 3098
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Niquelândia",
+   "codigo_ibge": 5214606,
+   "lat": -14.4662,
+   "lon": -48.4599,
+   "milho_t": 55331,
+   "soja_t": 226400
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Nova Iguaçu de Goiás",
+   "codigo_ibge": 5214879,
+   "lat": -14.2868,
+   "lon": -49.3872,
+   "milho_t": 287,
+   "soja_t": 475
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Nova Roma",
+   "codigo_ibge": 5214903,
+   "lat": -13.7388,
+   "lon": -46.8734,
+   "milho_t": 0,
+   "soja_t": 1822
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Porangatu",
+   "codigo_ibge": 5218003,
+   "lat": -13.4391,
+   "lon": -49.1503,
+   "milho_t": 8966,
+   "soja_t": 63053
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Santa Tereza de Goiás",
+   "codigo_ibge": 5219605,
+   "lat": -13.7138,
+   "lon": -49.0144,
+   "milho_t": 524,
+   "soja_t": 6994
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Santa Terezinha de Goiás",
+   "codigo_ibge": 5219704,
+   "lat": -14.4326,
+   "lon": -49.7091,
+   "milho_t": 1533,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "São João d'Aliança",
+   "codigo_ibge": 5220009,
+   "lat": -14.7048,
+   "lon": -47.5228,
+   "milho_t": 131158,
+   "soja_t": 145057
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Teresina de Goiás",
+   "codigo_ibge": 5221080,
+   "lat": -13.7801,
+   "lon": -47.2659,
+   "milho_t": 0,
+   "soja_t": 612
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Trombas",
+   "codigo_ibge": 5221452,
+   "lat": -13.5079,
+   "lon": -48.7417,
+   "milho_t": 90,
+   "soja_t": 1121
+  },
+  {
+   "uf": "GO",
+   "regiao": "Norte Goiano",
+   "municipio": "Uruaçu",
+   "codigo_ibge": 5221601,
+   "lat": -14.5238,
+   "lon": -49.1396,
+   "milho_t": 25168,
+   "soja_t": 83907
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Acreúna",
+   "codigo_ibge": 5200134,
+   "lat": -17.396,
+   "lon": -50.3749,
+   "milho_t": 170264,
+   "soja_t": 198657
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Aloândia",
+   "codigo_ibge": 5200506,
+   "lat": -17.7292,
+   "lon": -49.4769,
+   "milho_t": 4512,
+   "soja_t": 10413
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Anhanguera",
+   "codigo_ibge": 5201207,
+   "lat": -18.3339,
+   "lon": -48.2204,
+   "milho_t": 0,
+   "soja_t": 938
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Aparecida do Rio Doce",
+   "codigo_ibge": 5201454,
+   "lat": -18.2941,
+   "lon": -51.1516,
+   "milho_t": 5345,
+   "soja_t": 9608
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Aporé",
+   "codigo_ibge": 5201504,
+   "lat": -18.9607,
+   "lon": -51.9232,
+   "milho_t": 14482,
+   "soja_t": 58150
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Bom Jesus de Goiás",
+   "codigo_ibge": 5203500,
+   "lat": -18.2173,
+   "lon": -49.74,
+   "milho_t": 192279,
+   "soja_t": 240183
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Buriti Alegre",
+   "codigo_ibge": 5203906,
+   "lat": -18.1378,
+   "lon": -49.0404,
+   "milho_t": 29859,
+   "soja_t": 60417
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cachoeira Alta",
+   "codigo_ibge": 5204102,
+   "lat": -18.7618,
+   "lon": -50.9432,
+   "milho_t": 0,
+   "soja_t": 1448
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cachoeira Dourada",
+   "codigo_ibge": 5204250,
+   "lat": -18.4859,
+   "lon": -49.4766,
+   "milho_t": 24647,
+   "soja_t": 44803
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Caiapônia",
+   "codigo_ibge": 5204409,
+   "lat": -16.9539,
+   "lon": -51.8091,
+   "milho_t": 332342,
+   "soja_t": 342000
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Caldas Novas",
+   "codigo_ibge": 5204508,
+   "lat": -17.7441,
+   "lon": -48.6246,
+   "milho_t": 63875,
+   "soja_t": 122267
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Campestre de Goiás",
+   "codigo_ibge": 5204607,
+   "lat": -16.7624,
+   "lon": -49.695,
+   "milho_t": 2866,
+   "soja_t": 3083
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Campo Alegre de Goiás",
+   "codigo_ibge": 5204805,
+   "lat": -17.6363,
+   "lon": -47.7768,
+   "milho_t": 78260,
+   "soja_t": 272667
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Castelândia",
+   "codigo_ibge": 5205059,
+   "lat": -18.0921,
+   "lon": -50.203,
+   "milho_t": 9640,
+   "soja_t": 14987
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Catalão",
+   "codigo_ibge": 5205109,
+   "lat": -18.1656,
+   "lon": -47.944,
+   "milho_t": 102592,
+   "soja_t": 434167
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Caçu",
+   "codigo_ibge": 5204300,
+   "lat": -18.5594,
+   "lon": -51.1328,
+   "milho_t": 5240,
+   "soja_t": 10551
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cezarina",
+   "codigo_ibge": 5205455,
+   "lat": -16.9718,
+   "lon": -49.7758,
+   "milho_t": 10847,
+   "soja_t": 24827
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Chapadão do Céu",
+   "codigo_ibge": 5205471,
+   "lat": -18.4073,
+   "lon": -52.549,
+   "milho_t": 461438,
+   "soja_t": 345217
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Corumbaíba",
+   "codigo_ibge": 5205901,
+   "lat": -18.1415,
+   "lon": -48.5626,
+   "milho_t": 3703,
+   "soja_t": 46250
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cristianópolis",
+   "codigo_ibge": 5206305,
+   "lat": -17.1987,
+   "lon": -48.7034,
+   "milho_t": 9453,
+   "soja_t": 21310
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cromínia",
+   "codigo_ibge": 5206503,
+   "lat": -17.2883,
+   "lon": -49.3798,
+   "milho_t": 5942,
+   "soja_t": 16560
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Cumari",
+   "codigo_ibge": 5206602,
+   "lat": -18.2644,
+   "lon": -48.1511,
+   "milho_t": 1365,
+   "soja_t": 12323
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Davinópolis",
+   "codigo_ibge": 5206909,
+   "lat": -18.1501,
+   "lon": -47.5568,
+   "milho_t": 2378,
+   "soja_t": 11080
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Doverlândia",
+   "codigo_ibge": 5207253,
+   "lat": -16.7188,
+   "lon": -52.3189,
+   "milho_t": 169020,
+   "soja_t": 176567
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Edealina",
+   "codigo_ibge": 5207352,
+   "lat": -17.4239,
+   "lon": -49.6644,
+   "milho_t": 15474,
+   "soja_t": 73967
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Edéia",
+   "codigo_ibge": 5207402,
+   "lat": -17.3406,
+   "lon": -49.9295,
+   "milho_t": 35010,
+   "soja_t": 101293
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Gameleira de Goiás",
+   "codigo_ibge": 5208152,
+   "lat": -16.4854,
+   "lon": -48.6454,
+   "milho_t": 81562,
+   "soja_t": 102186
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Goiandira",
+   "codigo_ibge": 5208509,
+   "lat": -18.1352,
+   "lon": -48.0875,
+   "milho_t": 6153,
+   "soja_t": 12537
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Goiatuba",
+   "codigo_ibge": 5209101,
+   "lat": -18.0105,
+   "lon": -49.3658,
+   "milho_t": 151357,
+   "soja_t": 279390
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Gouvelândia",
+   "codigo_ibge": 5209150,
+   "lat": -18.6238,
+   "lon": -50.0805,
+   "milho_t": 4790,
+   "soja_t": 23892
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Inaciolândia",
+   "codigo_ibge": 5209937,
+   "lat": -18.4869,
+   "lon": -49.9888,
+   "milho_t": 32003,
+   "soja_t": 55000
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Indiara",
+   "codigo_ibge": 5209952,
+   "lat": -17.1387,
+   "lon": -49.9862,
+   "milho_t": 59060,
+   "soja_t": 115600
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Ipameri",
+   "codigo_ibge": 5210109,
+   "lat": -17.7215,
+   "lon": -48.1581,
+   "milho_t": 184938,
+   "soja_t": 384400
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Itajá",
+   "codigo_ibge": 5210802,
+   "lat": -19.0673,
+   "lon": -51.5495,
+   "milho_t": 63,
+   "soja_t": 8832
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Itarumã",
+   "codigo_ibge": 5211305,
+   "lat": -18.7646,
+   "lon": -51.3485,
+   "milho_t": 6363,
+   "soja_t": 19600
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Itumbiara",
+   "codigo_ibge": 5211503,
+   "lat": -18.4093,
+   "lon": -49.2158,
+   "milho_t": 91847,
+   "soja_t": 176821
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Jandaia",
+   "codigo_ibge": 5211701,
+   "lat": -17.0481,
+   "lon": -50.1453,
+   "milho_t": 13700,
+   "soja_t": 41483
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Jataí",
+   "codigo_ibge": 5211909,
+   "lat": -17.8784,
+   "lon": -51.7204,
+   "milho_t": 1791390,
+   "soja_t": 1196000
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Joviânia",
+   "codigo_ibge": 5212105,
+   "lat": -17.802,
+   "lon": -49.6197,
+   "milho_t": 55501,
+   "soja_t": 86040
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Lagoa Santa",
+   "codigo_ibge": 5212253,
+   "lat": -19.1832,
+   "lon": -51.3998,
+   "milho_t": 47,
+   "soja_t": 0
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Mairipotaba",
+   "codigo_ibge": 5212600,
+   "lat": -17.2975,
+   "lon": -49.4898,
+   "milho_t": 1145,
+   "soja_t": 17595
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Marzagão",
+   "codigo_ibge": 5212907,
+   "lat": -17.983,
+   "lon": -48.6415,
+   "milho_t": 2130,
+   "soja_t": 6043
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Maurilândia",
+   "codigo_ibge": 5213004,
+   "lat": -17.9719,
+   "lon": -50.3388,
+   "milho_t": 22990,
+   "soja_t": 37948
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Mineiros",
+   "codigo_ibge": 5213103,
+   "lat": -17.5654,
+   "lon": -52.5537,
+   "milho_t": 688784,
+   "soja_t": 459167
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Montividiu",
+   "codigo_ibge": 5213756,
+   "lat": -17.4439,
+   "lon": -51.1728,
+   "milho_t": 744730,
+   "soja_t": 543633
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Morrinhos",
+   "codigo_ibge": 5213806,
+   "lat": -17.7334,
+   "lon": -49.1059,
+   "milho_t": 54941,
+   "soja_t": 137320
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Nova Aurora",
+   "codigo_ibge": 5214804,
+   "lat": -18.0597,
+   "lon": -48.2552,
+   "milho_t": 1517,
+   "soja_t": 1888
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Orizona",
+   "codigo_ibge": 5215306,
+   "lat": -17.0334,
+   "lon": -48.2964,
+   "milho_t": 85496,
+   "soja_t": 152871
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Ouvidor",
+   "codigo_ibge": 5215504,
+   "lat": -18.2277,
+   "lon": -47.8355,
+   "milho_t": 5442,
+   "soja_t": 17480
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Palestina de Goiás",
+   "codigo_ibge": 5215652,
+   "lat": -16.7392,
+   "lon": -51.5309,
+   "milho_t": 55000,
+   "soja_t": 58967
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Palmeiras de Goiás",
+   "codigo_ibge": 5215702,
+   "lat": -16.8044,
+   "lon": -49.924,
+   "milho_t": 52050,
+   "soja_t": 136033
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Palmelo",
+   "codigo_ibge": 5215801,
+   "lat": -17.3258,
+   "lon": -48.426,
+   "milho_t": 4645,
+   "soja_t": 4487
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Palminópolis",
+   "codigo_ibge": 5215900,
+   "lat": -16.7924,
+   "lon": -50.1652,
+   "milho_t": 9400,
+   "soja_t": 21597
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Panamá",
+   "codigo_ibge": 5216007,
+   "lat": -18.1783,
+   "lon": -49.355,
+   "milho_t": 20277,
+   "soja_t": 32990
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Paranaiguara",
+   "codigo_ibge": 5216304,
+   "lat": -18.9141,
+   "lon": -50.6539,
+   "milho_t": 4051,
+   "soja_t": 10060
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Paraúna",
+   "codigo_ibge": 5216403,
+   "lat": -16.9463,
+   "lon": -50.4484,
+   "milho_t": 291430,
+   "soja_t": 526050
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Perolândia",
+   "codigo_ibge": 5216452,
+   "lat": -17.5258,
+   "lon": -52.065,
+   "milho_t": 236506,
+   "soja_t": 179947
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Piracanjuba",
+   "codigo_ibge": 5217104,
+   "lat": -17.302,
+   "lon": -49.017,
+   "milho_t": 72748,
+   "soja_t": 263900
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Pires do Rio",
+   "codigo_ibge": 5217401,
+   "lat": -17.3019,
+   "lon": -48.2768,
+   "milho_t": 35437,
+   "soja_t": 52268
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Pontalina",
+   "codigo_ibge": 5217708,
+   "lat": -17.5225,
+   "lon": -49.4489,
+   "milho_t": 29132,
+   "soja_t": 101300
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Porteirão",
+   "codigo_ibge": 5218052,
+   "lat": -17.8143,
+   "lon": -50.1653,
+   "milho_t": 42005,
+   "soja_t": 58125
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Portelândia",
+   "codigo_ibge": 5218102,
+   "lat": -17.3554,
+   "lon": -52.6799,
+   "milho_t": 91611,
+   "soja_t": 76200
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Professor Jamil",
+   "codigo_ibge": 5218391,
+   "lat": -17.2497,
+   "lon": -49.244,
+   "milho_t": 1954,
+   "soja_t": 6290
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Quirinópolis",
+   "codigo_ibge": 5218508,
+   "lat": -18.4472,
+   "lon": -50.4547,
+   "milho_t": 53642,
+   "soja_t": 126400
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Rio Quente",
+   "codigo_ibge": 5218789,
+   "lat": -17.774,
+   "lon": -48.7725,
+   "milho_t": 163,
+   "soja_t": 1171
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Rio Verde",
+   "codigo_ibge": 5218805,
+   "lat": -17.7923,
+   "lon": -50.9192,
+   "milho_t": 2207953,
+   "soja_t": 1660267
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Santa Cruz de Goiás",
+   "codigo_ibge": 5219209,
+   "lat": -17.3155,
+   "lon": -48.4809,
+   "milho_t": 59948,
+   "soja_t": 92667
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Santa Helena de Goiás",
+   "codigo_ibge": 5219308,
+   "lat": -17.8115,
+   "lon": -50.5977,
+   "milho_t": 289227,
+   "soja_t": 232267
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Santa Rita do Araguaia",
+   "codigo_ibge": 5219407,
+   "lat": -17.3269,
+   "lon": -53.2012,
+   "milho_t": 35170,
+   "soja_t": 30800
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Santo Antônio da Barra",
+   "codigo_ibge": 5219712,
+   "lat": -17.5585,
+   "lon": -50.6345,
+   "milho_t": 36291,
+   "soja_t": 37750
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Serranópolis",
+   "codigo_ibge": 5220504,
+   "lat": -18.3067,
+   "lon": -51.9586,
+   "milho_t": 144080,
+   "soja_t": 156420
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Silvânia",
+   "codigo_ibge": 5220603,
+   "lat": -16.66,
+   "lon": -48.6083,
+   "milho_t": 222850,
+   "soja_t": 335617
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "São João da Paraúna",
+   "codigo_ibge": 5220058,
+   "lat": -16.8126,
+   "lon": -50.4092,
+   "milho_t": 25400,
+   "soja_t": 47473
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "São Miguel do Passa Quatro",
+   "codigo_ibge": 5220264,
+   "lat": -17.0582,
+   "lon": -48.662,
+   "milho_t": 56617,
+   "soja_t": 48980
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "São Simão",
+   "codigo_ibge": 5220405,
+   "lat": -18.996,
+   "lon": -50.547,
+   "milho_t": 0,
+   "soja_t": 1760
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Três Ranchos",
+   "codigo_ibge": 5221304,
+   "lat": -18.3539,
+   "lon": -47.776,
+   "milho_t": 2136,
+   "soja_t": 2567
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Turvelândia",
+   "codigo_ibge": 5221551,
+   "lat": -17.8502,
+   "lon": -50.3024,
+   "milho_t": 46989,
+   "soja_t": 105287
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Urutaí",
+   "codigo_ibge": 5221809,
+   "lat": -17.4651,
+   "lon": -48.2015,
+   "milho_t": 15530,
+   "soja_t": 22042
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Varjão",
+   "codigo_ibge": 5221908,
+   "lat": -17.0471,
+   "lon": -49.6312,
+   "milho_t": 5918,
+   "soja_t": 9816
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Vianópolis",
+   "codigo_ibge": 5222005,
+   "lat": -16.7405,
+   "lon": -48.5159,
+   "milho_t": 60347,
+   "soja_t": 148539
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Vicentinópolis",
+   "codigo_ibge": 5222054,
+   "lat": -17.7322,
+   "lon": -49.8047,
+   "milho_t": 51996,
+   "soja_t": 102193
+  },
+  {
+   "uf": "GO",
+   "regiao": "Sul Goiano",
+   "municipio": "Água Limpa",
+   "codigo_ibge": 5200209,
+   "lat": -18.0771,
+   "lon": -48.7603,
+   "milho_t": 235,
+   "soja_t": 658
   }
  ]
 }

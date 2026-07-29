@@ -121,7 +121,10 @@ tbody tr.grp.sel td{background:#FFE9DC;}
     <button class="view-btn" data-grp="slc" onclick="setGrp('slc')">SLC</button>
     <button class="view-btn" data-grp="ba" onclick="setGrp('ba')">BrasilAgro</button>
     <button class="view-btn" data-grp="uf-rs" onclick="setGrp('uf-rs')">RS</button>
+    <button class="view-btn" data-grp="uf-pr" onclick="setGrp('uf-pr')">PR</button>
+    <button class="view-btn" data-grp="uf-ms" onclick="setGrp('uf-ms')">MS</button>
     <button class="view-btn" data-grp="uf-mt" onclick="setGrp('uf-mt')">MT</button>
+    <button class="view-btn" data-grp="uf-go" onclick="setGrp('uf-go')">GO</button>
     <button class="view-btn" data-grp="uf-matopiba" onclick="setGrp('uf-matopiba')">MATOPIBA</button>
   </div>
   <div class="view-btns sub-btns" id="mtp-btns" style="display:none">
@@ -175,14 +178,15 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 <div class="note-bar">
   Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. A multi-point average has a naturally narrow band (spatial cancellation) — select a single point to see the real spread.
-  <em>State groups</em> (RS · MT · MA · TO · PI · BA): each region row is averaged over <em>every</em> municipality it contains (1,635 in total) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), the other five by <em>IBGE</em> meso-regions. The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is, which matters most where output is concentrated (Extremo Oeste Baiano alone is 99.6% of BA soybean). The 7-day forecast samples the highest-weight grid cells of each region; the historical series uses all of them.
+  <em>State groups</em> (RS · PR · MS · MT · GO · MATOPIBA): each region row is averaged over <em>every</em> municipality it contains (2,359 in total, 51 regions) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), the other eight states by <em>IBGE</em> meso-regions. MATOPIBA pools MA, TO, PI and BA, and opens buttons to isolate each. The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is, which matters most where output is concentrated (Extremo Oeste Baiano alone is 99.6% of BA soybean). The 7-day forecast samples the highest-weight grid cells of each region; the historical series uses all of them.
 </div>
 
 <script>
 const FORECAST_URL="https://api.open-meteo.com/v1/forecast";
 const PAST_DAYS=92,FC_DAYS=7;
 const GRPLBL={cap:"Capitals",slc:"SLC Agrícola",ba:"BrasilAgro",
-  "uf-rs":"Rio Grande do Sul","uf-mt":"Mato Grosso","uf-matopiba":"MATOPIBA",
+  "uf-rs":"Rio Grande do Sul","uf-pr":"Paraná","uf-ms":"Mato Grosso do Sul",
+  "uf-mt":"Mato Grosso","uf-go":"Goiás","uf-matopiba":"MATOPIBA",
   "uf-ma":"Maranhão","uf-to":"Tocantins","uf-pi":"Piauí","uf-ba":"Bahia"};
 const WLBL={cap:"population",slc:"planted area"};
 /* Ponderações municipais das regiões — sufixo da chave em history.json
@@ -198,7 +202,8 @@ const hasW=g=>g==="cap"||g==="slc";
    municipal mora no locations.json, não aqui — o browser só consome o resultado.
    A linha ▣ ponderada por nº de municípios reproduz a média estadual real. */
 /* grupos por estado: prefixo "uf-" para não colidir com "ba" = BrasilAgro */
-const REGGRP={"uf-rs":"RS","uf-mt":"MT","uf-matopiba":"MATOPIBA",
+const REGGRP={"uf-rs":"RS","uf-pr":"PR","uf-ms":"MS","uf-mt":"MT","uf-go":"GO",
+              "uf-matopiba":"MATOPIBA",
               "uf-ma":"MA","uf-to":"TO","uf-pi":"PI","uf-ba":"BA"};
 function isReg(g){return g in REGGRP;}
 /* MATOPIBA é um grupo agregado: reúne as regiões dos quatro estados e abre os
@@ -206,12 +211,12 @@ function isReg(g){return g in REGGRP;}
 const MTP="uf-matopiba";
 const MTP_UFS=["uf-ma","uf-to","uf-pi","uf-ba"];
 const inMtp=g=>g===MTP||MTP_UFS.includes(g);
-const UFGRPS=["uf-rs","uf-mt",MTP,...MTP_UFS];
+const UFGRPS=["uf-rs","uf-pr","uf-ms","uf-mt","uf-go",MTP,...MTP_UFS];
 const SCOPE=new URLSearchParams(location.search).get("scope");
 const SCOPE_GROUPS=SCOPE==="agri"?["slc","ba",...UFGRPS]:SCOPE==="fnb"?["cap"]:["cap","slc","ba",...UFGRPS];
-const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC &amp; BrasilAgro farms · growing regions of RS, MT, MA, TO, PI &amp; BA"
+const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC &amp; BrasilAgro farms · growing regions of RS, PR, MS, MT, GO &amp; MATOPIBA"
   :SCOPE==="fnb"?"Current year vs. historical distribution — state capitals (beverage demand proxy)"
-  :"Current year vs. historical distribution — capitals (bars) · farms (SLC · BrasilAgro) · growing regions of RS, MT, MA, TO, PI &amp; BA";
+  :"Current year vs. historical distribution — capitals (bars) · farms (SLC · BrasilAgro) · growing regions of RS, PR, MS, MT, GO &amp; MATOPIBA";
 const POP={"São Paulo":11451245,"Rio de Janeiro":6211423,"Brasília":2817381,"Fortaleza":2428708,"Salvador":2418005,"Belo Horizonte":2315560,"Manaus":2063547,"Curitiba":1773718,"Recife":1488920,"Goiânia":1437237,"Porto Alegre":1332570,"Belém":1303389,"São Luís":1037775,"Maceió":957916,"Campo Grande":897938,"Teresina":866300,"João Pessoa":833932,"Natal":751300,"Cuiabá":650912,"Aracaju":602757,"Florianópolis":537213,"Porto Velho":460434,"Macapá":442933,"Boa Vista":413486,"Rio Branco":364756,"Vitória":322869,"Palmas":302692};
 const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* grade do NASA POWER — a mesma usada em build_regions.py para deduplicar os
