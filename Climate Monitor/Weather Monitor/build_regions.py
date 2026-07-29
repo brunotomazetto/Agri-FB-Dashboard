@@ -86,7 +86,9 @@ def load_cells():
 
 
 # ---------------------------------------------------------------- download
-def fetch_nasa(lat, lon, tries=5):
+def fetch_nasa(lat, lon, tries=12):
+    """Backoff longo: uma queda de rede/DNS não pode matar um job de 20 min —
+    o cache é resumível, mas reiniciar à mão a cada blip é pior que esperar."""
     url = ("https://power.larc.nasa.gov/api/temporal/daily/point"
            f"?parameters=T2M,PRECTOTCORR&community=AG&longitude={lon}&latitude={lat}"
            f"&start={Y0}0101&end={datetime.date.today():%Y%m%d}&format=JSON")
@@ -97,7 +99,9 @@ def fetch_nasa(lat, lon, tries=5):
             return ([f"{k[:4]}-{k[4:6]}-{k[6:]}" for k in p["T2M"]],
                     list(p["T2M"].values()), list(p["PRECTOTCORR"].values()))
         except Exception as e:
-            print(f"    retry {t+1}/{tries} ({str(e)[:50]})", flush=True); time.sleep(6 * (t + 1))
+            w = min(120, 5 * 2 ** min(t, 5))          # 5,10,20,40,80,120,120…
+            print(f"    retry {t+1}/{tries} em {w}s ({str(e)[:60]})", flush=True)
+            time.sleep(w)
     raise RuntimeError(f"falhou NASA {lat},{lon}")
 
 

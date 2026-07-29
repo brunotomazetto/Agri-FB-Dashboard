@@ -23,6 +23,9 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 .view-btn{padding:4px 11px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--gray-mid);font-family:var(--font);transition:all .12s;}
 .view-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);font-weight:700;}
 .view-btn:hover:not(.active){border-color:#ccc;color:var(--gray-dark);}
+/* pai de um subgrupo aberto: marcado sem competir com o filho selecionado */
+.view-btn.parent{border-color:var(--orange);color:var(--orange);font-weight:700;}
+.sub-btns{padding-left:8px;border-left:2px solid var(--orange);}
 .ctrl-sep{width:1px;height:22px;background:var(--border);}
 .main{display:grid;grid-template-columns:minmax(380px,44fr) 56fr;gap:12px;padding:12px 16px;align-items:stretch;}
 .card{background:var(--white);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;min-height:0;}
@@ -117,8 +120,15 @@ tbody tr.grp.sel td{background:#FFE9DC;}
     <button class="view-btn active" data-grp="cap" onclick="setGrp('cap')">Capitals</button>
     <button class="view-btn" data-grp="slc" onclick="setGrp('slc')">SLC</button>
     <button class="view-btn" data-grp="ba" onclick="setGrp('ba')">BrasilAgro</button>
-    <button class="view-btn" data-grp="rs" onclick="setGrp('rs')">RS</button>
-    <button class="view-btn" data-grp="mt" onclick="setGrp('mt')">MT</button>
+    <button class="view-btn" data-grp="uf-rs" onclick="setGrp('uf-rs')">RS</button>
+    <button class="view-btn" data-grp="uf-mt" onclick="setGrp('uf-mt')">MT</button>
+    <button class="view-btn" data-grp="uf-matopiba" onclick="setGrp('uf-matopiba')">MATOPIBA</button>
+  </div>
+  <div class="view-btns sub-btns" id="mtp-btns" style="display:none">
+    <button class="view-btn" data-grp="uf-ma" onclick="setGrp('uf-ma')">MA</button>
+    <button class="view-btn" data-grp="uf-to" onclick="setGrp('uf-to')">TO</button>
+    <button class="view-btn" data-grp="uf-pi" onclick="setGrp('uf-pi')">PI</button>
+    <button class="view-btn" data-grp="uf-ba" onclick="setGrp('uf-ba')">BA</button>
   </div>
   <div class="ctrl-sep"></div>
   <span class="view-label">Granularity:</span>
@@ -165,32 +175,43 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 <div class="note-bar">
   Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. A multi-point average has a naturally narrow band (spatial cancellation) — select a single point to see the real spread.
-  <em>RS</em> and <em>MT</em>: each region row is averaged over <em>every</em> municipality it contains (638 in total) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), RS by the 7 <em>IBGE</em> meso-regions (497/497). The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is.
+  <em>State groups</em> (RS · MT · MA · TO · PI · BA): each region row is averaged over <em>every</em> municipality it contains (1,635 in total) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), the other five by <em>IBGE</em> meso-regions. The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is, which matters most where output is concentrated (Extremo Oeste Baiano alone is 99.6% of BA soybean). The 7-day forecast samples the highest-weight grid cells of each region; the historical series uses all of them.
 </div>
 
 <script>
 const FORECAST_URL="https://api.open-meteo.com/v1/forecast";
 const PAST_DAYS=92,FC_DAYS=7;
-const GRPLBL={cap:"Capitals",slc:"SLC Agrícola",ba:"BrasilAgro",rs:"Rio Grande do Sul",mt:"Mato Grosso"};
+const GRPLBL={cap:"Capitals",slc:"SLC Agrícola",ba:"BrasilAgro",
+  "uf-rs":"Rio Grande do Sul","uf-mt":"Mato Grosso","uf-matopiba":"MATOPIBA",
+  "uf-ma":"Maranhão","uf-to":"Tocantins","uf-pi":"Piauí","uf-ba":"Bahia"};
 const WLBL={cap:"population",slc:"planted area"};
 /* Ponderações municipais das regiões — sufixo da chave em history.json
    ("UF|Região|n"). Não são um filtro global: viram três linhas de média
    estadual no topo da tabela de RS/MT, já que só se aplicam a esses grupos. */
-const WGT={n:{row:"▣ State average (simple)",  chart:"simple mean of all municipalities", fld:"n"},
-           m:{row:"▣ State average — 🌽 corn weighted", chart:"weighted by corn output (2022–24 avg)", fld:"milho_t"},
-           s:{row:"▣ State average — 🌱 soybean weighted", chart:"weighted by soybean output (2022–24 avg)", fld:"soja_t"}};
+const WGT={n:{suf:"(simple)",              chart:"simple mean of all municipalities", fld:"n"},
+           m:{suf:"— 🌽 corn weighted",    chart:"weighted by corn output (2022–24 avg)", fld:"milho_t"},
+           s:{suf:"— 🌱 soybean weighted", chart:"weighted by soybean output (2022–24 avg)", fld:"soja_t"}};
+const wgtRow=k=>"▣ "+(STATE.grp===MTP?"MATOPIBA":"State")+" average "+WGT[k].suf;
 const hasW=g=>g==="cap"||g==="slc";
 /* Grupos "por região" (RS/MT): cada ponto é uma REGIÃO inteira, cuja série já vem
    agregada sobre TODOS os seus municípios em build_regions.py. A ponderação
    municipal mora no locations.json, não aqui — o browser só consome o resultado.
    A linha ▣ ponderada por nº de municípios reproduz a média estadual real. */
-const REGGRP={rs:"RS",mt:"MT"};
+/* grupos por estado: prefixo "uf-" para não colidir com "ba" = BrasilAgro */
+const REGGRP={"uf-rs":"RS","uf-mt":"MT","uf-matopiba":"MATOPIBA",
+              "uf-ma":"MA","uf-to":"TO","uf-pi":"PI","uf-ba":"BA"};
 function isReg(g){return g in REGGRP;}
+/* MATOPIBA é um grupo agregado: reúne as regiões dos quatro estados e abre os
+   botões filhos para isolar um deles */
+const MTP="uf-matopiba";
+const MTP_UFS=["uf-ma","uf-to","uf-pi","uf-ba"];
+const inMtp=g=>g===MTP||MTP_UFS.includes(g);
+const UFGRPS=["uf-rs","uf-mt",MTP,...MTP_UFS];
 const SCOPE=new URLSearchParams(location.search).get("scope");
-const SCOPE_GROUPS=SCOPE==="agri"?["slc","ba","rs","mt"]:SCOPE==="fnb"?["cap"]:["cap","slc","ba","rs","mt"];
-const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC &amp; BrasilAgro farms · RS &amp; MT growing regions"
+const SCOPE_GROUPS=SCOPE==="agri"?["slc","ba",...UFGRPS]:SCOPE==="fnb"?["cap"]:["cap","slc","ba",...UFGRPS];
+const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC &amp; BrasilAgro farms · growing regions of RS, MT, MA, TO, PI &amp; BA"
   :SCOPE==="fnb"?"Current year vs. historical distribution — state capitals (beverage demand proxy)"
-  :"Current year vs. historical distribution — capitals (bars) · farms (SLC · BrasilAgro) · RS &amp; MT regions";
+  :"Current year vs. historical distribution — capitals (bars) · farms (SLC · BrasilAgro) · growing regions of RS, MT, MA, TO, PI &amp; BA";
 const POP={"São Paulo":11451245,"Rio de Janeiro":6211423,"Brasília":2817381,"Fortaleza":2428708,"Salvador":2418005,"Belo Horizonte":2315560,"Manaus":2063547,"Curitiba":1773718,"Recife":1488920,"Goiânia":1437237,"Porto Alegre":1332570,"Belém":1303389,"São Luís":1037775,"Maceió":957916,"Campo Grande":897938,"Teresina":866300,"João Pessoa":833932,"Natal":751300,"Cuiabá":650912,"Aracaju":602757,"Florianópolis":537213,"Porto Velho":460434,"Macapá":442933,"Boa Vista":413486,"Rio Branco":364756,"Vitória":322869,"Palmas":302692};
 const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* grade do NASA POWER — a mesma usada em build_regions.py para deduplicar os
@@ -222,6 +243,7 @@ function applyScope(){
   document.querySelectorAll("[data-grp]").forEach(b=>{if(!SCOPE_GROUPS.includes(b.dataset.grp))b.style.display="none";});
   if(SCOPE_GROUPS.length<2){["sep-grp","lbl-grp","grp-btns"].forEach(id=>document.getElementById(id).style.display="none");}
   act("var",STATE.vr);act("grp",STATE.grp);act("gran",STATE.gran);act("yrs",STATE.yrs);
+  syncMtp();
 }
 async function boot(){
   applyScope();
@@ -250,7 +272,7 @@ function collectRegions(muns){
   for(const m of muns){
     const key=m.uf+"|"+m.regiao;
     let r=by.get(key);
-    if(!r){r={id:"r|"+key,regKey:key,grp:m.uf.toLowerCase(),nome:m.regiao,uf:m.uf,n:0,milho_t:0,soja_t:0,cellsBy:{n:new Map(),m:new Map(),s:new Map()}};by.set(key,r);}
+    if(!r){r={id:"r|"+key,regKey:key,grp:"uf-"+m.uf.toLowerCase(),nome:m.regiao,uf:m.uf,n:0,milho_t:0,soja_t:0,cellsBy:{n:new Map(),m:new Map(),s:new Map()}};by.set(key,r);}
     r.n++;r.milho_t+=m.milho_t||0;r.soja_t+=m.soja_t||0;
     const cl=[Math.round(m.lat/CELL_LAT)*CELL_LAT,Math.round(m.lon/CELL_LON)*CELL_LON];
     const ck=cl[0].toFixed(4)+","+cl[1].toFixed(4);
@@ -262,8 +284,17 @@ function collectRegions(muns){
   }
   return [...by.values()].map(r=>{
     const o={...r,sub:r.n+" municipalities"};
-    o.cellsBy={n:[...r.cellsBy.n.values()],m:[...r.cellsBy.m.values()],s:[...r.cellsBy.s.values()]};
+    o.cellsBy={n:topCells(r.cellsBy.n),m:topCells(r.cellsBy.m),s:topCells(r.cellsBy.s)};
     return o;});
+}
+/* O forecast ao vivo é buscado por célula; com 1.635 municípios em 516 células
+   isso viraria ~14 requests no load. Para o forecast basta uma amostra espacial:
+   ficam as células de maior peso (até FC_CELLS). O histórico, que é o que
+   sustenta a série, continua usando TODAS as células — a agregação é feita no
+   build_regions.py. */
+const FC_CELLS=6;
+function topCells(map){
+  return [...map.values()].sort((a,b)=>b.w-a.w).slice(0,FC_CELLS);
 }
 function applyHist(hist){
   STATE.hist=hist;STATE.years=hist.years.slice();STATE.curYear=Math.max(...hist.years);
@@ -301,13 +332,13 @@ async function setModel(m){
 }
 function matchHist(lat,lon){let b=null,bd=1e9;for(const c of STATE.histPts){const d=Math.abs(c.la-lat)+Math.abs(c.lo-lon);if(d<bd){bd=d;b=c;}}return bd<0.02?b.v:null;}
 /* Um request por coordenada única: pontos simples usam a própria, regiões usam
-   as células da sua grade (as ~189 células cobrem os 638 municípios). Baixa
-   sempre o conjunto "n", que é superconjunto do de milho e do de soja. */
+   a união das suas células amostradas (as três ponderações podem escolher
+   células diferentes, então não dá para assumir que "n" contém as demais). */
 async function fetchLive(pts){
   const CH=45,want=new Map();
   const coordKey=(la,lo)=>la.toFixed(4)+","+lo.toFixed(4);
   for(const p of pts){
-    if(p.regKey)for(const c of p.cellsBy.n)want.set(coordKey(c.lat,c.lon),{lat:c.lat,lon:c.lon});
+    if(p.regKey)for(const k in p.cellsBy)for(const c of p.cellsBy[k])want.set(coordKey(c.lat,c.lon),{lat:c.lat,lon:c.lon});
     else want.set(coordKey(p.lat,p.lon),{lat:p.lat,lon:p.lon});
   }
   const list=[...want.entries()],live=new Map();
@@ -350,7 +381,15 @@ function syncLiveRegions(){
 
 /* ── CONTROLES ── */
 function setVar(v){STATE.vr=v;act("var",v);render();}
-function setGrp(v){STATE.grp=v;STATE.entity=isReg(v)?"st|n":hasW(v)?"wavg":"group";act("grp",v);render();}
+function setGrp(v){STATE.grp=v;STATE.entity=isReg(v)?"st|n":hasW(v)?"wavg":"group";act("grp",v);syncMtp();render();}
+/* abre os botões filhos enquanto MATOPIBA (ou um dos seus estados) está ativo,
+   e mantém o pai marcado como seção quando o filho é que está selecionado */
+function syncMtp(){
+  const on=inMtp(STATE.grp);
+  document.getElementById("mtp-btns").style.display=on?"":"none";
+  const pai=document.querySelector('[data-grp="'+MTP+'"]');
+  if(pai)pai.classList.toggle("parent",on&&STATE.grp!==MTP);
+}
 function setGran(v){STATE.gran=v;act("gran",v);render();}
 function setYrs(v){STATE.yrs=v;act("yrs",v);render();}
 function act(a,v){document.querySelectorAll(`[data-${a}]`).forEach(b=>b.classList.toggle("active",b.dataset[a]==String(v)));}
@@ -409,7 +448,9 @@ function computeSeries(sel,wtd){
 function lastObsIdx(S){for(let k=S.curObs.length-1;k>=0;k--)if(S.curObs[k]!=null)return k;return -1;}
 
 /* ── TABELA ── */
-function groupPts(){return STATE.pts.filter(p=>p.grp===STATE.grp&&p.h);}
+function groupPts(){
+  if(STATE.grp===MTP)return STATE.pts.filter(p=>MTP_UFS.includes(p.grp)&&p.h);
+  return STATE.pts.filter(p=>p.grp===STATE.grp&&p.h);}
 function summary(sel,wtd){const S=computeSeries(sel,wtd),i=lastObsIdx(S);return i<0?{cur:null,mean:null,min:null,max:null,lbl:"—"}:{cur:S.curObs[i],mean:S.mean[i],min:S.bandMin[i],max:S.bandMax[i],lbl:S.labels[i]};}
 const fmtV=v=>v==null?"—":(STATE.vr==="t"?v.toFixed(1)+"°":Math.round(v)+"mm");
 function vsColor(d){if(d==null)return{bg:"#f4f4f4",fg:"#bbb"};const t=STATE.vr==="t"?Math.max(-1,Math.min(1,d/3)):Math.max(-1,Math.min(1,d/40));
@@ -436,7 +477,7 @@ function renderTable(){
     for(const k in WGT){
       const sel=stateSel(k);if(!sel.length)continue;
       const tot=sel.reduce((s,x)=>s+x.w,0);
-      head.push({id:"st|"+k,nome:WGT[k].row,grpRow:true,
+      head.push({id:"st|"+k,nome:wgtRow(k),grpRow:true,
         sub:k==="n"?"all "+nm+" municipalities":(tot/1e6).toFixed(1)+" Mt "+(k==="m"?"corn":"soy")+" · 2022–24 avg",
         ...summary(sel,true)});
     }
@@ -447,11 +488,13 @@ function renderTable(){
   const totM=g.reduce((s,p)=>s+(p.milho_t||0),0),totS=g.reduce((s,p)=>s+(p.soja_t||0),0);
   const rowSub=p=>{
     if(!p.regKey)return p.sub+(p.area?" · "+(p.area/1000).toFixed(0)+"k ha":"");
-    // fatia da região na produção estadual de cada cultura
+    // fatia da região na produção do grupo (estado, ou MATOPIBA inteiro)
     const pc=(v,t)=>t?Math.round(v/t*100)+"%":"—";
     return `${p.n} municipalities · ${pc(p.milho_t,totM)} corn · ${pc(p.soja_t,totS)} soy`;
   };
-  const rowsData=head.concat(g.map(p=>({id:p.id,nome:p.nome,sub:rowSub(p),empresa:p.empresa,...summary([p],false)})));
+  // no grupo agregado a região sozinha é ambígua — prefixa a UF
+  const rowName=p=>(STATE.grp===MTP&&p.uf?p.uf+" · ":"")+p.nome;
+  const rowsData=head.concat(g.map(p=>({id:p.id,nome:rowName(p),sub:rowSub(p),empresa:p.empresa,...summary([p],false)})));
   rowsData.forEach(r=>{r.vs=(r.cur!=null&&r.mean!=null)?r.cur-r.mean:null;r.range=(r.min!=null&&r.max!=null)?r.max-r.min:null;});
   const nHead=head.length;
   const body=rowsData.slice(nHead).sort((a,b)=>{let va=a[STATE.sortKey],vb=b[STATE.sortKey];
@@ -488,7 +531,7 @@ function renderChart(){
   const head=st?`${GRPLBL[STATE.grp]} — ${WGT[st].chart}`
     :wtd?`${GRPLBL[STATE.grp]} — weighted by ${WLBL[STATE.grp]} (${sel.length})`
     :isGroup?`Average of ${sel.length} points · ${GRPLBL[STATE.grp]}`
-    :rg?`${sel[0].nome} (${REGGRP[STATE.grp]}) — mean of ${sel[0].n} municipalities`
+    :rg?`${sel[0].nome} (${sel[0].uf||REGGRP[STATE.grp]}) — mean of ${sel[0].n} municipalities`
     :sel[0].nome+" · "+sel[0].sub;
   document.getElementById("chart-title").textContent=(STATE.vr==="t"?"Mean temperature":"Rainfall")+" — "+head;
   document.getElementById("chart-sub").textContent=`Year ${STATE.curYear} · ${STATE.gran==="m"?"monthly":"weekly"} · ${STATE.yrs}-year history · ${MODELLBL[STATE.model]}`+(isGroup?" · narrow band (spatial average) — click a point":"");
