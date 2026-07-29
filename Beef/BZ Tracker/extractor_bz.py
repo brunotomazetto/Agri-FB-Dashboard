@@ -286,6 +286,9 @@ def init_db(conn):
         rev_000usd   REAL,
         vol_tons     REAL,
         price_usd_kg REAL,
+        source       TEXT,   -- 'mdic' = official closed month from the annual CSV
+                             -- 'weekly' = partial month estimated from the last
+                             --            MTD weekly bulletin (current month)
         PRIMARY KEY (year, month)
     );
     CREATE TABLE IF NOT EXISTS _weekly_raw (
@@ -330,6 +333,7 @@ def init_db(conn):
         ("weekly",      "vol_tons",   "REAL"),
         ("weekly",      "biz_days",   "INTEGER"),
         ("weekly",      "vol_tons_daily", "REAL"),
+        ("_secex_raw",  "source",     "TEXT"),
     ]
     for tbl, col, dtype in migrations:
         try:
@@ -338,6 +342,10 @@ def init_db(conn):
             print(f"  [DB] Migrated: added {tbl}.{col}")
         except Exception:
             pass  # column already exists
+
+    # Pre-existing _secex_raw rows all came from the MDIC annual CSV.
+    conn.execute("UPDATE _secex_raw SET source='mdic' WHERE source IS NULL")
+    conn.commit()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -550,9 +558,13 @@ def fetch_secex(conn, years=None):
                 rev  = float(row["rev_usd"]) / 1000     # 000 USD
                 p    = (rev * 1000 / (vol * 1000)) if vol > 0 else None  # USD/kg
                 rows.append((yr, m, rev, vol, p))
+            # source='mdic' — official data always outranks the weekly estimate,
+            # so this REPLACE upgrades any partial row left by
+            # fill_secex_from_weekly() once MDIC publishes the closed month.
             conn.executemany(
-                "INSERT OR REPLACE INTO _secex_raw(year,month,rev_000usd,vol_tons,price_usd_kg)"
-                " VALUES(?,?,?,?,?)", rows
+                "INSERT OR REPLACE INTO _secex_raw"
+                "(year,month,rev_000usd,vol_tons,price_usd_kg,source)"
+                " VALUES(?,?,?,?,?,'mdic')", rows
             )
             conn.commit()
             total += len(rows)
@@ -1510,9 +1522,12 @@ def fill_weekly_gaps(conn):
     today = date.today()
     filled = 0
 
+    # source='weekly' rows are derived FROM _weekly_raw, so they can never
+    # reveal a gap in it — only official MDIC totals are a valid reference.
     completed = conn.execute(
         "SELECT year, month, vol_tons, rev_000usd FROM _secex_raw"
         " WHERE vol_tons IS NOT NULL AND rev_000usd IS NOT NULL"
+        "   AND source = 'mdic'"
         " ORDER BY year, month"
     ).fetchall()
 
@@ -1571,6 +1586,70 @@ def fill_weekly_gaps(conn):
 
     if filled == 0:
         print("  [GAP-FILL] No gaps detected.")
+    return filled
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FILL SECEX MONTHLY FROM THE WEEKLY BULLETIN (partial current month)
+# ══════════════════════════════════════════════════════════════════════════════
+def fill_secex_from_weekly(conn):
+    """
+    MDIC only publishes a month in the annual CSV once it has closed, so the
+    monthly (and therefore quarterly) table lags a full month behind the weekly
+    bulletin.  This estimates the open month from weekly data so the current
+    quarter shows up as soon as its first week is in.
+
+    _weekly_raw.vol_tons / rev_000usd are MTD *cumulative*, so the estimate is
+    simply the latest bulletin row of that month — never a sum across rows.
+
+    Rows are written with source='weekly' and are refreshed on every run.  Rows
+    with source='mdic' are never touched: once MDIC publishes the closed month,
+    fetch_secex() overwrites the estimate and it stops being updated here.
+    """
+    months = conn.execute(
+        "SELECT DISTINCT strftime('%Y', start_date), strftime('%m', start_date)"
+        " FROM _weekly_raw WHERE vol_tons IS NOT NULL AND rev_000usd IS NOT NULL"
+    ).fetchall()
+
+    filled = 0
+    for yr_s, mo_s in months:
+        yr, mo = int(yr_s), int(mo_s)
+
+        src = conn.execute(
+            "SELECT source FROM _secex_raw WHERE year=? AND month=?", (yr, mo)
+        ).fetchone()
+        if src and src[0] == "mdic":
+            continue  # official data already in — leave it alone
+
+        # Latest bulletin of the month = highest MTD cumulative figures.
+        last = conn.execute(
+            "SELECT vol_tons, rev_000usd, end_date FROM _weekly_raw"
+            " WHERE start_date LIKE ? AND vol_tons IS NOT NULL"
+            "   AND rev_000usd IS NOT NULL"
+            " ORDER BY start_date DESC LIMIT 1",
+            (f"{yr:04d}-{mo:02d}-%",)
+        ).fetchone()
+        if not last:
+            continue
+
+        vol, rev, end_date = last
+        if not vol or vol <= 0:
+            continue
+        price = rev / vol   # (000 USD / t) == USD/kg
+
+        conn.execute(
+            "INSERT OR REPLACE INTO _secex_raw"
+            "(year,month,rev_000usd,vol_tons,price_usd_kg,source)"
+            " VALUES(?,?,?,?,?,'weekly')",
+            (yr, mo, rev, vol, price)
+        )
+        conn.commit()
+        print(f"  [WEEKLY→SECEX] {yr}-{mo:02d} partial (MTD thru {end_date}): "
+              f"price={price:.4f} USD/kg, vol={vol:,.0f} t")
+        filled += 1
+
+    if filled == 0:
+        print("  [WEEKLY→SECEX] No open month to estimate.")
     return filled
 
 
@@ -1775,6 +1854,11 @@ def main():
     # Auto-fill any closing weeks that were missed due to late bulletin publication
     print("\n[→] Checking for missing weekly gaps …")
     fill_weekly_gaps(conn)
+
+    # Estimate the still-open month from the weekly bulletin so the current
+    # quarter appears before MDIC publishes the closed month.
+    print("\n[→] Estimating open month from weekly bulletin …")
+    fill_secex_from_weekly(conn)
 
     print("\n[→] Computing spread tables …")
     materialise(conn)
