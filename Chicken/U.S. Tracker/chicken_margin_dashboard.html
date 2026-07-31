@@ -70,6 +70,17 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
 /* FIX #2: taller chart area */
 .chart-wrap{flex:1;min-height:0;position:relative;height:220px;}
 
+/* ── SEASONALITY SECTION ── */
+.season-section{padding:0 16px 8px;}
+.season-section .chart-card{min-height:0;}
+.season-section .chart-wrap{height:250px;}
+.season-btn{padding:3px 9px;font-size:11px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--border);background:none;color:var(--gray-mid);
+  font-family:var(--font);transition:all .15s;}
+.season-btn.active{background:var(--orange);color:white;
+  border-color:var(--orange);font-weight:700;}
+.season-btn:hover:not(.active){border-color:#ccc;color:var(--gray-dark);}
+
 /* ── BOTTOM ROW — FIX #4: no overflow:hidden ── */
 .bottom-row{display:grid;grid-template-columns:236px 1fr;gap:0;
   border-top:1px solid var(--border);}
@@ -165,6 +176,9 @@ tr:hover td{background:#FFF8F5;}
 @media(max-width:768px){
   /* stack the side-by-side chart pair */
   .charts-row,.charts-row.single{grid-template-columns:1fr;padding-left:10px;padding-right:10px;}
+  .season-section{padding-left:10px;padding-right:10px;}
+  .season-section .chart-wrap{height:260px;}
+  .season-section .chart-card-header{flex-direction:column;align-items:stretch;gap:8px;}
   .charts-row > *{min-width:0;}
   .chart-card{padding:12px 12px 8px;}
   .chart-card-header{flex-direction:column;align-items:stretch;gap:6px;}
@@ -266,6 +280,32 @@ tr:hover td{background:#FFF8F5;}
     </div>
   </div>
 
+  <!-- SEASONALITY CHART (full width, independent band filter) -->
+  <div class="season-section">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-title">Seasonal Spread Pattern — Monthly by Year</div>
+          <div style="font-size:10.5px;color:var(--gray-mid);margin-top:3px;">
+            Each line = one year &nbsp;·&nbsp;
+            <span style="color:var(--orange);font-weight:700;">—</span> = current year &nbsp;·&nbsp;
+            <span style="color:var(--black);font-weight:700;">—</span> = prev year &nbsp;·&nbsp;
+            <span style="background:rgba(255,85,0,0.15);padding:0 4px;border-radius:2px;">shading</span> = max/min band
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span style="font-size:10.5px;font-weight:700;color:var(--gray-mid);">BAND:</span>
+          <div style="display:flex;gap:3px;">
+            <button class="season-btn" data-sy="3" onclick="setSeasonYears(3)">3Y</button>
+            <button class="season-btn active" data-sy="5" onclick="setSeasonYears(5)">5Y</button>
+            <button class="season-btn" data-sy="0" onclick="setSeasonYears(0)">All</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="seasonChart"></canvas></div>
+    </div>
+  </div>
+
   <!-- BOTTOM ROW -->
   <div class="bottom-row">
 
@@ -342,7 +382,9 @@ let charts      = {};     // Chart.js instances
 let currentView = '3y';   // 'all' | '3y' | '1y'
 let currentLag  = '0q5';  // 'spot' | '0q5' | '1q5'
 let currentTab  = 'quarterly'; // 'quarterly' | 'monthly' | 'weekly'
+let seasonYears = 5;      // max/min band window, 0 = all years
 const DEFAULTS = { breast:40, leg:34, wings:17, tenders:9, lag:'0q5' };
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function goBack() {
@@ -498,6 +540,13 @@ function setView(v) {
   currentView = v;
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   render();
+}
+
+function setSeasonYears(n) {
+  seasonYears = n;
+  document.querySelectorAll('.season-btn').forEach(b =>
+    b.classList.toggle('active', +b.dataset.sy === n));
+  renderSeasonalityChart();
 }
 
 function setTab(tab) {
@@ -662,6 +711,10 @@ function render() {
     );
     if (isMonth) renderMonthlyTable(); else renderWeeklyTable();
   }
+
+  // Seasonality is independent of the Period/View selectors — it always shows
+  // the full monthly history, but follows the parts weights.
+  renderSeasonalityChart();
 }
 
 // ─── CHART 1: QoQ Delta ──────────────────────────────────────────────────────
@@ -802,6 +855,137 @@ function renderLevelChart(series, showGm) {
       },
       scales
     }
+  });
+}
+
+// ─── SEASONALITY: monthly spread by calendar year ─────────────────────────────
+// { year: [Jan..Dec] spread values } — spot feed cost, current parts weights.
+function buildSeasonality() {
+  const w      = getWeights();
+  const result = {};
+  computeMonthly().forEach(r => {
+    const year = +r.month.slice(0, 4);
+    const mi   = +r.month.slice(5, 7) - 1;
+    if (!result[year]) result[year] = new Array(12).fill(null);
+    const s = computeSpreadSpot(r, w);
+    if (s != null) result[year][mi] = +(s * 100).toFixed(2);
+  });
+  // Drop years with no computable month (e.g. 2016 has parts prices but no feed cost)
+  Object.keys(result).forEach(y => {
+    if (result[y].every(v => v == null)) delete result[y];
+  });
+  return result;
+}
+
+function renderSeasonalityChart() {
+  const SEASONALITY = buildSeasonality();
+  const allYears = Object.keys(SEASONALITY).map(Number).sort((a, b) => a - b);
+  if (!allYears.length) return;
+
+  const latestYear = allYears[allYears.length - 1];
+  const prevYear   = latestYear - 1;
+  // historical years = all except latest (latest is partial)
+  const histYears  = allYears.filter(y => y < latestYear);
+  // band years = subset for min/max band based on filter
+  const bandYears  = seasonYears === 0
+    ? histYears
+    : histYears.filter(y => y >= latestYear - seasonYears);
+  // gray lines = band years excluding prevYear (prevYear gets its own black line)
+  const grayYears  = bandYears.filter(y => y !== prevYear);
+
+  // per-month min/max from band years (includes prevYear for band accuracy)
+  const minBand = Array(12).fill(null);
+  const maxBand = Array(12).fill(null);
+  bandYears.forEach(y => {
+    SEASONALITY[y].forEach((v, mi) => {
+      if (v == null) return;
+      minBand[mi] = minBand[mi] == null ? v : Math.min(minBand[mi], v);
+      maxBand[mi] = maxBand[mi] == null ? v : Math.max(maxBand[mi], v);
+    });
+  });
+
+  const bandLabel = !bandYears.length ? 'Max/Min' : (seasonYears === 0
+    ? `Max/Min — all (${bandYears[0]}–${bandYears[bandYears.length-1]})`
+    : `Max/Min — last ${seasonYears}Y (${bandYears[0]}–${bandYears[bandYears.length-1]})`);
+
+  const datasets = [];
+
+  // Shaded band: maxBand fills down to minBand via fill:'+1'
+  datasets.push({
+    label: bandLabel, data: maxBand,
+    borderColor: 'rgba(255,85,0,0.20)', backgroundColor: 'rgba(255,85,0,0.10)',
+    borderWidth: 0.8, pointRadius: 0, tension: 0.35, fill: '+1', order: 4,
+  });
+  datasets.push({
+    label: '_min', data: minBand,
+    borderColor: 'rgba(255,85,0,0.20)', backgroundColor: 'rgba(255,85,0,0.10)',
+    borderWidth: 0.8, pointRadius: 0, tension: 0.35, fill: false, order: 4,
+  });
+
+  // Gray lines = band years excluding prevYear
+  grayYears.forEach(y => {
+    datasets.push({
+      label: String(y), data: SEASONALITY[y],
+      borderColor: 'rgba(160,160,160,0.35)', backgroundColor: 'transparent',
+      borderWidth: 1, pointRadius: 0, tension: 0.35, order: 3,
+    });
+  });
+
+  // Previous year — BLACK line
+  if (SEASONALITY[prevYear]) {
+    datasets.push({
+      label: `${prevYear} (prev)`, data: SEASONALITY[prevYear],
+      borderColor: '#1A1A1A', backgroundColor: 'transparent',
+      borderWidth: 2, pointRadius: 2, pointHoverRadius: 4,
+      pointBackgroundColor: '#1A1A1A', tension: 0.35, order: 2,
+    });
+  }
+
+  // Current year — ORANGE, bold
+  datasets.push({
+    label: `${latestYear} (current)`, data: SEASONALITY[latestYear],
+    borderColor: '#FF5500', backgroundColor: 'transparent',
+    borderWidth: 2.5, pointRadius: 3, pointHoverRadius: 5,
+    pointBackgroundColor: '#FF5500', tension: 0.35, order: 1,
+  });
+
+  if (charts.season) charts.season.destroy();
+  charts.season = new Chart(document.getElementById('seasonChart').getContext('2d'), {
+    type: 'line',
+    data: { labels: MONTHS_SHORT, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true, position: 'right',
+          labels: {
+            // Show band + prevYear + current year; skip raw year labels and _min
+            filter: item => !item.text.match(/^\d{4}$/) && !item.text.startsWith('_'),
+            font: { size: 10, family: 'Segoe UI,Arial,sans-serif' },
+            boxWidth: 14, color: '#666', padding: 10,
+          },
+        },
+        tooltip: {
+          filter: item => !item.dataset.label.startsWith('_'), // hide _min
+          callbacks: {
+            label: ctx => {
+              if (ctx.parsed.y == null) return null;
+              const lbl = ctx.dataset.label;
+              const displayLbl = lbl.startsWith('Max/Min') ? 'Band Max' : lbl;
+              return `${displayLbl}: ${ctx.parsed.y.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color:'#999', font:{size:10, family:'Arial'}, maxRotation:0 },
+             grid: { color:'rgba(0,0,0,0.04)' } },
+        y: { ticks: { color:'#888', font:{size:9}, callback: v => v.toFixed(0) + '%' },
+             grid: { color:'rgba(0,0,0,0.05)' },
+             title: { display:true, text:'Spread Proxy %', font:{size:9.5}, color:'#888' } },
+      },
+    },
   });
 }
 
