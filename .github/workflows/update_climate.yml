@@ -3,6 +3,12 @@ name: Update Climate (NASA + RONI)
 # Mensal: regenera o history.json (NASA POWER, sem rate limit) dos módulos de
 # clima e atualiza a tabela RONI do NOAA. A virada de ano é automática (os
 # builders usam Y1 = ano corrente). O ERA5 fica num workflow manual à parte.
+#
+# build_history_nasa.py cobre só capitais e fazendas e REESCREVE o history.json
+# inteiro — sem o build_regions.py logo em seguida, as 51 regiões produtoras
+# somem do arquivo (foi o que aconteceu nos refreshes de jul e ago/2026). A
+# ordem dos dois passos é obrigatória, e o passo de sanidade abaixo impede que
+# um arquivo sem regiões volte a ser commitado.
 
 on:
   schedule:
@@ -12,6 +18,7 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 180        # as 726 células das regiões levam ~1h no NASA POWER
     permissions:
       contents: write
     steps:
@@ -27,6 +34,23 @@ jobs:
         run: |
           python "Climate Monitor/Weather Monitor/build_history_nasa.py"
           python "Climate Monitor/Sugar Monitor/build_history_nasa.py"
+
+      # Sem cache entre execuções de propósito: o cache de células é resumível
+      # por chave, então uma célula já cacheada não voltaria a ser baixada e o
+      # ano corrente da região congelaria na data do cache.
+      - name: Rebuild region series (Weather)
+        run: python "Climate Monitor/Weather Monitor/build_regions.py" nasa
+
+      - name: Sanidade — regiões presentes no history.json
+        run: |
+          python - <<'PY'
+          import json, sys
+          h = json.load(open("Climate Monitor/Weather Monitor/history.json", encoding="utf-8"))
+          regs = [k for k in h["points"] if "|" in k]
+          print(f"{len(h['points'])} pontos, {len(regs)} séries de região")
+          if len(regs) < 100:
+              sys.exit("history.json sem as séries de região — abortando o commit")
+          PY
 
       - name: Refresh RONI (NOAA CPC)
         run: python "Climate Monitor/update_roni.py"

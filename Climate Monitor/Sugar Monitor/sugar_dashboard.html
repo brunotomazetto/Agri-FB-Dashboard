@@ -161,13 +161,17 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 </div>
 
 <div class="note-bar">
-  Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (7-day forecast). Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
+  Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (observed, to bridge the gap since the last historical refresh). <em>Observed data only — no forecast</em>: the series ends on the last day that has actually happened. Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. Mill location is a proxy for the surrounding cane-supply region. A multi-mill average has a naturally narrow band (spatial cancellation) — select a single mill to see the real spread.
 </div>
 
 <script>
+/* Camada ao vivo: só dado OBSERVADO. O history.json (NASA POWER) é regenerado
+   uma vez por mês, então entre um refresh e outro ele fica até ~30 dias atrás;
+   PAST_DAYS cobre esse intervalo com o observado da Open-Meteo. forecast_days=0
+   corta a projeção — o gráfico termina no último dia que de fato aconteceu. */
 const FORECAST_URL="https://api.open-meteo.com/v1/forecast";
-const PAST_DAYS=92,FC_DAYS=7;
+const PAST_DAYS=92,FC_DAYS=0;
 const GRPLBL={smto:"São Martinho",jall:"Jalles Machado",agro:"Adecoagro"};
 const WLBL={smto:"crushing capacity",jall:"crushing capacity",agro:"crushing capacity"};
 const hasW=g=>true;
@@ -291,14 +295,12 @@ function computeSeries(sel,wtd){
   const bandMin=[],bandMax=[],mean=[];
   for(let i=0;i<buckets.length;i++){const vv=yearSeries.map(s=>s[i]).filter(v=>v!=null);
     if(vv.length){bandMin.push(Math.min(...vv));bandMax.push(Math.max(...vv));mean.push(vv.reduce((a,b)=>a+b,0)/vv.length);}else{bandMin.push(null);bandMax.push(null);mean.push(null);}}
-  const showFc=STATE.gran==="w";
-  const curObs=[],curFc=[];
-  buckets.forEach(b=>{const obs=b.days.filter(d=>!d.future),fut=b.days.filter(d=>d.future),hasObs=obs.length>0;
-    curObs.push(hasObs?aggCur(obs,vr,sel,wtd):null);
-    curFc.push(showFc&&fut.length?aggCur(hasObs?b.days:fut,vr,sel,wtd):null);});
-  if(showFc)for(let i=1;i<curFc.length;i++)if(curFc[i]!=null&&curObs[i-1]!=null&&curFc[i-1]==null)curFc[i-1]=curObs[i-1];
+  /* Só o observado: dias futuros do bucket são descartados, de modo que o
+     último ponto do ano corrente é sempre um dia que já aconteceu. */
+  const curObs=buckets.map(b=>{const obs=b.days.filter(d=>!d.future);
+    return obs.length?aggCur(obs,vr,sel,wtd):null;});
   const bucketMonth=buckets.map(b=>b.m!=null?b.m:b.days[Math.floor(b.days.length/2)].m);
-  return {labels,yearSeries,bandMin,bandMax,mean,curObs,curFc,yrs,bucketMonth};
+  return {labels,yearSeries,bandMin,bandMax,mean,curObs,yrs,bucketMonth};
 }
 function lastObsIdx(S){for(let k=S.curObs.length-1;k>=0;k--)if(S.curObs[k]!=null)return k;return -1;}
 
@@ -356,7 +358,6 @@ function drawLegend(S){
      <span><i class="ln" style="border-color:rgba(120,120,120,.45)"></i>Earlier years</span>`;
   document.getElementById("chart-legend").innerHTML=
   `<span><i class="ln" style="border-color:var(--orange);width:20px"></i>${STATE.curYear}</span>
-   <span><i class="ln" style="border-color:var(--orange);border-top-style:dotted"></i>Forecast</span>
    <span><i class="ln" style="border-color:#999;border-top-style:dashed"></i>Mean ${S.yrs[0]}–${S.yrs[S.yrs.length-1]}</span>
    <span><i class="sw" style="background:rgba(120,120,120,.18)"></i>Min–max range</span>`+tail;}
 function drawStats(S){const i=lastObsIdx(S);const cur=i>=0?S.curObs[i]:null,mean=i>=0?S.mean[i]:null,mn=i>=0?S.bandMin[i]:null,mx=i>=0?S.bandMax[i]:null;
@@ -378,7 +379,6 @@ function drawChart(S){
     if(ensoOn)d.segment={borderColor:ctx=>{const a=RONI[yr],mo=S.bucketMonth[ctx.p0DataIndex];return a?ensoColor(a[mo-1],STATE.enso,yr,mo):undefined;}};
     ds.push(d);});
   ds.push({label:"Mean "+yl,data:S.mean,borderColor:"#888",borderWidth:1.6,borderDash:[5,3],pointRadius:0,fill:false,order:5,_to:3,tension:.3,spanGaps:true});
-  ds.push({label:"Forecast",data:S.curFc,borderColor:"#FF5500",borderWidth:2.2,borderDash:[3,3],pointRadius:0,fill:false,order:1,_to:2,tension:.25,spanGaps:true});
   ds.push({label:String(STATE.curYear),data:S.curObs,borderColor:"#FF5500",borderWidth:2.8,pointRadius:STATE.gran==="m"?2.5:0,fill:false,order:1,_to:1,tension:.25,spanGaps:true});
   if(!Chart.Tooltip.positioners.awayCursor)Chart.Tooltip.positioners.awayCursor=function(items,ev){const a=this.chart.chartArea;if(!a)return ev;const midX=(a.left+a.right)/2;return{x:ev.x<midX?a.right:a.left,y:a.top+2};};
   STATE.chart=new Chart(document.getElementById("chart"),{type:"line",data:{labels:S.labels,datasets:ds},options:{
