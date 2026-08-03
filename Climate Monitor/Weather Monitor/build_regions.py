@@ -32,7 +32,15 @@ Uso:  python3 build_regions.py [nasa|era5|all] [--only-aggregate]
 import json, os, sys, time, datetime, urllib.request, urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))          # Climate Monitor/
+import om_archive
+
 LOC = os.path.join(HERE, "locations.json")
+
+# Janela rebaixada a cada execução incremental do ERA5. O ERA5T dos últimos
+# dias é preliminar e revisado; 45 dias cobrem a revisão com folga e ainda
+# deixam o job na casa de minutos.
+OVERLAP_DAYS = 45
 
 # Grade do NASA POWER; compartilhada pelos dois modelos (ver docstring).
 DLAT, DLON = 0.5, 0.625
@@ -105,70 +113,86 @@ def fetch_nasa(lat, lon, tries=12):
     raise RuntimeError(f"falhou NASA {lat},{lon}")
 
 
-def secs_to_next_hour():
-    now = datetime.datetime.utcnow()
-    nxt = now.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
-    return max(30, int((nxt - now).total_seconds()) + 60)
-
-
-def fetch_era5(lat, lon, max_hour_waits=6, tries=5):
-    url = ("https://archive-api.open-meteo.com/v1/archive"
-           f"?latitude={lat}&longitude={lon}&start_date={Y0}-01-01"
-           f"&end_date={datetime.date.today():%Y-%m-%d}"
-           "&daily=temperature_2m_mean,precipitation_sum&timezone=auto")
-    hour_waits, t = 0, 0
-    while True:
-        try:
-            with urllib.request.urlopen(url, timeout=120) as r:
-                d = json.loads(r.read().decode())["daily"]
-            return d["time"], d["temperature_2m_mean"], d["precipitation_sum"]
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                body = ""
-                try: body = e.read().decode()
-                except Exception: pass
-                if "ourly" in body or "aily" in body:
-                    if hour_waits >= max_hour_waits:
-                        raise RuntimeError(f"falhou {lat},{lon} (limite persistente)")
-                    hour_waits += 1; w = secs_to_next_hour()
-                    print(f"    limite horário — aguardando {w}s ({hour_waits}/{max_hour_waits})", flush=True)
-                    time.sleep(w); continue
-                print("    429 por-minuto — 65s", flush=True); time.sleep(65); continue
-            t += 1
-            if t >= tries: raise RuntimeError(f"falhou ERA5 {lat},{lon} (HTTP {e.code})")
-            time.sleep(8 * t)
-        except Exception as e:
-            t += 1
-            if t >= tries: raise RuntimeError(f"falhou ERA5 {lat},{lon} ({str(e)[:40]})")
-            time.sleep(10)
-
-
 def to_years(dates, vals, nd):
     years = {y: [None] * 366 for y in range(Y0, Y1 + 1)}
+    merge_years(years, dates, vals, nd)
+    return years
+
+
+def merge_years(years, dates, vals, nd):
+    """Grava os dias baixados por cima da matriz existente. É o que permite
+    rebaixar só uma janela recente: os dias revisados sobrescrevem o valor
+    preliminar e o resto do histórico fica intocado.
+
+    Aceita matriz com chave int (recém-criada) ou str (vinda do cache JSON)."""
     for ds, v in zip(dates, vals):
         if v is None or v <= -900:
             continue
         y, m, d = int(ds[:4]), int(ds[5:7]), int(ds[8:10])
-        if Y0 <= y <= Y1:
-            years[y][MD[(m, d)]] = round(v, nd)
-    return years
+        if not (Y0 <= y <= Y1):
+            continue
+        key = y if y in years else str(y)
+        if key not in years:                       # ano novo (virada de ano)
+            key = str(y) if any(isinstance(k, str) for k in years) else y
+            years[key] = [None] * 366
+        years[key][MD[(m, d)]] = round(v, nd)
 
 
 def download(model, cells):
-    cfg = MODELS[model]
+    return download_era5(cells) if model == "era5" else download_nasa(cells)
+
+
+def download_nasa(cells):
+    """NASA POWER não tem cota, mas só atende uma coordenada por request: ~726
+    requests, ~50 min. O rebuild COMPLETO é de propósito — o POWER revisa os
+    ~30 dias mais recentes (medido em 03/08/2026: 28 dias de junho mudaram
+    entre o build de 02/07 e o de 02/08, |Δ| médio 0,42 °C e máx 1,30 °C), e
+    rebaixar tudo é o que faz o histórico convergir para o valor final.
+
+    O cache existe só para retomar um job interrompido: em CI ele não é
+    restaurado entre execuções, senão célula já baixada nunca seria revisitada
+    e o valor preliminar ficaria congelado para sempre."""
+    cfg = MODELS["nasa"]
     cache_path = os.path.join(HERE, cfg["cache"])
     cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
     todo = [k for k in sorted(cells) if k not in cache]
-    print(f"[{model}] {len(cells)} células | {len(cache)} em cache | {len(todo)} a baixar", flush=True)
-    fetch = fetch_nasa if model == "nasa" else fetch_era5
-    pause = 0.6 if model == "nasa" else 11
+    print(f"[nasa] {len(cells)} células | {len(cache)} em cache | {len(todo)} a baixar", flush=True)
     for i, k in enumerate(todo, 1):
         c = cells[k]
         print(f"  [{i}/{len(todo)}] {k}", flush=True)
-        dates, t, p = fetch(c["lat"], c["lon"])
+        dates, t, p = fetch_nasa(c["lat"], c["lon"])
         cache[k] = {"t": to_years(dates, t, 1), "p": to_years(dates, p, 1)}
         json.dump(cache, open(cache_path, "w", encoding="utf-8"))
-        time.sleep(pause)
+        time.sleep(0.6)
+    return cache
+
+
+def download_era5(cells):
+    """Incremental e em lote (ver om_archive). Célula inédita puxa 2010→hoje;
+    célula já em cache puxa só a janela de sobreposição, porque o ERA5 recente
+    é preliminar (ERA5T) e os últimos dias são revisados depois."""
+    cfg = MODELS["era5"]
+    cache_path = os.path.join(HERE, cfg["cache"])
+    cache = json.load(open(cache_path, encoding="utf-8")) if os.path.exists(cache_path) else {}
+    hoje = datetime.date.today()
+    novas = [(k, cells[k]["lat"], cells[k]["lon"]) for k in sorted(cells) if k not in cache]
+    velhas = [(k, cells[k]["lat"], cells[k]["lon"]) for k in sorted(cells) if k in cache]
+    print(f"[era5] {len(cells)} células | {len(novas)} completas | "
+          f"{len(velhas)} incrementais ({OVERLAP_DAYS}d)", flush=True)
+
+    if novas:
+        got = om_archive.fetch(novas, f"{Y0}-01-01", hoje.isoformat(), "completa ")
+        for k, (dates, t, p) in got.items():
+            cache[k] = {"t": to_years(dates, t, 1), "p": to_years(dates, p, 1)}
+        json.dump(cache, open(cache_path, "w", encoding="utf-8"))
+
+    if velhas:
+        ini = (hoje - datetime.timedelta(days=OVERLAP_DAYS)).isoformat()
+        got = om_archive.fetch(velhas, ini, hoje.isoformat(), "janela ")
+        for k, (dates, t, p) in got.items():
+            merge_years(cache[k]["t"], dates, t, 1)
+            merge_years(cache[k]["p"], dates, p, 1)
+        json.dump(cache, open(cache_path, "w", encoding="utf-8"))
     return cache
 
 

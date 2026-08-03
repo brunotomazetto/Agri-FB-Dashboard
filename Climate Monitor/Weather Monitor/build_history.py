@@ -1,107 +1,131 @@
 #!/usr/bin/env python3
 """
-Gera history.json (estático): série diária por ANO de cada ponto, para o gráfico
-"spaghetti + envelope" (curvas dos últimos anos, banda min/máx, média).
+Gera history_era5.json (estático): série diária por ANO de cada ponto, para o
+gráfico "spaghetti + envelope" (curvas dos últimos anos, banda min/máx, média).
 
-Para cada coordenada única: baixa do Open-Meteo Archive (ERA5) a série diária
-2010-2024 de temperatura média + precipitação, e armazena por ano alinhada ao
-índice de dia-do-ano (0..365, ano bissexto de referência).
+Para cada coordenada única baixa do Open-Meteo Archive (ERA5) a série diária de
+temperatura média + precipitação desde Y0, e armazena por ano alinhada ao índice
+de dia-do-ano (0..365, ano bissexto de referência).
 
-Resumível (cache _hist_cache.json), paceado e tolerante a rate-limit horário.
-Roda 1x (reexecute ~1x/ano para incorporar o ano novo).
+Incremental e em lote (ver ../om_archive.py): ponto inédito puxa Y0→hoje, ponto
+já em cache puxa só os últimos OVERLAP_DAYS dias. Isso importa porque o custo
+cobrado pela API é ~proporcional a (coordenadas × dias) — rebaixar o histórico
+inteiro toda vez é o que tornava este script um job de horas, incapaz de rodar
+em cron.
+
+A janela de sobreposição não é opcional: o ERA5 recente é preliminar (ERA5T) e
+os últimos dias são revisados depois. Buscar só os dias inéditos congelaria o
+valor preliminar para sempre.
+
+Uso:  python3 build_history.py [--full]     (--full ignora o cache e rebaixa tudo)
 """
-import json, time, os, urllib.request, urllib.error, datetime
+import json, os, sys, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(HERE))          # Climate Monitor/
+import om_archive
+
 LOC = os.path.join(HERE, "locations.json")
-OUT = os.path.join(HERE, "history_era5.json")          # ERA5 (Open-Meteo); NASA fica em history.json
+OUT = os.path.join(HERE, "history_era5.json")          # ERA5; NASA fica em history.json
 CACHE = os.path.join(HERE, "_hist_era5_cache.json")
 
-ARCHIVE = "https://archive-api.open-meteo.com/v1/archive"
 Y0 = 2010
 Y1 = datetime.date.today().year                      # inclui o ano corrente (parcial via ERA5)
-START, END = f"{Y0}-01-01", datetime.date.today().isoformat()
+OVERLAP_DAYS = 45
+
+# pontos do módulo — única linha que difere entre Weather e Sugar Monitor
+def module_points(data):
+    return list(data["capitais"]) + list(data["fazendas"])   # regiões: ver build_regions.py
+
 
 def build_md_index():
-    md, idx, days = {}, 0, [31,29,31,30,31,30,31,31,30,31,30,31]
-    for m, n in enumerate(days, start=1):
+    md, i, days = {}, 0, [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    for m, n in enumerate(days, 1):
         for d in range(1, n + 1):
-            md[(m, d)] = idx; idx += 1
+            md[(m, d)] = i; i += 1
     return md
-MD = build_md_index()  # 366 chaves
+MD = build_md_index()
 
-def secs_to_next_hour():
-    now = datetime.datetime.utcnow()
-    nxt = now.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
-    return max(30, int((nxt - now).total_seconds()) + 60)
-
-def fetch(lat, lon, max_hour_waits=6, tries=5):
-    url = (f"{ARCHIVE}?latitude={lat}&longitude={lon}"
-           f"&start_date={START}&end_date={END}"
-           f"&daily=temperature_2m_mean,precipitation_sum&timezone=auto")
-    hour_waits, t = 0, 0
-    while True:
-        try:
-            with urllib.request.urlopen(url, timeout=120) as r:
-                return json.loads(r.read().decode())["daily"]
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                body = ""
-                try: body = e.read().decode()
-                except Exception: pass
-                if "ourly" in body or "aily" in body:
-                    if hour_waits >= max_hour_waits:
-                        raise RuntimeError(f"falhou {lat},{lon} (limite persistente)")
-                    hour_waits += 1; w = secs_to_next_hour()
-                    print(f"    limite horário — aguardando {w}s ({hour_waits}/{max_hour_waits})", flush=True)
-                    time.sleep(w); continue
-                print("    429 por-minuto — 65s", flush=True); time.sleep(65); continue
-            t += 1
-            if t >= tries: raise RuntimeError(f"falhou {lat},{lon} (HTTP {e.code})")
-            print(f"    retry {t}/{tries} ({e.code})", flush=True); time.sleep(8*t)
-        except Exception as e:
-            t += 1
-            if t >= tries: raise RuntimeError(f"falhou {lat},{lon} ({str(e)[:40]})")
-            print(f"    retry {t}/{tries} ({str(e)[:40]})", flush=True); time.sleep(10)
 
 def to_year_matrix(dates, vals, nd):
-    """dict ano -> array de 366 (índice dia-do-ano), arredondado."""
-    years = {y: [None]*366 for y in range(Y0, Y1+1)}
-    for ds, v in zip(dates, vals):
-        if v is None: continue
-        y = int(ds[:4]); m = int(ds[5:7]); d = int(ds[8:10])
-        years[y][MD[(m, d)]] = round(v, nd)
+    years = {y: [None] * 366 for y in range(Y0, Y1 + 1)}
+    merge_years(years, dates, vals, nd)
     return years
 
+
+def merge_years(years, dates, vals, nd):
+    """Grava os dias baixados por cima da matriz existente — os revisados
+    sobrescrevem o preliminar e o resto do histórico fica intocado.
+    Aceita chave int (matriz nova) ou str (matriz vinda do cache JSON)."""
+    for ds, v in zip(dates, vals):
+        if v is None:
+            continue
+        y, m, d = int(ds[:4]), int(ds[5:7]), int(ds[8:10])
+        if not (Y0 <= y <= Y1):
+            continue
+        key = y if y in years else str(y)
+        if key not in years:                       # ano novo (virada de ano)
+            key = str(y) if any(isinstance(k, str) for k in years) else y
+            years[key] = [None] * 366
+        years[key][MD[(m, d)]] = round(v, nd)
+
+
+def load_cache():
+    """Cache do build anterior; na falta dele, o próprio history_era5.json serve
+    de semente — o "points" do output tem exatamente o mesmo formato.
+
+    Isso evita que uma execução sem cache (CI limpo, cache expirado, máquina
+    nova) vire um bootstrap de 16 anos, que é caro em cota e leva horas. Com a
+    semente, o pior caso é uma janela incremental como qualquer outra."""
+    if os.path.exists(CACHE):
+        return json.load(open(CACHE, encoding="utf-8"))
+    if os.path.exists(OUT):
+        pts = json.load(open(OUT, encoding="utf-8")).get("points", {})
+        if pts:
+            print(f"sem cache — semeando com {OUT.rsplit(os.sep, 1)[-1]} "
+                  f"({len(pts)} pontos)", flush=True)
+        return pts
+    return {}
+
+
 def main():
+    full = "--full" in sys.argv
     data = json.load(open(LOC, encoding="utf-8"))
-    pts = list(data["capitais"]) + list(data["fazendas"])   # regiões: ver build_regions.py
     uniq = {}
-    for p in pts:
+    for p in module_points(data):
         uniq.setdefault(f"{round(p['lat'],3)},{round(p['lon'],3)}", (p["lat"], p["lon"]))
 
-    points = json.load(open(CACHE, encoding="utf-8")) if os.path.exists(CACHE) else {}
-    todo = [(k, v) for k, v in sorted(uniq.items()) if k not in points]
-    print(f"{len(uniq)} coords únicas | {len(points)} em cache | {len(todo)} a baixar", flush=True)
+    points = {} if full else load_cache()
+    hoje = datetime.date.today()
+    novas = [(k, v[0], v[1]) for k, v in sorted(uniq.items()) if k not in points]
+    velhas = [(k, v[0], v[1]) for k, v in sorted(uniq.items()) if k in points]
+    print(f"{len(uniq)} coords únicas | {len(novas)} completas | "
+          f"{len(velhas)} incrementais ({OVERLAP_DAYS}d)", flush=True)
 
-    for i, (key, (lat, lon)) in enumerate(todo, 1):
-        print(f"[{i}/{len(todo)}] {key}", flush=True)
-        d = fetch(lat, lon)
-        points[key] = {
-            "t": to_year_matrix(d["time"], d["temperature_2m_mean"], 1),
-            "p": to_year_matrix(d["time"], d["precipitation_sum"], 1),
-        }
+    if novas:
+        got = om_archive.fetch(novas, f"{Y0}-01-01", hoje.isoformat(), "completa ")
+        for k, (dates, t, p) in got.items():
+            points[k] = {"t": to_year_matrix(dates, t, 1),
+                         "p": to_year_matrix(dates, p, 1)}
         json.dump(points, open(CACHE, "w", encoding="utf-8"))
-        time.sleep(11)
+
+    if velhas:
+        ini = (hoje - datetime.timedelta(days=OVERLAP_DAYS)).isoformat()
+        got = om_archive.fetch(velhas, ini, hoje.isoformat(), "janela ")
+        for k, (dates, t, p) in got.items():
+            merge_years(points[k]["t"], dates, t, 1)
+            merge_years(points[k]["p"], dates, p, 1)
+        json.dump(points, open(CACHE, "w", encoding="utf-8"))
 
     out = {
         "meta": {"fonte": "Open-Meteo Archive (ERA5)", "anos": f"{Y0}-{Y1}",
                  "doy_index": "0=1jan ... 59=29fev ... 365=31dez", "n_pontos": len(points)},
-        "years": list(range(Y0, Y1+1)),
+        "years": list(range(Y0, Y1 + 1)),
         "points": points,
     }
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"OK -> {OUT} ({os.path.getsize(OUT)/1024/1024:.1f} MB, {len(points)} pontos)", flush=True)
+
 
 if __name__ == "__main__":
     main()

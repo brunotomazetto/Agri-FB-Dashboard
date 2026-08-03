@@ -1,8 +1,18 @@
 name: Update Climate (NASA + RONI)
 
-# Mensal: regenera o history.json (NASA POWER, sem rate limit) dos módulos de
+# Semanal: regenera o history.json (NASA POWER, sem rate limit) dos módulos de
 # clima e atualiza a tabela RONI do NOAA. A virada de ano é automática (os
-# builders usam Y1 = ano corrente). O ERA5 fica num workflow manual à parte.
+# builders usam Y1 = ano corrente). O ERA5 tem workflow próprio.
+#
+# É um REBUILD COMPLETO de propósito, não incremental. O POWER revisa os ~30
+# dias mais recentes: medido em 03/08/2026, 28 dias de junho mudaram entre o
+# build de 02/07 e o de 02/08 (|Δ| médio 0,42 °C, máx 1,30 °C). Um builder que
+# só acrescentasse os dias novos congelaria o valor preliminar para sempre —
+# daqui a um ano o histórico teria 12 janelas de dado nunca corrigido.
+# Rebaixar tudo é o que faz a série convergir para o valor final.
+#
+# Semanal e não diário por causa do peso no repositório: o history.json tem
+# ~12 MB e é commitado a cada execução.
 #
 # build_history_nasa.py cobre só capitais e fazendas e REESCREVE o history.json
 # inteiro — sem o build_regions.py logo em seguida, as 51 regiões produtoras
@@ -12,7 +22,7 @@ name: Update Climate (NASA + RONI)
 
 on:
   schedule:
-    - cron: "0 9 2 * *"   # dia 2 de cada mês, 09:00 UTC
+    - cron: "0 9 * * 1"   # toda segunda, 09:00 UTC
   workflow_dispatch:
 
 jobs:

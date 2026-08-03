@@ -1,11 +1,29 @@
-name: Update Climate — ERA5 (manual)
+name: Update Climate — ERA5
 
-# ERA5 (Open-Meteo archive) tem rate limit horário/diário e, em runner do GitHub
-# (IP compartilhado), pode demorar; por isso é manual. O builder já é resiliente
-# (espera a virada da hora e é resumível). Rode quando quiser refrescar o ERA5.
+# Semanal. Antes era manual porque o builder baixava uma coordenada por request
+# e rebaixava 2010→hoje toda vez, o que estourava a cota do Open-Meteo Archive
+# (o custo é ~proporcional a coordenadas × dias). Medido em 03/08/2026:
+#
+#   10 coords × 6.059 dias  -> 429 já no 2º request
+#  600 coords ×    45 dias  -> 600 coords em 21s
+#
+# O builder agora vai em lote e só rebaixa a janela recente (ver om_archive.py),
+# então a execução incremental é 1 request e ~3s por módulo. Isso só funciona se
+# o cache sobreviver entre execuções — daí o actions/cache abaixo.
+#
+# A janela de sobreposição (OVERLAP_DAYS=45) não é desperdício: o ERA5 recente é
+# preliminar (ERA5T) e revisado depois, então rebaixá-la é o que faz a série
+# convergir para o valor final.
 
 on:
+  schedule:
+    - cron: "0 10 * * 1"   # toda segunda, 10:00 UTC
   workflow_dispatch:
+    inputs:
+      full:
+        description: "Ignorar o cache e rebaixar o histórico inteiro (lento, consome cota)"
+        type: boolean
+        default: false
 
 jobs:
   update:
@@ -22,11 +40,45 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Sem o cache, todo run vira bootstrap completo e bate na cota diária.
+      - name: Restaura cache do ERA5
+        uses: actions/cache@v4
+        with:
+          path: |
+            Climate Monitor/Weather Monitor/_hist_era5_cache.json
+            Climate Monitor/Sugar Monitor/_hist_era5_cache.json
+          key: era5-cache-${{ github.run_id }}
+          restore-keys: era5-cache-
+
       - name: Rebuild ERA5 history (Weather + Sugar)
         run: |
-          rm -f "Climate Monitor/Weather Monitor/_hist_era5_cache.json" "Climate Monitor/Sugar Monitor/_hist_era5_cache.json"
-          python "Climate Monitor/Weather Monitor/build_history.py"
-          python "Climate Monitor/Sugar Monitor/build_history.py"
+          FLAG=""
+          [ "${{ inputs.full }}" = "true" ] && FLAG="--full"
+          python "Climate Monitor/Weather Monitor/build_history.py" $FLAG
+          python "Climate Monitor/Sugar Monitor/build_history.py" $FLAG
+
+      - name: Sanidade — série chegou perto de hoje
+        run: |
+          python - <<'PY'
+          import json, datetime, sys
+          IDX = {}
+          i = 0
+          for m, n in enumerate([31,29,31,30,31,30,31,31,30,31,30,31], 1):
+              for d in range(1, n+1):
+                  IDX[i] = (m, d); i += 1
+          hoje = datetime.date.today()
+          for f in ("Climate Monitor/Weather Monitor/history_era5.json",
+                    "Climate Monitor/Sugar Monitor/history_era5.json"):
+              pts = json.load(open(f, encoding="utf-8"))["points"]
+              k = next(iter(pts))
+              s = pts[k]["t"][str(hoje.year)]
+              idx = max(j for j, v in enumerate(s) if v is not None)
+              m, d = IDX[idx]
+              atraso = (hoje - datetime.date(hoje.year, m, d)).days
+              print(f"{f}: ultimo dia {hoje.year}-{m:02d}-{d:02d} ({atraso}d de atraso)")
+              if atraso > 10:
+                  sys.exit(f"ERA5 atrasado demais em {f} - abortando o commit")
+          PY
 
       - name: Commit e push
         run: |
