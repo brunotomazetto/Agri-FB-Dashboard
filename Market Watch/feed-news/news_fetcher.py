@@ -17,30 +17,6 @@ if platform.system() == "Windows":
 HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) NewsReader/1.0"}
 
 
-def _resolve_google_news_url(url: str) -> str:
-    """Resolve Google News redirect URLs to the real source URL.
-    Falls back to the original URL if resolution fails."""
-    if "news.google.com" not in url:
-        return url
-    try:
-        import requests as _req
-        import re as _re
-        r = _req.get(url, headers={"User-Agent": HEADERS["User-Agent"]}, timeout=8)
-        html = r.text
-        au = _re.search(r'data-n-au="(https?://[^"]+)"', html)
-        if au and "google" not in au.group(1):
-            return au.group(1)
-        for u in _re.findall(r'"(https?://(?![^"]*google)[^"]+)"', html):
-            if any(d in u for d in ["globo.com", "canalrural", "agfeed", "noticiasagricolas",
-                                     "agrolink", "moneytimes", "braziljournal", "beefpoint",
-                                     "neofeed", "bloomberglinea", "theagribiz", "feedfood",
-                                     "estadao", "cnnbrasil", "farmnews", "abpa", "abiec"]):
-                return u
-    except Exception:
-        pass
-    return url
-
-
 class NewsFetcher:
     GOOGLE_PT = "https://news.google.com/rss/search?q={query}&hl=pt-BR&gl=BR&ceid=BR:pt"
     GOOGLE_EN = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
@@ -86,16 +62,15 @@ class NewsFetcher:
             if not resp.ok:
                 return []
             feed = feedparser.parse(resp.content)
-            for entry in feed.entries[:40]:
+            for entry in feed.entries[:60]:
                 title = getattr(entry, "title", "").strip()
                 url_item = getattr(entry, "link", "").strip()
                 if not title or not url_item:
                     continue
                 summary = ""
                 if hasattr(entry, "summary") and entry.summary:
-                    # Strip HTML tags from summary
-                    import re
-                    summary = re.sub(r"<[^>]+>", "", entry.summary)[:600]
+                    import re as _re
+                    summary = _re.sub(r"<[^>]+>", "", entry.summary)[:600]
                 items.append({
                     "title": title,
                     "url": url_item,
@@ -105,8 +80,9 @@ class NewsFetcher:
                     "group_id": group_id,
                 })
         except Exception as e:
-            print(f"    [WARN] Error fetching {url[:60]}: {e}")
+            print(f"    [WARN] _fetch_feed error {url[:60]}: {e}")
         return items
+
 
     def _fetch_group(self, group: dict) -> list:
         items = []
@@ -121,16 +97,16 @@ class NewsFetcher:
             pt_queries = [" OR ".join(all_terms[:6])] if all_terms else []
 
         # Build all URLs
-        all_urls = []
-        for query in pt_queries:
-            all_urls.append((self._build_url([query], "pt"), gid))
-        for query in en_queries:
-            all_urls.append((self._build_url([query], "en"), gid))
+        all_pairs = []
+        for q in pt_queries:
+            all_pairs.append((self._build_url([q], "pt"), gid))
+        for q in en_queries:
+            all_pairs.append((self._build_url([q], "en"), gid))
 
-        # Fetch in parallel (max 10 concurrent) with overall timeout
+        # Fetch ALL queries in parallel — 10 concurrent workers
         from concurrent.futures import ThreadPoolExecutor, as_completed
         with ThreadPoolExecutor(max_workers=10) as pool:
-            futures = {pool.submit(self._fetch_feed, url, gid): url for url, gid in all_urls}
+            futures = {pool.submit(self._fetch_feed, url, gid): url for url, gid in all_pairs}
             for future in as_completed(futures, timeout=90):
                 try:
                     for item in future.result(timeout=15):
@@ -142,28 +118,26 @@ class NewsFetcher:
 
         return items
 
+
     def _fetch_direct_feed(self, url: str, group_id: int, source_name: str,
                            topical_filter: list = None) -> list:
         items = []
         filter_kws = [kw.lower() for kw in topical_filter] if topical_filter else []
         try:
-            # Fetch with explicit timeout to avoid hanging on slow/broken feeds
-            import requests as _req
+            import requests as _req, re as _re
             resp = _req.get(url, headers=HEADERS, timeout=12, allow_redirects=True)
             if not resp.ok:
                 print(f"    [WARN] Feed returned {resp.status_code}: {url[:60]}")
                 return []
             feed = feedparser.parse(resp.content)
-            for entry in feed.entries[:30]:
+            for entry in feed.entries[:60]:
                 title = getattr(entry, "title", "").strip()
                 url_item = getattr(entry, "link", "").strip()
                 if not title or not url_item:
                     continue
                 summary = ""
                 if hasattr(entry, "summary") and entry.summary:
-                    import re
-                    summary = re.sub(r"<[^>]+>", "", entry.summary)[:600]
-                # Topical filter: discard if none of the required keywords appear
+                    summary = _re.sub(r"<[^>]+>", "", entry.summary)[:600]
                 if filter_kws:
                     text = (title + " " + summary).lower()
                     if not any(kw in text for kw in filter_kws):
@@ -177,25 +151,34 @@ class NewsFetcher:
                     "group_id": group_id,
                 })
         except Exception as e:
-            print(f"    [WARN] Error fetching direct feed {url[:60]}: {e}")
+            print(f"    [WARN] _fetch_direct_feed error {url[:60]}: {e}")
         return items
+
 
     def fetch_all(self) -> list:
         all_items = []
-        for group in self.groups:
-            print(f"  > {group['name']}...")
-            items = self._fetch_group(group)
-            all_items.extend(items)
-            print(f"    {len(items)} itens encontrados")
+        seen_urls = set()
 
+        # Fetch all groups in parallel
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        groups = self.config.get("groups", [])
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            futures = {pool.submit(self._fetch_group, g): g["name"] for g in groups}
+            for future in as_completed(futures, timeout=180):
+                name = futures[future]
+                try:
+                    results = future.result(timeout=120)
+                    new_items = [i for i in results if i["url"] not in seen_urls]
+                    seen_urls.update(i["url"] for i in new_items)
+                    all_items.extend(new_items)
+                    print(f"  > {name}... {len(new_items)} itens encontrados")
+                except Exception as e:
+                    print(f"  > {name}... erro: {e}")
+
+        # Fetch direct feeds in parallel
         direct_feeds = self.config.get("direct_feeds", [])
         if direct_feeds:
-            existing_urls = {item["url"] for item in all_items}
             direct_items = []
-            seen = set()
-            print(f"  > Buscando {len(direct_feeds)} feeds diretos em paralelo...")
-
-            from concurrent.futures import ThreadPoolExecutor, as_completed
             def fetch_one(feed_cfg):
                 url = feed_cfg.get("url", "")
                 if not url:
@@ -209,11 +192,10 @@ class NewsFetcher:
                 futures = [pool.submit(fetch_one, fc) for fc in direct_feeds]
                 for future in as_completed(futures, timeout=90):
                     try:
-                        raw = future.result(timeout=15)
-                        for i in raw:
-                            if i["url"] not in existing_urls and i["url"] not in seen:
-                                seen.add(i["url"])
-                                direct_items.append(i)
+                        for item in future.result(timeout=15):
+                            if item["url"] not in seen_urls:
+                                seen_urls.add(item["url"])
+                                direct_items.append(item)
                     except Exception:
                         pass
 
