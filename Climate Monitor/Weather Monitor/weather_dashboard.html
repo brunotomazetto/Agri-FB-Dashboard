@@ -505,7 +505,27 @@ function vsColor(d){if(d==null)return{bg:"#f4f4f4",fg:"#bbb"};const t=STATE.vr==
   const warm=STATE.vr==="t"?t>=0:t<0,mag=Math.abs(t),al=0.12+0.5*mag;
   const c=warm?"192,57,43":"44,111,181";return{bg:`rgba(${c},${al})`,fg:mag>.55?"#fff":(warm?"#7a1f15":"#1c4870")};}
 
-function render(){renderTable();renderChart();}
+/* O selo do topo mostra o último dia com dado na série exibida — não a hora do
+   load. Antes era new Date(), então dizia "atualizado agora" mesmo quando a
+   camada ao vivo tinha falhado e o gráfico parava semanas atrás. */
+function lastDataIdx(){
+  let last=-1;
+  for(const p of groupPts()){
+    const a=p.h&&p.h[STATE.vr]?p.h[STATE.vr][STATE.curYear]:null;
+    for(let i=365;i>=0;i--){
+      let v=a?a[i]:null;
+      if(v==null&&p.liveIdx&&p.liveIdx[i])v=p.liveIdx[i][STATE.vr];
+      if(v!=null){if(i>last)last=i;break;}
+    }
+  }
+  return last;
+}
+function stampUpdated(){
+  const i=lastDataIdx(),md=i>=0?IDX2MD[i]:null;
+  document.getElementById("updated").textContent=
+    md?String(md[1]).padStart(2,"0")+" "+MES[md[0]-1]+" "+STATE.curYear:"—";
+}
+function render(){renderTable();renderChart();stampUpdated();}
 function renderTable(){
   document.getElementById("tbl-title").textContent="Points — "+GRPLBL[STATE.grp];
   const g=groupPts();
@@ -632,7 +652,6 @@ function drawChart(S){
             y:{title:{display:true,text:STATE.vr==="t"?"°C":"mm",font:{size:10},color:"#888"},ticks:{font:{size:9},color:"#999"},grid:{color:"#f2f2f2"}}}}});
 }
 function goBack(){if(window.parent&&window.parent!==window)window.parent.postMessage({action:"closeDash"},"*");else history.back();}
-document.getElementById("updated").textContent=new Date().toLocaleString("en-GB",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
 boot();
 </script>
 </body>
