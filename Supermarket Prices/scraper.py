@@ -200,7 +200,6 @@ PRODUTOS = {
         {"marca":"Sadia",       "nome":"Lasanha Bolonhesa 600g Sadia",     "embalagem":"600g"},
         {"marca":"Perdigão",    "nome":"Lasanha Bolonhesa 600g Perdigão",  "embalagem":"600g"},
         {"marca":"Seara",       "nome":"Lasanha Calabresa 600g Seara",     "embalagem":"600g"},
-        {"marca":"Sadia",       "nome":"Peito de Frango 1kg Sadia",        "embalagem":"1kg"},
         {"marca":"Swift",       "nome":"Peito de Frango 1kg Swift",        "embalagem":"1kg"},
         {"marca":"Seara",       "nome":"Peito de Frango 1kg Seara",        "embalagem":"1kg"},
         {"marca":"Sadia",       "nome":"Coxa de Frango 1kg Sadia",         "embalagem":"1kg"},
@@ -245,10 +244,8 @@ PRODUTOS = {
         {"marca":"União",           "nome":"Açúcar Refinado 1kg União",                    "embalagem":"1kg"},
         {"marca":"Caravelas",       "nome":"Açúcar Refinado 1kg Caravelas",                "embalagem":"1kg"},
         {"marca":"Da Barra",        "nome":"Açúcar Refinado 1kg Da Barra",                 "embalagem":"1kg"},
-        {"marca":"Guarani",         "nome":"Açúcar Refinado 1kg Guarani",                  "embalagem":"1kg"},
         {"marca":"Dona Benta",      "nome":"Farinha de Trigo 1kg Dona Benta",              "embalagem":"1kg"},
         {"marca":"Venturelli",      "nome":"Farinha de Trigo 1kg Venturelli",              "embalagem":"1kg"},
-        {"marca":"Sol",             "nome":"Farinha de Trigo 1kg Sol",                     "embalagem":"1kg"},
         {"marca":"Pilão",           "nome":"Café Torrado e Moído 500g Pilão",              "embalagem":"500g"},
         {"marca":"3 Corações",      "nome":"Café Torrado e Moído 500g 3 Corações",         "embalagem":"500g"},
         {"marca":"Melitta",         "nome":"Café Torrado e Moído 500g Melitta",            "embalagem":"500g"},
@@ -312,7 +309,7 @@ LINKS = {
         "Massas": {
             "Macarrão Espaguete 500g Barilla_500g":  "https://www.paodeacucar.com/produto/279928/macarrao-com-ovos-espaguete-8-barilla-pacote-500g",
             "Macarrão Espaguete 500g Adria_500g":    "https://www.paodeacucar.com/produto/111375/macarrao-adria-com-ovos-espaguete---8-500g",
-            "Miojo Carne 85g Nissin_85g":            "https://www.paodeacucar.com/produto/169902/macarrao-instantaneo-de-carne-nissin-miojo-lamen-pacote-85g",
+            "Miojo Carne 85g Nissin_85g":            "https://www.paodeacucar.com/produto/169981/macarrao-instantaneo-de-galinha-caipira-nissin-miojo-lamen-pacote-85g",
         },
         "Mercearia": {
             "Arroz Branco 5kg Tio João_5kg":                    "https://www.paodeacucar.com/produto/138068/arroz-agulhinha-tipo-1-tio-joao-pacote-5kg",
@@ -355,7 +352,6 @@ LINKS = {
             "Salsicha Hot Dog 500g Sadia_500g":     "https://www.extramercado.com.br/produto/114859/salsicha-hot-dog-sadia-500g-10-unidades",
             "Salsicha Hot Dog 500g Perdigão_500g":  "https://www.extramercado.com.br/produto/113887/salsicha-hot-dog-perdigao-500g-12-unidades",
             "Salsicha Hot Dog 500g Seara_500g":     "https://www.extramercado.com.br/produto/21730/salsicha-hot-dog-seara-500g",
-            "Linguiça Toscana 700g Sadia_700g":     "https://www.extramercado.com.br/produto/1649350/linguica-toscana-sadia-700g",
             "Linguiça Toscana 700g Perdigão_700g":  "https://www.extramercado.com.br/produto/1667071/linguica-toscana-perdigao-na-brasa-700g",
             "Linguiça Toscana 700g Swift_700g":     "https://www.extramercado.com.br/produto/422282/linguica-toscana-swift-700g",
             "Nuggets de Frango 300g Sadia_300g":    "https://www.extramercado.com.br/produto/142969/empanado-de-frango-peito-crocante-sadia-nuggets-pacote-300g",
@@ -366,9 +362,7 @@ LINKS = {
             "Coxa de Frango 1kg Sadia_1kg":         "https://www.extramercado.com.br/produto/66810/coxa-de-frango-congelada-sadia-1kg",
             "Coxa de Frango 1kg Swift_1kg":         "https://www.extramercado.com.br/produto/422468/coxa-de-frango-swift-1kg",
             "Asa de Frango 1kg Swift_1kg":          "https://www.extramercado.com.br/produto/463439/asa-de-frango-swift-bandeja-1kg",
-            "Fraldinha 1kg Bassi_1kg":              "https://www.extramercado.com.br/produto/114843/fraldinha-extra-limpa-bovina-bassi-1,2kg",
             "Picanha 1kg Bassi_1kg":                "https://www.extramercado.com.br/produto/115631/picanha-bovina-extra-limpa-pedaco-bassi-a%C2%A0vacuo-1,4kg",
-            "Picanha 1kg Estância 92_1kg":          "https://www.extramercado.com.br/produto/1613858/picanha-estancia-92-resfriado-1,3kg",
             "Carne Moida 1kg Swift_1kg":            "https://www.extramercado.com.br/produto/1651983/carne-moida-swift-1kg",
         },
         "Biscoitos": {
@@ -378,7 +372,6 @@ LINKS = {
             "Água e Sal 184g Piraque_184g":          "https://www.extramercado.com.br/produto/1641546/biscoito-agua-e-sal-piraque-pacote-184g",
             "Cream Cracker 300g Marilan_300g":       "https://www.extramercado.com.br/produto/1667380/biscoito-cream-cracker-marilan-300g",
             "Cream Cracker 350g Vitarella_350g":     "https://www.extramercado.com.br/produto/1376439/biscoito-cream-cracker-amanteigado-tradicional-vitarella-pacote-350g",
-            "Cream Cracker 184g Piraque_184g":       "https://www.extramercado.com.br/produto/1641542/biscoito-cream-cracker-piraque-pacote-184g",
             "Cream Cracker 140g Marilan_140g":       "https://www.extramercado.com.br/produto/1667384/biscoito-cream-cracker-marilan-pacote-140g",
             "Cream Cracker 165g Bauducco_165g":      "https://www.extramercado.com.br/produto/1660610/biscoito-cream-cracker-tradicional-bauducco-pacote-165g",
             "Cream Cracker 170g Adria_170g":         "https://www.extramercado.com.br/produto/1638049/biscoito-cream-cracker-folhado-manteiga-adria-folhata-pacote-170g",
@@ -389,7 +382,7 @@ LINKS = {
         "Massas": {
             "Macarrão Espaguete 500g Barilla_500g":   "https://www.extramercado.com.br/produto/305593/macarrao-com-ovos-espaguete-8-barilla-pacote-500g",
             "Macarrão Espaguete 500g Adria_500g":     "https://www.extramercado.com.br/produto/111375/macarrao-adria-com-ovos-espaguete---8-500g",
-            "Macarrão Espaguete 500g Dona Benta_500g":"https://www.extramercado.com.br/produto/5789/macarrao-de-semola-com-ovos-linguine-dona-benta-pacote-500g",
+            "Macarrão Espaguete 500g Dona Benta_500g":"https://www.extramercado.com.br/produto/108898/macarrao-com-ovos-espaguete-n%C2%BA-8-dona-benta-pacote-500g",
             "Miojo Carne 85g Nissin_85g":             "https://www.extramercado.com.br/produto/169902/macarrao-instantaneo-de-carne-nissin-miojo-lamen-pacote-85g",
         },
         "Mercearia": {
@@ -399,8 +392,6 @@ LINKS = {
             "Feijão Carioca 1kg Kicaldo_1kg":                   "https://www.extramercado.com.br/produto/109209/feijao-carioca-tipo-1-kicaldo-pacote-1kg",
             "Açúcar Refinado 1kg União_1kg":                    "https://www.extramercado.com.br/produto/74215/acucar-refinado-uniao-pacote-1kg",
             "Açúcar Refinado 1kg Caravelas_1kg":                "https://www.extramercado.com.br/produto/61474/acucar-refinado-caravelas-pacote-1kg",
-            "Açúcar Refinado 1kg Guarani_1kg":                  "https://www.extramercado.com.br/produto/359075/acucar-refinado-guarani-pacote-1kg",
-            "Farinha de Trigo 1kg Sol_1kg":                     "https://www.extramercado.com.br/produto/359075/farinha-de-trigo-sol-1kg",
             "Café Torrado e Moído 500g Pilão_500g":             "https://www.extramercado.com.br/produto/152052/cafe-torrado-e-moido-tradicional-pilao-pacote-500g",
             "Café Torrado e Moído 500g Melitta_500g":           "https://www.extramercado.com.br/produto/345621/cafe-torrado-e-moido-tradicional-melitta-pacote-500g",
             "Café Torrado e Moído 500g Café Brasileiro_500g":   "https://www.extramercado.com.br/produto/62071/cafe-torrado-e-moido-tradicional-cafe-brasileiro-pacote-500g",
@@ -413,10 +404,8 @@ LINKS = {
             "Amstel Lata_350ml":             "https://www.atacadao.com.br/cerveja-amstel-sleek-86708-11276/p",
             "Antarctica Lata_350ml":         "https://www.atacadao.com.br/cerveja-antarctica-9218-11292/p",
             "Brahma Duplo Malte_269ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-74794-11647/p",
-            "Brahma Duplo Malte_350ml":      "https://www.atacadao.com.br/cerveja-brahma-duplo-malte-67653-11651/p",
             "Budweiser Lata_269ml":          "https://www.atacadao.com.br/cerveja-budweiser-51187-11765/p",
             "Budweiser Lata_350ml":          "https://www.atacadao.com.br/cerveja-budweiser-sleek-lata-com-350ml-80258-11811/p",
-            "Corona Extra Long Neck_330ml":  "https://www.atacadao.com.br/cerveja-corona-long-neck-com-330ml-66884-12000/p",
             "Heineken 0.0_350ml":            "https://www.atacadao.com.br/cerveja-heineken-zero-sleek-86709-12501/p",
             "Heineken Lata_269ml":           "https://www.atacadao.com.br/cerveja-heineken-lata-com-269ml-76983-12460/p",
             "Heineken Lata_350ml":           "https://www.atacadao.com.br/cerveja-heineken-sleek-86733-12486/p",
@@ -440,7 +429,6 @@ LINKS = {
             "Lasanha Bolonhesa 600g Sadia_600g":    "https://www.atacadao.com.br/lasanha-sadia-congelada-bolonhesa-54196-29612/p",
             "Lasanha Bolonhesa 600g Perdigão_600g": "https://www.atacadao.com.br/lasanha-perdigao-congelada-bolonhesa-58251-29563/p",
             "Lasanha Bolonhesa 600g Seara_600g":    "https://www.atacadao.com.br/lasanha-seara-congelada-bolonhesa-32549-29633/p",
-            "Peito de Frango 1kg Sadia_1kg":        "https://www.atacadao.com.br/file-de-peito-de-frango-sadia-congelado-bifes-3499-56449/p",
             "Peito de Frango 1kg Seara_1kg":        "https://www.atacadao.com.br/file-de-peito-de-frango-seara-congelado-37849-12021/p",
             "Coxa de Frango 1kg Sadia_1kg":         "https://www.atacadao.com.br/coxa-de-frango-sadia-iqf-congelada-15063-26014/p",
             "Asa de Frango 1kg Sadia_1kg":          "https://www.atacadao.com.br/asa-de-frango-sadia-congelada-15062-15376/p",
@@ -467,14 +455,11 @@ LINKS = {
             "Miojo Carne 85g Nissin_85g":             "https://www.atacadao.com.br/macarrao-instantaneo-nissin-lamen-carne-5612-3297/p",
         },
         "Mercearia": {
-            "Arroz Branco 5kg Tio João_5kg":                    "https://www.atacadao.com.br/arroz-tio-joao-agulhinha---tipo-1-5148-15022/p",
-            "Arroz Branco 5kg Camil_5kg":                       "https://www.atacadao.com.br/arroz-camil-agulhinha---tipo-1-pacote-com-5kg-12658-13743/p",
             "Feijão Carioca 1kg Camil_1kg":                     "https://www.atacadao.com.br/feijao-carioca-camil-tipo-1-7382-9742/p",
             "Feijão Carioca 1kg Kicaldo_1kg":                   "https://www.atacadao.com.br/feijao-carioca-kicaldo-tipo-1-pacote-com-1kg-11874-9925/p",
             "Açúcar Refinado 1kg União_1kg":                    "https://www.atacadao.com.br/acucar-uniao-refinado-21176-2371/p",
             "Açúcar Refinado 1kg Caravelas_1kg":                "https://www.atacadao.com.br/acucar-caravelas-refinado-25668-1517/p",
-            "Açúcar Refinado 1kg Da Barra_1kg":                 "https://www.atacadao.com.br/acucar-da-barra-refinado-pacote-com-1kg-15604-1814/p",
-            "Farinha de Trigo 1kg Dona Benta_1kg":              "https://www.atacadao.com.br/farinha-de-trigo-dona-benta-tipo-1-pacote-com-1kg-23162-8563/p",
+            "Farinha de Trigo 1kg Dona Benta_1kg":              "https://www.atacadao.com.br/farinha-de-trigo-dona-benta-tipo-1-23162-8563/p",
             "Farinha de Trigo 1kg Venturelli_1kg":              "https://www.atacadao.com.br/farinha-de-trigo-venturelli-tipo-1-pacote-com-1kg-66335-9230/p",
             "Café Torrado e Moído 500g Pilão_500g":             "https://www.atacadao.com.br/cafe-pilao-almofada-4959-3014/p",
             "Café Torrado e Moído 500g 3 Corações_500g":        "https://www.atacadao.com.br/cafe-3-coracoes-tradicional-23371-915/p",
@@ -1018,65 +1003,24 @@ def coletar_com_retry(page, url, supermercado, nome_produto, embalagem, con, max
 # ─── Loop principal ───────────────────────────────────────────────────────────
 def preencher_gaps(con, hoje):
     """
-    Ao final de cada coleta, preenche com o último preço disponível
-    os produtos que não foram coletados hoje mas têm histórico recente.
+    Ao final de cada coleta, preenche com o último preço real conhecido
+    (sem limite de dias) os produtos que ficaram sem preço hoje.
 
-    Melhorias vs versão anterior:
-    - Remove copiados obsoletos antes de recalcular (idempotente).
-    - Remove entradas de erro quando já existe preço real ou copiado no mesmo dia.
-    - Nunca duplica: usa INSERT apenas se não há nenhum registro hoje ainda.
-    - Busca o último preço real (rota_css != 99) para evitar copiar cópias.
+    Como `inserir()` já grava uma linha por produto/loja a cada dia (seja com
+    preço real, seja com erro), aqui apenas fazemos UPDATE na linha existente —
+    nunca INSERT — para não duplicar registros no mesmo dia.
     """
-    inseridos = 0
+    atualizados = 0
 
-    # 1. Limpeza: remove copiados de hoje para recalcular do zero (idempotência)
-    con.execute("DELETE FROM precos WHERE data_coleta=? AND erro='copiado_dia_anterior'", (hoje,))
-
-    # 2. Limpeza: remove entradas de erro quando já existe preço real hoje
-    con.execute("""
-        DELETE FROM precos WHERE data_coleta=?
-          AND erro IN ('produto_indisponivel','preco_nao_encontrado_todas_rotas','pagina_invalida_url_desatualizada')
-          AND EXISTS (
-            SELECT 1 FROM precos r
-            WHERE r.supermercado=precos.supermercado AND r.nome_produto=precos.nome_produto
-              AND r.embalagem=precos.embalagem AND r.data_coleta=precos.data_coleta
-              AND r.preco_atual IS NOT NULL AND r.erro IS NULL
-          )
-    """, (hoje,))
-    con.commit()
-
-    # 3. Produtos com dado real hoje (após limpeza)
-    tem_hoje = set()
-    for r in con.execute("""
-        SELECT supermercado, nome_produto, embalagem FROM precos
-        WHERE data_coleta=? AND preco_atual IS NOT NULL
-          AND (erro IS NULL OR erro='input_manual')
-    """, (hoje,)).fetchall():
-        tem_hoje.add((r[0], r[1], r[2]))
-
-    # 4. Candidatos: produtos com preço nos últimos 7 dias OU com erro hoje
-    candidatos_rows = con.execute("""
-        SELECT DISTINCT supermercado, categoria, grupo, marca, nome_produto,
-               embalagem, cidade, uf, regiao, url
+    # Linhas de hoje sem preço (erro de coleta)
+    gaps = con.execute("""
+        SELECT id, supermercado, nome_produto, embalagem
         FROM precos
-        WHERE preco_atual IS NOT NULL
-          AND data_coleta >= date(?, '-20 days') AND data_coleta < ?
-        UNION
-        SELECT DISTINCT supermercado, categoria, grupo, marca, nome_produto,
-               embalagem, cidade, uf, regiao, url
-        FROM precos
-        WHERE data_coleta=?
-          AND erro IN ('produto_indisponivel','preco_nao_encontrado_todas_rotas','pagina_invalida_url_desatualizada')
-    """, (hoje, hoje, hoje)).fetchall()
+        WHERE data_coleta=? AND preco_atual IS NULL
+    """, (hoje,)).fetchall()
 
-    for p in candidatos_rows:
-        sm, cat, grp, marca, nome, emb = p[0], p[1], p[2], p[3], p[4], p[5]
-        cidade, uf, reg, url = p[6], p[7], p[8], p[9]
-
-        if (sm, nome, emb) in tem_hoje:
-            continue
-
-        # Busca último preço real coletado (não cópia), para não copiar cópias
+    for gap_id, sm, nome, emb in gaps:
+        # Busca o último preço real (não cópia) já coletado, sem limite de dias
         ultimo = con.execute("""
             SELECT preco_atual, preco_original, em_promocao FROM precos
             WHERE supermercado=? AND nome_produto=? AND embalagem=?
@@ -1087,22 +1031,19 @@ def preencher_gaps(con, hoje):
         """, (sm, nome, emb)).fetchone()
 
         if not ultimo:
-            continue
+            continue  # sem histórico algum ainda — não há o que copiar
 
         con.execute("""
-            INSERT INTO precos
-            (data_coleta, horario_coleta, supermercado, categoria, grupo, marca,
-             nome_produto, embalagem, cidade, uf, regiao, preco_atual, preco_original,
-             em_promocao, disponivel, url, erro, rota_css, tentativas)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,'copiado_dia_anterior',99,1)
-        """, (hoje, "00:00:00", sm, cat, grp, marca, nome, emb,
-              cidade, uf, reg, ultimo[0], ultimo[1], ultimo[2], url))
-        inseridos += 1
-        tem_hoje.add((sm, nome, emb))  # evita duplicar dentro do mesmo loop
+            UPDATE precos
+            SET preco_atual=?, preco_original=?, em_promocao=?,
+                disponivel=1, erro='copiado_dia_anterior', rota_css=99
+            WHERE id=?
+        """, (ultimo[0], ultimo[1], ultimo[2], gap_id))
+        atualizados += 1
 
     con.commit()
-    print(f"  → {inseridos} preços preenchidos por cópia do dia anterior")
-    return inseridos
+    print(f"  → {atualizados} preços preenchidos por cópia do último preço real")
+    return atualizados
 
 
 def main(categorias_filtro=None):
@@ -1210,6 +1151,10 @@ def main(categorias_filtro=None):
 
 
         browser.close()
+
+    # Preenche produtos que falharam hoje com o último preço válido (até 20 dias atrás),
+    # evitando distorção nas médias por falta de dado no dia.
+    preencher_gaps(con, hoje)
 
     con.close()
 
