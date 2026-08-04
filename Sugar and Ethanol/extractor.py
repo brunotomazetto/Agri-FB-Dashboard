@@ -60,7 +60,21 @@ FORCE_ALL = False  # overridden in main() if --force-all passed
 
 def is_weekday()  -> bool: return TODAY.weekday() < 5           # Mon–Fri
 def is_thursday() -> bool: return FORCE_ALL or TODAY.weekday() == 3
-def is_month_5th()-> bool: return FORCE_ALL or TODAY.day == 5
+
+# ── Supply/Demand windows ───────────────────────────────────────────────────
+# ANP "vendas" (sales) is published on the last business day of month M+1 for
+# month M's data — confirmed empirically (Mar->30/04, Apr->29/05, May->30/06,
+# Jun->31/07, all landing on the last weekday on/before the calendar month-end).
+# Window = last days of the month + first few days of the next month as a
+# safety net in case publication slips.
+def is_vendas_window() -> bool:
+    return FORCE_ALL or TODAY.day >= 28 or TODAY.day <= 3
+
+# ANP "produção" (biofuel production) has no confirmed fixed publish day —
+# observed fills ranged from the 16th to the 24th of the month. Check weekly
+# (Fridays) across that broader window until a tighter pattern is confirmed.
+def is_producao_window() -> bool:
+    return FORCE_ALL or (12 <= TODAY.day <= 28 and TODAY.weekday() == 4)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -223,8 +237,12 @@ def fetch_sugar_ny11(conn) -> int:
         log.info("[NY11] Already up to date.")
         return 0
 
-    df = yf.Ticker("SB=F").history(start=start, end=TODAY.strftime("%Y-%m-%d"),
-                                   auto_adjust=False)
+    # yfinance's `end` is exclusive of the date itself, so end=TODAY always
+    # skips today's own close — even after market close, even hours after
+    # the run started. Using TODAY+1 lets today's close (if already settled
+    # by run time) be captured the same evening instead of the next run.
+    end = (TODAY + timedelta(days=1)).strftime("%Y-%m-%d")
+    df = yf.Ticker("SB=F").history(start=start, end=end, auto_adjust=False)
     if df is None or df.empty:
         log.info("[NY11] No new data.")
         return 0
@@ -521,10 +539,21 @@ def run_supply_demand(conn: sqlite3.Connection) -> dict:
     log.info("Supply/Demand — ANP monthly volumes (Vendas + Produção)")
     log.info("=" * 60)
 
-    return {
-        "vendas":  ingest_vendas(conn),
-        "producao": ingest_producao(conn),
-    }
+    results = {}
+
+    if is_vendas_window():
+        results["vendas"] = ingest_vendas(conn)
+    else:
+        log.info("[vendas] Outside publication window (day 28-31 or 1-3) — skipping.")
+        results["vendas"] = {"skipped": True}
+
+    if is_producao_window():
+        results["producao"] = ingest_producao(conn)
+    else:
+        log.info("[producao] Outside publication window (Fridays, day 12-28) — skipping.")
+        results["producao"] = {"skipped": True}
+
+    return results
 
 
 def parse_vendas_year(content: bytes, year: int, label: str) -> pd.DataFrame | None:
@@ -967,7 +996,9 @@ def main():
         log.info(f"Agri Extractor | DASHBOARD-ONLY MODE | {NOW_STR}")
     else:
         log.info(f"Agri Extractor | {TODAY} ({TODAY.strftime('%A')}) | {NOW_STR}")
-        log.info(f"  Weekday: {is_weekday()} | Thursday: {is_thursday()} | 5th: {is_month_5th()} | Force: {FORCE_ALL}")
+        log.info(f"  Weekday: {is_weekday()} | Thursday: {is_thursday()} | "
+                 f"Vendas window: {is_vendas_window()} | Producao window: {is_producao_window()} | "
+                 f"Force: {FORCE_ALL}")
     log.info("=" * 60)
 
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
