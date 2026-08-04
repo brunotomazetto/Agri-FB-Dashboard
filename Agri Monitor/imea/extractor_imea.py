@@ -136,7 +136,16 @@ ANNUAL_SNAPS = {
         ("2024-09", "2023/24",  None),
         ("2025-09", "2024/25",  None),
         ("2025-09", "2025/26",  None),
-        ("2026-02", "2026/27e", None),
+        # ("2026-02", "2026/27e", None),  # REMOVIDO: nenhum custo real
+        # publicado sob esse rótulo ainda (só existe produtividade/preço
+        # antecipado); ficava mostrando o custo de fev/2026, que na
+        # verdade pertence à safra 2025/26, com rótulo errado de safra
+        # futura. Volta a aparecer sozinho, com dado real, assim que a
+        # série mensal tiver o primeiro mês publicado sob "2026/27e" —
+        # esperado a partir de out/2026, quando o calendário da soja vira
+        # (ver calc_safra_label). Até lá, a safra 2025/26 acima já cobre
+        # a safra em andamento e é atualizada automaticamente com o mês
+        # mais recente disponível.
     ],
     "MILHO": [
         ("2021-12", "2020/21",  "anual"),
