@@ -487,6 +487,18 @@ def fetch_imea_custo(conn, token, cultura, cadeia_id, now_str):
             if exists:
                 continue
 
+            # A safra gravada no banco é sempre a calculada por calendário
+            # (calc_safra_label), não o rótulo cru da coluna "Safra" do
+            # Excel. Isso evita duas fontes de verdade divergentes para o
+            # mesmo mês (ex.: a IMEA já republicando abr-jun/2026 como
+            # "2026/27e" — projeção antecipada da próxima safra — enquanto
+            # o calendário real ainda considera esses meses parte da safra
+            # 2025/26, em andamento). Com uma única regra determinística
+            # decidindo a safra na hora de gravar, nunca existem duas
+            # linhas para o mesmo (cultura, indicador, mês) sob rótulos de
+            # safra diferentes — a informação nunca duplica.
+            safra_correta = calc_safra_label(cultura, data_ref[:7])
+
             conn.execute(
                 """INSERT INTO historico
                    (cultura, cadeia_id, indicador_id, indicador_nome,
@@ -496,9 +508,9 @@ def fetch_imea_custo(conn, token, cultura, cadeia_id, now_str):
                    VALUES (?,?,?,?,?,NULL,'mensal',?,?,?,?,
                            'R$/ha','MT','CUSTO',?)""",
                 (cultura, cadeia_id,
-                 f"xlsx_{cultura.lower()}_{ind_nome[:20]}",
+                 f"xlsx_{cultura.lower()}_{ind_nome[:40]}",
                  ind_nome,
-                 meta["safra"], data_ref,
+                 safra_correta, data_ref,
                  meta["ano"], meta["mes"], round(val, 4),
                  now_str),
             )
@@ -951,14 +963,31 @@ def get_price_avg(conn, cultura, ym, inicio):
 # ════════════════════════════════════════════════════════════════════════════════
 # QUERIES DE CUSTO
 # ════════════════════════════════════════════════════════════════════════════════
-def qm(conn, c, ind, ym):
-    """Mensal: portal > mensal interno > qualquer."""
-    for sql in [
-        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO' AND indicador_id IS NOT NULL LIMIT 1",
-        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO' AND safra_tipo='mensal' LIMIT 1",
-        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO' LIMIT 1",
-    ]:
-        r = conn.execute(sql, (c, ind, ym)).fetchone()
+def qm(conn, c, ind, ym, safra_lbl=None):
+    """Mensal: portal > mensal interno > qualquer.
+
+    Se safra_lbl for informado, prioriza a linha cujo campo 'safra' bate
+    com o rótulo esperado pelo calendário (calc_safra_label) para aquele
+    mês. Isso evita ambiguidade quando, num mesmo mês, a fonte publica ao
+    mesmo tempo o dado real da safra corrente E uma projeção antecipada da
+    próxima safra (ex.: abr/2026 com 'safra=2025/26' — o dado real — e
+    'safra=2026/27e' — projeção precoce — coexistindo na tabela). Sem esse
+    filtro, a query pegaria a que viesse primeiro no banco, o que é
+    indeterminístico e pode silenciosamente trocar o dado real pelo da
+    projeção futura. Se nada bater com o rótulo esperado, cai no
+    comportamento antigo (sem filtro de safra) — preserva compatibilidade
+    com todo o histórico onde não há ambiguidade."""
+    bases = [
+        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO' AND indicador_id IS NOT NULL",
+        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO' AND safra_tipo='mensal'",
+        "SELECT valor FROM historico WHERE cultura=? AND indicador_nome=? AND strftime('%Y-%m',data_referencia)=? AND grupo='CUSTO'",
+    ]
+    if safra_lbl:
+        for base in bases:
+            r = conn.execute(base + " AND safra=? LIMIT 1", (c, ind, ym, safra_lbl)).fetchone()
+            if r and r[0]: return r[0]
+    for base in bases:
+        r = conn.execute(base + " LIMIT 1", (c, ind, ym)).fetchone()
         if r and r[0]: return r[0]
     return None
 
@@ -972,9 +1001,9 @@ def qa(conn, c, ind, ym):
     return r[0] if r and r[0] else None
 
 
-def get_seeds(conn, c, ym, anual=False):
+def get_seeds(conn, c, ym, anual=False, safra_lbl=None):
     """Seeds = Sementes + Semente de Cobertura."""
-    q = qa if anual else qm
+    q = qa if anual else (lambda *a: qm(*a, safra_lbl))
     for n in ["Sementes","Semente de Soja","Semente de milho","Semente de Milho","Semente de Algodão"]:
         v = q(conn, c, n, ym)
         if v is not None:
@@ -982,23 +1011,23 @@ def get_seeds(conn, c, ym, anual=False):
     return None
 
 
-def get_ferts(conn, c, ym, anual=False):
-    q = qa if anual else qm
+def get_ferts(conn, c, ym, anual=False, safra_lbl=None):
+    q = qa if anual else (lambda *a: qm(*a, safra_lbl))
     v = q(conn, c, "Fertilizantes e Corretivos", ym)
     if v: return v
     return sum(q(conn, c, n, ym) or 0 for n in
                ["Macronutriente","Micronutriente","Corretivo de Solo"]) or None
 
 
-def get_pests(conn, c, ym, anual=False):
-    q = qa if anual else qm
+def get_pests(conn, c, ym, anual=False, safra_lbl=None):
+    q = qa if anual else (lambda *a: qm(*a, safra_lbl))
     v = q(conn, c, "Defensivos", ym)
     if v: return v
     return sum(q(conn, c, n, ym) or 0 for n in
                ["Fungicida","Herbicida","Inseticida","Adjuvante/Outros"]) or None
 
 
-def get_other(conn, c, ym, anual=False):
+def get_other(conn, c, ym, anual=False, safra_lbl=None):
     """
     Other Costs = F. OUTROS CUSTOS da planilha IMEA
     (Assistência Técnica + Combustível Utilitários + Despesas Gerais)
@@ -1007,7 +1036,7 @@ def get_other(conn, c, ym, anual=False):
     NÃO entram aqui — estão embutidos no COE e nunca foram parte do
     "Other" do dashboard na série histórica da API.
     """
-    q = qa if anual else qm
+    q = qa if anual else (lambda *a: qm(*a, safra_lbl))
     v = q(conn, c, "Outros Custos", ym)
     if v:
         return v
@@ -1032,7 +1061,7 @@ def build_rec(conn, cultura, ym, s_label, anual=False):
     rb_spot = round(spot * prod, 2) if spot and prod else None
     rb_std  = round(std  * prod, 2) if std  and prod else None
 
-    qf = qa if anual else qm
+    qf = qa if anual else (lambda *a: qm(*a, s_label))
     coe_v = qf(conn, cultura, "Custo Operacional Efetivo", ym)
     if not coe_v:
         cot = qf(conn, cultura, "Custo Operacional Total", ym)
@@ -1047,10 +1076,10 @@ def build_rec(conn, cultura, ym, s_label, anual=False):
     mo    = qf(conn, cultura, "Mão de Obra", ym)
     pl    = (qf(conn, cultura, "Pró-Labore", ym) or
              qf(conn, cultura, "Mão-de-obra Familiar", ym))
-    sem   = get_seeds(conn, cultura, ym, anual)
-    fer   = get_ferts(conn, cultura, ym, anual)
-    pes   = get_pests(conn, cultura, ym, anual)
-    othr  = get_other(conn, cultura, ym, anual)
+    sem   = get_seeds(conn, cultura, ym, anual, s_label)
+    fer   = get_ferts(conn, cultura, ym, anual, s_label)
+    pes   = get_pests(conn, cultura, ym, anual, s_label)
+    othr  = get_other(conn, cultura, ym, anual, s_label)
     labor = round((mo or 0) + (pl or 0), 2) if (mo or pl) else None
     coe_s = (coe_v - arr) if coe_v and arr else coe_v
 
@@ -1146,9 +1175,69 @@ def build_dataset(conn):
             build_rec(conn, cultura, ym, safra_label_monthly(conn, cultura, ym) or ym)
             for ym in m_yms
         ]
+
+        # Preenche gaps de mês na série mensal usando o dado 'anual'
+        # (histórico interno) quando ele é a ÚNICA fonte disponível pra
+        # aquele mês — ex.: ALGODÃO dez/2024 nunca foi publicado pela fonte
+        # via portal/xlsx mensal, só existe via convenção de fechamento
+        # anual. Sem isso, o gráfico mensal teria um buraco (nov/2024 →
+        # jan/2025 pulando dez/2024) mesmo havendo dado real pra aquele mês.
+        existing_yms = set(m_yms)
+        anual_only_yms = [r[0] for r in conn.execute("""
+            SELECT DISTINCT strftime('%Y-%m',data_referencia) FROM historico
+            WHERE grupo='CUSTO' AND cultura=? AND safra_tipo='anual'
+              AND data_referencia BETWEEN ? AND date('now','+60 days')
+            ORDER BY 1""", (cultura, start)).fetchall()]
+        gap_yms = [ym for ym in anual_only_yms if ym not in existing_yms]
+        for ym in gap_yms:
+            lbl = calc_safra_label(cultura, ym)
+            rec = build_rec(conn, cultura, ym, lbl, anual=True)
+            if rec.get("ok"):
+                monthly.append(rec)
+                log.info(f"  [{cultura}] {ym}: gap preenchido com dado anual "
+                         f"(fonte não publicou via mensal/portal)")
+        monthly.sort(key=lambda r: r["d"])
+
         monthly = apply_cost_interpolation(monthly)
+
+        # A entrada de ANNUAL_SNAPS referente a safra em andamento tem o mês
+        # hardcoded e fica desatualizada a cada nova publicacao mensal da
+        # IMEA (ex.: ficou travada em "2026-02" mesmo ja tendo dado mensal
+        # ate "2026-06"). Em vez de mes fixo, para a safra que esta de fato
+        # em andamento -- identificada como a safra da publicacao mensal
+        # mais recente -- usamos sempre o mes mais recente disponivel na
+        # serie mensal com aquele mesmo rotulo de safra. Assim a visao
+        # "Annual" acompanha automaticamente o ultimo mes publicado, sem
+        # precisar editar este dicionario a cada novo boletim. Rotulos que
+        # ainda nao tem nenhum dado mensal (previsao precoce da proxima
+        # safra) permanecem com o mes hardcoded original.
+        #
+        # Comparação normalizada (ignora sufixo "e"): calc_safra_label()
+        # decide o sufixo "e" com base em date.today() no momento em que o
+        # script roda (norm_y: "e" apenas se y1 >= CURRENT_YEAR). Isso
+        # significa que uma safra hoje rotulada "2026/27e" passa a ser
+        # calculada como "2026/27" (sem "e") assim que o calendário virar
+        # pra 2027, mesmo que o ANNUAL_SNAPS continue com o literal "e"
+        # hardcoded. Sem normalizar, essa comparação pararia de casar
+        # silenciosamente na virada do ano e o bug original (Annual travado
+        # num mês antigo) voltaria a acontecer.
+        def _sem_e(lbl):
+            return lbl[:-1] if lbl.endswith("e") else lbl
+
+        snaps = list(ANNUAL_SNAPS[cultura])
+        if snaps and monthly:
+            latest_label = max(monthly, key=lambda r: r["d"])["safra"]
+            idxs = [i for i, (_, lbl, _) in enumerate(snaps)
+                    if _sem_e(lbl) == _sem_e(latest_label)]
+            if idxs:
+                i = idxs[-1]
+                ym0, lbl0, tipo0 = snaps[i]
+                candidatos = [r["d"] for r in monthly if r["safra"] == latest_label]
+                if candidatos:
+                    snaps[i] = (max(candidatos), lbl0, tipo0)
+
         annual, seen = [], set()
-        for ym, lbl, tipo in ANNUAL_SNAPS[cultura]:
+        for ym, lbl, tipo in snaps:
             if lbl in seen: continue
             seen.add(lbl)
             annual.append(build_rec(conn, cultura, ym, lbl, anual=(tipo == "anual")))
@@ -1177,6 +1266,36 @@ def update_dashboard(data):
 # ════════════════════════════════════════════════════════════════════════════════
 # MIGRATION — idempotent, run once per startup
 # ════════════════════════════════════════════════════════════════════════════════
+def migrate_indicador_ids(conn, now_str):
+    """
+    Limpeza única e idempotente de historico.indicador_id.
+
+    Recalcula o indicador_id de toda linha xlsx_* usando o truncamento
+    atual (40 chars) em vez do antigo (20 chars), que fazia indicadores
+    diferentes colidirem no mesmo id (ex.: 'Custo de Oportunidade' e
+    'Custo de Oportunidade da Terra' truncavam para o mesmo prefixo de 20
+    caracteres). Não afeta indicador_id de outras origens (numérico, do
+    pipeline de portal descontinuado). Seguro para rodar a cada
+    inicialização: só grava quando o valor muda.
+    """
+    rows = conn.execute(
+        "SELECT id, cultura, indicador_nome, indicador_id FROM historico "
+        "WHERE indicador_id LIKE 'xlsx_%'"
+    ).fetchall()
+    updated = 0
+    for row in rows:
+        correct = f"xlsx_{row['cultura'].lower()}_{row['indicador_nome'][:40]}"
+        if row["indicador_id"] != correct:
+            conn.execute(
+                "UPDATE historico SET indicador_id=?, updated_at=? WHERE id=?",
+                (correct, now_str, row["id"]),
+            )
+            updated += 1
+    if updated:
+        log.info(f"[migrate] historico.indicador_id: {updated} linhas corrigidas (truncamento 20→40 chars)")
+    conn.commit()
+
+
 def migrate_safra_labels(conn, now_str):
     """
     Limpeza única e idempotente da coluna historico.safra.
@@ -1285,6 +1404,7 @@ def main():
     conn = get_conn()
     ensure_schema(conn)
     migrate_preco_conab(conn)  # idempotent cleanup: remove stale product/nivel combos
+    migrate_indicador_ids(conn, now_str)  # idempotent cleanup: corrige truncamento de indicador_id
     migrate_safra_labels(conn, now_str)  # idempotent cleanup: corrige historico.safra
 
     # ── 1. Autenticar IMEA ────────────────────────────────────────────────────
