@@ -1552,6 +1552,26 @@ def _classify_op(op: str | None) -> str | None:
     return None
 
 
+def _classify_bucket(op: str | None) -> str:
+    """
+    Separa operações em dois grupos com economias/preços distintos, para não
+    misturar preço médio de mercado aberto com preço de exercício de opções,
+    planos de remuneração, doações etc. (ver INSIDER_AGG abaixo).
+
+    'mkt' → compra/venda à vista ou a termo em bolsa (preço real de mercado)
+    'oth' → tudo o mais que altera a posição mas não é uma transação de
+            mercado a preço corrente: exercício de opção/stock options,
+            ações de plano de remuneração, bonificação, subscrição,
+            doação, empréstimo, outorga, desligamento/renúncia etc.
+    """
+    if not op:
+        return "oth"
+    o = op.lower()
+    if ("vista" in o or "termo" in o) and "exercício" not in o and "exercicio" not in o:
+        return "mkt"
+    return "oth"
+
+
 def _replace_block(html: str, name: str, new_val: str) -> str:
     m = re.search(rf"(const {re.escape(name)}\s+=\s+)", html)
     if not m:
@@ -1671,11 +1691,20 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         insider_series[t] = series
 
     # ── INSIDER_AGG ───────────────────────────────────────────────────────────
-    agg_raw: dict = defaultdict(lambda: defaultdict(lambda: {
-        "ctrl_bq": 0, "ctrl_bv": 0.0, "ctrl_sq": 0, "ctrl_sv": 0.0,
-        "mgmt_bq": 0, "mgmt_bv": 0.0, "mgmt_sq": 0, "mgmt_sv": 0.0,
-        "board_bq": 0, "board_bv": 0.0, "board_sq": 0, "board_sv": 0.0,
-    }))
+    # Cada role (ctrl/mgmt/board) grava DOIS grupos de compra/venda separados:
+    #   _mkt_* → operações de mercado aberto (à vista / a termo) → preço real
+    #   _oth_* → exercício de opções, planos, doações, empréstimos etc.
+    # Isso evita "liquidar" custo de exercício de opção contra receita de
+    # venda a mercado, o que gerava preços médios sem sentido econômico.
+    def _empty_agg():
+        d = {}
+        for role in ("ctrl", "mgmt", "board"):
+            for bucket in ("mkt", "oth"):
+                for suf in ("bq", "bv", "sq", "sv"):
+                    d[f"{role}_{bucket}_{suf}"] = 0 if suf in ("bq", "sq") else 0.0
+        return d
+
+    agg_raw: dict = defaultdict(lambda: defaultdict(_empty_agg))
     for r in conn.execute("""
         SELECT c.ticker, cp.data_referencia, cp.grupo, cp.tipo_movimentacao,
                SUM(cp.quantidade) qty, SUM(COALESCE(cp.volume, 0)) vol
@@ -1689,13 +1718,14 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         direction = _classify_op(r["tipo_movimentacao"])
         if not role or not direction:
             continue
+        bucket = _classify_bucket(r["tipo_movimentacao"])
         qty = round(r["qty"] or 0)
         vol = round(r["vol"] or 0, 2)
         d   = agg_raw[r["ticker"]][r["data_referencia"]]
         if direction == "buy":
-            d[f"{role}_bq"] += qty;  d[f"{role}_bv"] += vol
+            d[f"{role}_{bucket}_bq"] += qty;  d[f"{role}_{bucket}_bv"] += vol
         else:
-            d[f"{role}_sq"] += qty;  d[f"{role}_sv"] += vol
+            d[f"{role}_{bucket}_sq"] += qty;  d[f"{role}_{bucket}_sv"] += vol
 
     insider_agg: dict = {
         t: sorted([{"d": m, **v} for m, v in months.items()], key=lambda x: x["d"])
@@ -1703,6 +1733,8 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
     }
 
     # ── PROGRAMS_FULL ─────────────────────────────────────────────────────────
+    today_str = date.today().isoformat()
+
     programs_full: dict = defaultdict(list)
     for r in conn.execute("""
         SELECT c.ticker, b.id_programa, b.data_deliberacao, b.data_final_prazo,
@@ -1710,26 +1742,59 @@ def build_dashboard(conn: sqlite3.Connection) -> None:
         FROM buyback_programs b JOIN companies c ON c.cnpj_digits=b.cnpj_digits
         ORDER BY c.ticker, b.data_deliberacao
     """):
+        situacao_raw = r["situacao"]
+        # A CVM às vezes demora a atualizar 'situacao' para 'Encerrado' depois
+        # que o prazo do programa já passou. Corrigimos aqui: qualquer programa
+        # com data_final_prazo no passado é tratado como encerrado, independente
+        # do que o feed bruto ainda diz.
+        expired  = bool(r["data_final_prazo"]) and r["data_final_prazo"] < today_str
+        situacao = "Encerrado" if expired else situacao_raw
         programs_full[r["ticker"]].append({
             "id_programa":      r["id_programa"],
             "data_deliberacao": r["data_deliberacao"],
             "data_final_prazo": r["data_final_prazo"],
-            "situacao":         r["situacao"],
+            "situacao":         situacao,
+            "situacao_cvm":     situacao_raw,   # valor bruto, caso precise depurar
             "auth_qty":         r["qtd_autorizada"],
             "float_qty":        r["qtd_acoes_em_circ"],
             "dest":             r["destinacao"] or "—",
         })
 
     # ── CONSOLIDATED + REALIZED ───────────────────────────────────────────────
+    # REALIZED: quanto foi de fato comprado dentro da JANELA PRÓPRIA de cada
+    # programa (da sua deliberação até o início do próximo programa do mesmo
+    # ticker, ou até seu próprio prazo/hoje — o que vier primeiro). Isso evita
+    # contar a mesma compra em dois programas e evita diluir o % concluído de
+    # um programa novo com a autorização de um programa antigo já encerrado.
     consolidated: dict = {}
     realized:     dict = {}
     for t in tickers:
-        cnpj   = cnpj_of[t]
-        active = [p for p in programs_full.get(t, []) if p["situacao"] == "Em Andamento"]
-        realized[t] = {
-            p["id_programa"]: {"realized_q": 0, "realized_v": 0, "pct_done": 0.0}
-            for p in programs_full.get(t, [])
-        }
+        cnpj  = cnpj_of[t]
+        progs = sorted(programs_full.get(t, []), key=lambda p: p["data_deliberacao"] or "")
+        realized[t] = {}
+        for i, p in enumerate(progs):
+            start = p["data_deliberacao"]
+            if not start:
+                realized[t][p["id_programa"]] = {"realized_q": 0, "realized_v": 0, "pct_done": 0.0}
+                continue
+            next_start = progs[i + 1]["data_deliberacao"] if i + 1 < len(progs) else None
+            candidates = [d for d in (p["data_final_prazo"], next_start, today_str) if d]
+            end = min(candidates) if candidates else today_str
+            row = conn.execute("""
+                SELECT SUM(e.quantidade) q, SUM(e.volume) v FROM ipe_entries e
+                WHERE e.cnpj_digits=? AND e.tipo_ativo='Ações'
+                  AND e.qualificacao='treasury'
+                  AND e.tipo_movimentacao IN ('Compra à vista','Compra à termo','Compra')
+                  AND (e.preco_unitario IS NULL OR e.preco_unitario > 0)
+                  AND e.data_movimentacao >= ? AND e.data_movimentacao < ?
+            """, (cnpj, start, end)).fetchone()
+            rq = round(row["q"] or 0)
+            rv = round(row["v"] or 0, 2)
+            auth = p["auth_qty"] or 0
+            pct  = round(rq / auth * 100, 1) if auth else 0.0
+            realized[t][p["id_programa"]] = {"realized_q": rq, "realized_v": rv, "pct_done": pct}
+
+        active = [p for p in progs if p["situacao"] == "Em Andamento"]
         if not active:
             consolidated[t] = None
             continue
