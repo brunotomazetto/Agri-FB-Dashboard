@@ -51,6 +51,17 @@ INR/BRL         -> Yahoo Finance, ticker INRBRL=X. BCB's PTAX API only
                     cross rate instead of a synthetic USD/INR + USD/BRL
                     computation.
 
+IPCA (Focus)    -> Banco Central do Brasil, "Boletim Focus" market
+                    expectations survey (olinda.bcb.gov.br/olinda/servico/
+                    Expectativas). For any given date, stores the median
+                    market expectation for IPCA of THAT date's calendar
+                    year (e.g. any day in 2026 stores the current
+                    consensus for full-year IPCA 2026), using the
+                    baseCalculo=0 series (rolling last-30-days survey --
+                    the one normally meant by "the Focus number"). Rolls
+                    over automatically to the next year's expectation on
+                    Jan 1. Free, official, no auth needed.
+
 Barley          -> TradingView's public single-symbol quote API
                     (scanner.tradingview.com/symbol?symbol=...), symbol
                     NCDEX:BARLEYJPR1! (NCDEX Barley futures, INR/quintal).
@@ -154,6 +165,15 @@ def create_schema(conn: sqlite3.Connection) -> None:
             rate       REAL,
             source     TEXT,
             updated_at   TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS ipca_focus (
+            date              TEXT PRIMARY KEY,   -- date the expectation was reported
+            reference_year    INTEGER,              -- which year's IPCA this expectation is for
+            expectation_median REAL,
+            expectation_mean   REAL,
+            source            TEXT,
+            updated_at          TEXT DEFAULT (datetime('now'))
         );
         """
     )
@@ -282,6 +302,23 @@ def get_yfinance_inrbrl() -> tuple[str, float]:
     return last_date, float(last["Close"])
 
 
+def get_bcb_ipca_focus_latest(year: int) -> tuple[str, float, float]:
+    """Returns (date_str, median, mean) for the most recently reported
+    Focus market expectation of IPCA for the given reference year."""
+    url = (
+        "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais"
+        f"?$filter=Indicador eq 'IPCA' and DataReferencia eq '{year}' and baseCalculo eq 0"
+        "&$orderby=Data desc&$top=1&$format=json"
+    )
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    values = r.json().get("value", [])
+    if not values:
+        raise RuntimeError(f"BCB Focus: no IPCA expectation found for reference year {year}")
+    row = values[0]
+    return row["Data"], float(row["Mediana"]), float(row["Media"])
+
+
 def get_tradingview_barley() -> tuple[str, float]:
     """Returns (date_str today UTC, close_price) for NCDEX Barley futures.
     NCDEX:BARLEYJPR1! is the front-month rolling contract; TradingView's
@@ -355,6 +392,21 @@ def upsert_fx(conn, table, trade_date, rate, source):
         ON CONFLICT(date) DO UPDATE SET rate=excluded.rate, source=excluded.source
         """,
         (trade_date, rate, source),
+    )
+
+
+def upsert_ipca(conn, trade_date, reference_year, median, mean, source):
+    conn.execute(
+        """
+        INSERT INTO ipca_focus (date, reference_year, expectation_median, expectation_mean, source)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(date) DO UPDATE SET
+            reference_year=excluded.reference_year,
+            expectation_median=excluded.expectation_median,
+            expectation_mean=excluded.expectation_mean,
+            source=excluded.source
+        """,
+        (trade_date, reference_year, median, mean, source),
     )
 
 
@@ -458,6 +510,17 @@ def run_daily_update() -> int:
         had_error = True
         print(f"[INRBRL] FAILED: {e}", file=sys.stderr)
 
+    # --- IPCA (Focus) ---
+    try:
+        year = datetime.now(timezone.utc).year
+        d, median, mean = get_bcb_ipca_focus_latest(year)
+        upsert_ipca(conn, d, year, median, mean, "bcb/focus")
+        conn.commit()
+        print(f"[IPCA Focus] OK: {d} (ref. {year}) -> median={median} mean={mean} (bcb/focus)")
+    except Exception as e:
+        had_error = True
+        print(f"[IPCA Focus] FAILED: {e}", file=sys.stderr)
+
     conn.close()
     return 1 if had_error else 0
 
@@ -493,6 +556,45 @@ def find_last_real_data_row(ws, first_row: int, cols: list[int]) -> int:
             prev = v
         cutoffs.append(col_cutoff)
     return min(cutoffs)
+
+
+def backfill_ipca(conn, start_year: int, end_date: date) -> int:
+    """Fetches the full daily history of Focus IPCA expectations, year by
+    year, keeping for each date only the expectation whose reference year
+    matches that date's own calendar year (see module docstring)."""
+    url = "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais"
+    total = 0
+    for year in range(start_year, end_date.year + 1):
+        full_url = (
+            f"{url}?$filter=Indicador eq 'IPCA' and DataReferencia eq '{year}' and baseCalculo eq 0"
+            "&$orderby=Data asc&$top=10000&$format=json"
+        )
+        r = requests.get(full_url, timeout=60)
+        r.raise_for_status()
+        rows = r.json().get("value", [])
+
+        for row in rows:
+            d = datetime.strptime(row["Data"], "%Y-%m-%d").date()
+            if d.year != year:          # keep only same-calendar-year reports
+                continue
+            if d > end_date:
+                continue
+            if not is_weekday(d):
+                continue
+            date_str = d.strftime("%Y-%m-%d")
+            conn.execute(
+                """INSERT INTO ipca_focus
+                       (date, reference_year, expectation_median, expectation_mean, source)
+                   VALUES (?, ?, ?, ?, 'bcb/focus')
+                   ON CONFLICT(date) DO UPDATE SET
+                       reference_year=excluded.reference_year,
+                       expectation_median=excluded.expectation_median,
+                       expectation_mean=excluded.expectation_mean,
+                       source=excluded.source""",
+                (date_str, year, float(row["Mediana"]), float(row["Media"])),
+            )
+            total += 1
+    return total
 
 
 def run_backfill(xlsx_path: str, end_date: date | None = None) -> int:
@@ -594,6 +696,13 @@ def run_backfill(xlsx_path: str, end_date: date | None = None) -> int:
 
     conn.commit()
     print(f"Backfilled (skipped {skipped_weekends} weekend rows): {counts}")
+
+    first_year = ws.cell(row=FIRST_DATA_ROW, column=DATE_COL).value.date().year
+    ipca_end = end_date or ws.cell(row=last_real_row, column=DATE_COL).value.date()
+    ipca_count = backfill_ipca(conn, first_year, ipca_end)
+    conn.commit()
+    print(f"Backfilled ipca_focus: {ipca_count} rows ({first_year}..{ipca_end.year}, capped at {ipca_end})")
+
     conn.close()
     return 0
 
