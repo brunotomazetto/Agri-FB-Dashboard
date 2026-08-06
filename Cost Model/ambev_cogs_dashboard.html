@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ambev COGS Inflation Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --or:#FF5500;--bk:#333333;--gy:#888888;
+  --bg:#F4F4F4;--bd:#E5E5E5;--wh:#FFFFFF;
+  --gr:#27AE60;--rd:#C0392B;
+  --font:'Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--bk);font-size:12px;}
+
+.hdr{background:var(--wh);border-bottom:3px solid var(--or);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;}
+.hdr-title{font-size:14px;font-weight:700;color:var(--or);}
+.hdr-sub{font-size:10px;color:var(--gy);margin-top:2px;}
+.hdr-right{font-size:10px;color:var(--gy);}
+
+.toggle-group{display:flex;border:1px solid var(--bd);border-radius:4px;overflow:hidden;}
+.tog-btn{padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;background:var(--wh);color:var(--gy);border:none;font-family:var(--font);transition:all .15s;}
+.tog-btn.active{background:var(--or);color:var(--wh);}
+.tog-select{border:1px solid var(--bd);border-radius:4px;padding:4px 8px;font-size:11px;font-weight:600;color:var(--bk);background:var(--wh);font-family:var(--font);cursor:pointer;}
+
+.content{padding:14px 24px;display:flex;flex-direction:column;gap:14px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+.card{background:var(--wh);border:1px solid var(--bd);border-radius:6px;padding:16px;}
+.card-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--or);}
+.card-title{font-size:12px;font-weight:700;color:var(--bk);}
+.card-stat{font-size:10px;color:var(--gy);}
+canvas{max-height:215px;}
+
+/* Filters bar (horizontal, top of page) */
+.filters-bar{background:var(--wh);border:1px solid var(--bd);border-radius:6px;padding:14px 18px;}
+.fb-row{display:flex;align-items:center;flex-wrap:wrap;gap:22px;}
+.fb-row + .fb-row{margin-top:12px;padding-top:12px;border-top:1px solid var(--bd);}
+.fb-group{display:flex;align-items:center;gap:8px;}
+.fb-group-label{font-size:10px;font-weight:700;color:var(--gy);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;}
+.fb-section-label{font-size:10px;font-weight:700;color:var(--or);text-transform:uppercase;letter-spacing:.5px;margin-right:4px;white-space:nowrap;}
+.fb-slider-wrap{display:flex;align-items:center;gap:6px;}
+.fb-lbl{font-size:11px;color:var(--bk);white-space:nowrap;}
+.fb-slider{width:100px;accent-color:var(--or);cursor:pointer;}
+.fb-val{font-size:11px;font-weight:700;color:var(--or);min-width:44px;text-align:right;background:#FFF3EA;border-radius:4px;padding:3px 6px;}
+.fb-val.auto{color:var(--gy);font-weight:400;}
+.btn-reset{padding:7px 16px;background:transparent;border:1.5px solid var(--or);color:var(--or);font-size:11px;font-weight:700;cursor:pointer;border-radius:4px;transition:all .15s;font-family:var(--font);white-space:nowrap;}
+.btn-reset:hover{background:var(--or);color:var(--wh);}
+.fb-weight-total{font-size:10px;color:var(--gy);}
+.info-icon{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--bd);color:var(--gy);font-size:10px;font-style:normal;cursor:help;flex-shrink:0;}
+.info-icon:hover{background:var(--or);color:var(--wh);}
+
+/* Footnote */
+.footnote{font-size:10px;color:#888;margin-top:6px;font-style:italic;}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;margin-top:4px;max-height:520px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:10.5px;}
+thead th{padding:7px 9px;text-align:right;color:var(--gy);font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.3px;border-bottom:2px solid var(--or);white-space:nowrap;position:sticky;top:0;background:var(--wh);}
+thead th:first-child{text-align:left;}
+tbody tr{border-bottom:1px solid var(--bd);}
+tbody tr:hover{background:#FFF5EC;}
+tbody tr.projected{background:#FFFBF3;}
+tbody td{padding:5px 9px;text-align:right;white-space:nowrap;}
+tbody td:first-child{text-align:left;font-weight:600;}
+.ov{color:var(--or);font-weight:700;}
+.pos{color:var(--gr);}
+.neg{color:var(--rd);}
+
+.src{font-size:9px;color:#BBB;margin-top:10px;}
+.loading{text-align:center;padding:60px 24px;color:var(--gy);}
+.spinner{width:26px;height:26px;border:3px solid var(--bd);border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 10px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.error-box{background:#FFF8F8;border:1px solid #FFCCCC;border-radius:6px;padding:16px;color:var(--rd);margin:24px;font-size:12px;line-height:1.8;}
+
+@media(max-width:768px){
+  .row2{grid-template-columns:1fr;gap:12px;}
+  .row2 > *{min-width:0;}
+  .content{padding:12px;gap:12px;}
+  .card{padding:12px;}
+  .card-hdr{flex-direction:column;align-items:flex-start;gap:4px;}
+  canvas{max-height:240px;}
+  .hdr{padding:11px 12px;flex-direction:column;align-items:flex-start;gap:6px;}
+  .hdr-right{font-size:9.5px;}
+  .fb-row{gap:12px;}
+  .fb-slider{width:80px;}
+  table{min-width:640px;}
+  .tbl-wrap{-webkit-overflow-scrolling:touch;}
+  .error-box{margin:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">Ambev COGS Inflation Tracker</div>
+    <div class="hdr-sub">Beer Cost Breakdown — Aluminum · Corn · Barley/Wheat · Labor (IGP-M), converted to BRL</div>
+  </div>
+  <div class="hdr-right" id="last-upd">—</div>
+</div>
+
+<div id="root"><div class="loading"><div class="spinner"></div>Loading commodities_prices.db…</div></div>
+
+<script>
+// ══ CONSTANTS ════════════════════════════════════════════════════════════════
+let W = { alu:0.36, corn:0.064, leg3:0.12, igpm:0.456 };  // normalized, recomputed from CW
+const LEG3_LABEL = { barley:'Barley', wheat:'Wheat' };
+const ALU_LABEL = { spot:'Aluminum (spot)', future:'Aluminum (future 12M)' };
+const PRICE_LABELS = {
+  aluminum_spot:'Aluminum (spot)', aluminum_future:'Aluminum (future 12M)',
+  corn:'Corn', wheat:'Wheat', barley:'Barley (USD)',
+};
+
+// ══ STATE ════════════════════════════════════════════════════════════════════
+let aluMode='spot', leg3Mode='barley';
+let revisionYear=null;                     // which effective year the Revision chart shows
+let rangeMode='full';                      // '5y' | '10y' | 'full' -- applies to all charts except Revision History
+let macro = { fx:null, igpm:null };       // current slider values (null until defaults loaded)
+let macroDefault = { fx:null, igpm:null };
+let CW = { alu:36, corn:6.4, leg3:12, igpm:45.6 };       // editable weight sliders (raw units, auto-normalized)
+let CWDefault = { alu:36, corn:6.4, leg3:12, igpm:45.6 };
+let projYear = null;                       // the forward-looking year (no realized data yet)
+
+function recomputeWeights(){
+  const sum = CW.alu+CW.corn+CW.leg3+CW.igpm;
+  W = { alu:CW.alu/sum, corn:CW.corn/sum, leg3:CW.leg3/sum, igpm:CW.igpm/sum };
+}
+
+function getFilteredYears(){
+  if(rangeMode==='full') return YEARS;
+  const n = rangeMode==='5y' ? 5 : 10;
+  return YEARS.slice(-n);
+}
+
+// raw annual series, filled at load time
+let ANNUAL = {};
+let MONTHLY = {};
+let DAILY = {};       // full daily series, used for the retrospective revision chart and the FX projection
+let REPORTED = {};   // {effective_year: value} -- Ambev's actual reported COGS/hl growth
+let IGPM_FOCUS_HISTORY = {}; // {reference_year: [{date,v}, ...]} -- full daily Focus history
+let FX_COMPANY = {};   // {year: rate}
+let IGPM_REALIZED = {}; // {year: value}
+let IGPM_FOCUS = {};    // {year: value}  (latest median per reference_year)
+let FX_FOCUS = {};      // {year: value}
+let YEARS = [];         // full range of effective years to display
+
+// ══ DB LOAD ══════════════════════════════════════════════════════════════════
+function toArr(res){
+  if(!res.length) return [];
+  const{columns,values}=res[0];
+  return values.map(row=>Object.fromEntries(columns.map((c,i)=>[c,row[i]])));
+}
+
+function annualAvg(rows, dateCol, valCol){
+  const grp = {};
+  rows.forEach(r=>{
+    const yr = r[dateCol].slice(0,4);
+    const v = r[valCol];
+    if(v==null) return;
+    (grp[yr] = grp[yr]||[]).push(v);
+  });
+  const out = {};
+  Object.entries(grp).forEach(([yr,vals])=>{
+    out[yr] = vals.reduce((a,b)=>a+b,0)/vals.length;
+  });
+  return out;
+}
+
+function monthlyAvg(rows, dateCol, valCol){
+  const grp = {};
+  rows.forEach(r=>{
+    const ym = r[dateCol].slice(0,7);
+    const v = r[valCol];
+    if(v==null) return;
+    (grp[ym] = grp[ym]||[]).push(v);
+  });
+  return Object.entries(grp).sort(([a],[b])=>a<b?-1:1)
+    .map(([ym,vals])=>({ym, v:vals.reduce((a,b)=>a+b,0)/vals.length}));
+}
+
+// Projected full-year average for `year`: actual realized average for the
+// days we have, holding the LAST reported rate flat for the remaining
+// business days through Dec 31. Defined further below (used both here at
+// init time and by the Revision History chart's per-day reconstruction).
+
+async function init(){
+  try{
+    const SQL = await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+    const resp = await fetch('./commodities_prices.db');
+    if(!resp.ok) throw new Error(`commodities_prices.db not found (HTTP ${resp.status}). Make sure the file is in the same folder as this HTML.`);
+    const db = new SQL.Database(new Uint8Array(await resp.arrayBuffer()));
+
+    const aluRows    = toArr(db.exec('SELECT date, spot, future FROM aluminum_lme'));
+    const cornRows    = toArr(db.exec('SELECT date, close FROM corn_cbot'));
+    const wheatRows   = toArr(db.exec('SELECT date, close FROM wheat_cbot'));
+    const barleyJoin  = toArr(db.exec(`
+      SELECT b.date as date, b.close/(f1.rate/f2.rate) as usd
+      FROM barley_ncdex b
+      JOIN fx_usdbrl f1 ON f1.date=b.date
+      JOIN fx_inrbrl f2 ON f2.date=b.date
+    `));
+    const fxRows      = toArr(db.exec('SELECT date, rate FROM fx_usdbrl'));
+    const fxCompanyRows = toArr(db.exec('SELECT effective_year, rate FROM fx_usdbrl_guidance'));
+    const igpmRealRows  = toArr(db.exec('SELECT year, value FROM igpm_realized'));
+    const igpmFocusRows = toArr(db.exec(`
+      SELECT reference_year, expectation_median, MAX(date) as d
+      FROM igpm_focus GROUP BY reference_year
+    `));
+    const fxFocusRows   = toArr(db.exec(`
+      SELECT reference_year, expectation_median, MAX(date) as d
+      FROM fx_focus GROUP BY reference_year
+    `));
+    const reportedRows  = toArr(db.exec('SELECT effective_year, value FROM cogs_inflation_reported'));
+    const igpmFocusHistRows = toArr(db.exec('SELECT date, reference_year, expectation_median FROM igpm_focus ORDER BY date'));
+
+    MONTHLY.aluminum_spot   = monthlyAvg(aluRows, 'date', 'spot');
+    MONTHLY.aluminum_future = monthlyAvg(aluRows, 'date', 'future');
+    MONTHLY.corn            = monthlyAvg(cornRows, 'date', 'close');
+    MONTHLY.wheat            = monthlyAvg(wheatRows, 'date', 'close');
+    MONTHLY.barley          = monthlyAvg(barleyJoin, 'date', 'usd');
+
+    DAILY.aluminum_spot   = aluRows.map(r=>({date:r.date, v:r.spot}));
+    DAILY.aluminum_future = aluRows.map(r=>({date:r.date, v:r.future}));
+    DAILY.corn            = cornRows.map(r=>({date:r.date, v:r.close}));
+    DAILY.wheat            = wheatRows.map(r=>({date:r.date, v:r.close}));
+    DAILY.barley          = barleyJoin.map(r=>({date:r.date, v:r.usd}));
+    DAILY.fx_market       = fxRows.map(r=>({date:r.date, v:r.rate}));
+
+    reportedRows.forEach(r=> REPORTED[r.effective_year] = r.value);
+    igpmFocusHistRows.forEach(r=>{
+      (IGPM_FOCUS_HISTORY[r.reference_year] = IGPM_FOCUS_HISTORY[r.reference_year]||[]).push({date:r.date, v:r.expectation_median/100});
+    });
+
+    ANNUAL.aluminum_spot   = annualAvg(aluRows, 'date', 'spot');
+    ANNUAL.aluminum_future = annualAvg(aluRows, 'date', 'future');
+    ANNUAL.corn            = annualAvg(cornRows, 'date', 'close');
+    ANNUAL.wheat           = annualAvg(wheatRows, 'date', 'close');
+    ANNUAL.barley          = annualAvg(barleyJoin, 'date', 'usd');
+    ANNUAL.fx_market       = annualAvg(fxRows, 'date', 'rate');
+
+    fxCompanyRows.forEach(r=> FX_COMPANY[r.effective_year] = r.rate);
+    igpmRealRows.forEach(r=> IGPM_REALIZED[r.year] = r.value);
+    igpmFocusRows.forEach(r=> IGPM_FOCUS[r.reference_year] = r.expectation_median/100);
+    fxFocusRows.forEach(r=> FX_FOCUS[r.reference_year] = r.expectation_median);
+
+    db.close();
+
+    // The projected year is the forward-looking one with adjustable
+    // macro sliders -- always the last year with a Focus expectation
+    // (i.e. genuinely no realized data has started yet). Years before it
+    // (including a still-in-progress current year) use the best
+    // available fixed data: company FX guidance / realized or Focus IGP-M.
+    const focusYears = Object.keys(IGPM_FOCUS).map(Number).sort((a,b)=>a-b);
+    projYear = focusYears[focusYears.length-1];
+
+    macroDefault.fx   = projectedFullYearAvg(DAILY.fx_market, projYear-1); // realized YTD of the HEDGE year,
+                                                        // held flat at the last reported rate through Dec 31 --
+                                                        // this is the projected full-year average, carried into
+                                                        // the projected year (not a forward FX guess).
+    macroDefault.igpm = IGPM_FOCUS[projYear]*100;       // IGP-M genuinely is a forward projection FOR the projected year itself
+    macro.fx = macroDefault.fx; macro.igpm = macroDefault.igpm;
+    recomputeWeights();
+
+    // year range: from earliest year with usable hedge data through projYear
+    const allDataYears = Object.keys(ANNUAL.aluminum_spot).map(Number);
+    const minYear = Math.min(...allDataYears);
+    YEARS = [];
+    for(let y=minYear+2; y<=projYear; y++) YEARS.push(y);
+
+    revisionYear = projYear;
+
+    const lastRealDate = fxRows.length ? fxRows[fxRows.length-1].date : null;
+    document.getElementById('last-upd').textContent = lastRealDate ? `Latest realized data: ${lastRealDate} · Projection: FY${String(projYear).slice(2)}e` : '—';
+
+    buildLayout();
+    renderAll();
+    renderPriceCharts();
+    renderRevisionChart();
+    renderScenarioChart();
+  }catch(e){
+    document.getElementById('root').innerHTML = `<div class="error-box">
+      <strong>⚠ ${e.message}</strong><br><br>
+      1. Run <code>python update_commodities.py --backfill &lt;xlsx&gt;</code> (once) and <code>python update_commodities.py</code> (daily)<br>
+      2. Make sure <code>commodities_prices.db</code> is in the same folder as this file<br>
+      3. Reload the page
+    </div>`;
+  }
+}
+
+// ══ CALC ═════════════════════════════════════════════════════════════════════
+function fxForYear(year){
+  if(FX_COMPANY[year] !== undefined) return FX_COMPANY[year];
+  return projectedFullYearAvg(DAILY.fx_market, year-1); // Option A fallback (same formula as the macro default;
+                                                          // reduces to the plain average for already-complete years)
+}
+function fxFor(effYear){
+  if(effYear === projYear) return macro.fx;   // user-adjustable, only for the forward-looking year
+  return fxForYear(effYear);
+}
+function igpmFor(effYear){
+  if(effYear === projYear) return macro.igpm/100;
+  if(IGPM_REALIZED[effYear] !== undefined) return IGPM_REALIZED[effYear];
+  if(IGPM_FOCUS[effYear] !== undefined) return IGPM_FOCUS[effYear];
+  return null;
+}
+function yoy(seriesKey, effYear){
+  const hy=effYear-1, hyp=effYear-2;
+  const now=ANNUAL[seriesKey][hy], prev=ANNUAL[seriesKey][hyp];
+  if(now==null||prev==null) return null;
+  const fxNow = fxFor(effYear), fxPrev = fxFor(hy);
+  if(fxNow==null||fxPrev==null) return null;
+  return (now*fxNow)/(prev*fxPrev) - 1;
+}
+function computeRow(effYear){
+  const a = yoy(aluMode==='spot' ? 'aluminum_spot' : 'aluminum_future', effYear);
+  const c = yoy('corn', effYear);
+  const b = yoy(leg3Mode, effYear);
+  const g = igpmFor(effYear);
+  let est = null;
+  if(a!=null && c!=null && b!=null && g!=null){
+    est = W.alu*a + W.corn*c + W.leg3*b + W.igpm*g;
+  }
+  return {year:effYear, a, c, b, g, est};
+}
+function computeAll(){ return getFilteredYears().map(computeRow); }
+
+function pct(x, d=2){ return x==null ? '—' : (x*100).toFixed(d)+'%'; }
+function cls(x){ return x==null ? '' : (x>=0 ? 'neg' : 'pos'); } // cost UP = red (neg for margin conv.), DOWN = green
+
+// ══ CONTROLS ═════════════════════════════════════════════════════════════════
+function setAlu(v, el){ aluMode=v; document.querySelectorAll('#alu-toggles .tog-btn').forEach(b=>b.classList.toggle('active', b===el)); renderAll(); renderRevisionChart(); }
+function setLeg3(v, el){ leg3Mode=v; document.querySelectorAll('#leg3-toggles .tog-btn').forEach(b=>b.classList.toggle('active', b===el)); renderAll(); renderRevisionChart(); }
+function setRevisionYear(v){ revisionYear=parseInt(v); renderRevisionChart(); }
+function setRange(mode, el){
+  rangeMode=mode;
+  document.querySelectorAll('#range-toggles .tog-btn').forEach(b=>b.classList.toggle('active', b===el));
+  renderAll(); renderPriceCharts(); renderScenarioChart();
+}
+
+function onMacroSlider(key, val){
+  macro[key] = parseFloat(val);
+  syncMacroLabels();
+  renderAll();
+  renderScenarioChart();
+}
+function syncMacroLabels(){
+  document.getElementById('v-fx').textContent   = macro.fx.toFixed(2);
+  document.getElementById('v-igpm').textContent = macro.igpm.toFixed(1)+'%';
+  document.getElementById('v-fx').classList.toggle('auto', macro.fx===macroDefault.fx);
+  document.getElementById('v-igpm').classList.toggle('auto', macro.igpm===macroDefault.igpm);
+}
+
+function onWeightSlider(key, val){
+  CW[key] = parseFloat(val);
+  recomputeWeights();
+  syncWeightLabels();
+  renderAll(); renderScenarioChart(); renderRevisionChart();
+}
+function syncWeightLabels(){
+  const sum = CW.alu+CW.corn+CW.leg3+CW.igpm;
+  document.getElementById('w-alu-val').textContent = (CW.alu/sum*100).toFixed(1)+'%';
+  document.getElementById('w-corn-val').textContent = (CW.corn/sum*100).toFixed(1)+'%';
+  document.getElementById('w-leg3-val').textContent = (CW.leg3/sum*100).toFixed(1)+'%';
+  document.getElementById('w-igpm-val').textContent = (CW.igpm/sum*100).toFixed(1)+'%';
+}
+
+function resetAll(){
+  macro.fx = macroDefault.fx; macro.igpm = macroDefault.igpm;
+  document.getElementById('sl-fx').value = macro.fx;
+  document.getElementById('sl-igpm').value = macro.igpm;
+  syncMacroLabels();
+
+  CW = { ...CWDefault };
+  document.getElementById('sl-w-alu').value = CW.alu;
+  document.getElementById('sl-w-corn').value = CW.corn;
+  document.getElementById('sl-w-leg3').value = CW.leg3;
+  document.getElementById('sl-w-igpm').value = CW.igpm;
+  recomputeWeights();
+  syncWeightLabels();
+
+  renderAll(); renderScenarioChart(); renderRevisionChart();
+}
+
+// ══ LAYOUT ═══════════════════════════════════════════════════════════════════
+function buildLayout(){
+  document.getElementById('root').innerHTML = `
+  <div class="content">
+
+    <!-- i) Filters -->
+    <div class="filters-bar">
+      <div class="fb-row">
+        <div class="fb-group">
+          <span class="fb-section-label">Range</span>
+          <div class="toggle-group" id="range-toggles">
+            <button class="tog-btn" data-v="5y" onclick="setRange('5y',this)">5Y</button>
+            <button class="tog-btn" data-v="10y" onclick="setRange('10y',this)">10Y</button>
+            <button class="tog-btn active" data-v="full" onclick="setRange('full',this)">Full History</button>
+          </div>
+        </div>
+        <div class="fb-group">
+          <span class="fb-section-label">Aluminum</span>
+          <div class="toggle-group" id="alu-toggles">
+            <button class="tog-btn active" data-v="spot" onclick="setAlu('spot',this)">Spot</button>
+            <button class="tog-btn" data-v="future" onclick="setAlu('future',this)">Future 12M</button>
+          </div>
+        </div>
+        <div class="fb-group">
+          <span class="fb-section-label">Component 3</span>
+          <div class="toggle-group" id="leg3-toggles">
+            <button class="tog-btn active" data-v="barley" onclick="setLeg3('barley',this)">Barley</button>
+            <button class="tog-btn" data-v="wheat" onclick="setLeg3('wheat',this)">Wheat</button>
+          </div>
+        </div>
+        <span class="footnote" style="margin:0;">Range applies everywhere except Revision History (always the full hedge-year window).</span>
+      </div>
+
+      <div class="fb-row">
+        <span class="fb-section-label">Macro Assumptions</span>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl">USD/BRL</span>
+          <input id="sl-fx" class="fb-slider" type="range" min="4.00" max="7.00" step="0.01" oninput="onMacroSlider('fx', this.value)">
+          <span class="fb-val" id="v-fx">—</span>
+          <span class="info-icon" title="Average USD/BRL expected for FY${String(projYear-1).slice(2)}, carried forward to convert FY${String(projYear).slice(2)} COGS.">ⓘ</span>
+        </div>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl">IGP-M</span>
+          <input id="sl-igpm" class="fb-slider" type="range" min="-5" max="15" step="0.1" oninput="onMacroSlider('igpm', this.value)">
+          <span class="fb-val" id="v-igpm">—</span>
+          <span class="info-icon" title="IGP-M expected for FY${String(projYear).slice(2)}.">ⓘ</span>
+        </div>
+        <button class="btn-reset" onclick="resetAll()">↺ Reset to defaults</button>
+      </div>
+      <div class="footnote" style="margin:6px 0 0;">FX default = ${projYear-1} realized YTD average, held flat through Dec 31 &middot; IGP-M default = ${projYear} BCB Focus projection.</div>
+
+      <div class="fb-row">
+        <span class="fb-section-label">Beer Cost Breakdown</span>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl" id="w-alu-lbl">Aluminum</span>
+          <input id="sl-w-alu" class="fb-slider" type="range" min="0" max="100" step="0.5" value="36" oninput="onWeightSlider('alu', this.value)">
+          <span class="fb-val" id="w-alu-val">36.0%</span>
+        </div>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl">Corn</span>
+          <input id="sl-w-corn" class="fb-slider" type="range" min="0" max="100" step="0.5" value="6.4" oninput="onWeightSlider('corn', this.value)">
+          <span class="fb-val" id="w-corn-val">6.4%</span>
+        </div>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl" id="w-leg3-lbl">Barley</span>
+          <input id="sl-w-leg3" class="fb-slider" type="range" min="0" max="100" step="0.5" value="12" oninput="onWeightSlider('leg3', this.value)">
+          <span class="fb-val" id="w-leg3-val">12.0%</span>
+        </div>
+        <div class="fb-slider-wrap">
+          <span class="fb-lbl">Labor</span>
+          <input id="sl-w-igpm" class="fb-slider" type="range" min="0" max="100" step="0.5" value="45.6" oninput="onWeightSlider('igpm', this.value)">
+          <span class="fb-val" id="w-igpm-val">45.6%</span>
+        </div>
+      </div>
+      <div class="footnote" style="margin:6px 0 0;">Weight sliders are relative and auto-normalize to 100%.</div>
+    </div>
+
+    <!-- ii) Trajectory + Decomposition -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">COGS Inflation — Trajectory</span>
+          <span class="card-stat" id="proj-stat"></span>
+        </div>
+        <canvas id="chartTotal"></canvas>
+        <div class="footnote">"e" suffix = projected year (adjustable via Macro sliders above)</div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">Decomposition by Component</span>
+          <span class="card-stat">Weighted contribution, pp</span>
+        </div>
+        <canvas id="chartDecomp"></canvas>
+      </div>
+    </div>
+
+    <!-- iii) Revision History + Scenario Comparison -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">COGS Inflation — Revision History</span>
+          <select id="revision-year-select" class="tog-select" onchange="setRevisionYear(this.value)"></select>
+        </div>
+        <canvas id="chartRevision"></canvas>
+        <div class="footnote" id="revision-note">How the estimate for the selected year moved as new data came in.</div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">Scenario Comparison</span>
+          <span class="card-stat">Corn fixed, Aluminum &amp; Component 3 vary, vs. Ambev reported</span>
+        </div>
+        <canvas id="chartScenario"></canvas>
+      </div>
+    </div>
+
+    <!-- iv) Price History x2 -->
+    <div class="row2">
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Price History — Aluminum</span></div>
+        <canvas id="chartPriceAlu"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">Price History — Wheat vs Barley</span></div>
+        <canvas id="chartPriceGrain"></canvas>
+      </div>
+    </div>
+
+    <!-- v) Table -->
+    <div class="card">
+      <div class="card-hdr">
+        <span class="card-title">COGS Inflation by Year</span>
+        <span class="card-stat">Company-reported FX through FY${String(projYear-1).slice(2)}, market assumption in FY${String(projYear).slice(2)}e</span>
+      </div>
+      <div class="tbl-wrap">
+        <table><thead id="tbl-head"></thead><tbody id="tbl-body"></tbody></table>
+      </div>
+      <div class="src">Sources: Westmetall (LME spot) · TradingView (LME future, NCDEX Barley) · Yahoo Finance (CBOT wheat/corn) · BCB PTAX (USD/BRL) · BCB Focus (projected FX and IGP-M) · BCB SGS 189 (realized IGP-M)</div>
+    </div>
+
+  </div>`;
+
+  document.getElementById('sl-fx').value = macro.fx;
+  document.getElementById('sl-igpm').value = macro.igpm;
+  syncMacroLabels();
+  syncWeightLabels();
+
+  const revSel = document.getElementById('revision-year-select');
+  revSel.innerHTML = YEARS.slice().reverse().map(y=>`<option value="${y}">FY${String(y).slice(2)}${y===projYear?'e':''}</option>`).join('');
+  revSel.value = revisionYear;
+}
+
+// ══ RENDER ═══════════════════════════════════════════════════════════════════
+let chartDecomp, chartTotal;
+
+function renderAll(){
+  const rows = computeAll();
+
+  document.getElementById('w-alu-lbl').textContent = aluMode==='spot' ? 'Aluminum (spot)' : 'Aluminum (future)';
+  document.getElementById('w-leg3-lbl').textContent = LEG3_LABEL[leg3Mode];
+  document.getElementById('proj-stat').textContent = `FY${String(projYear).slice(2)}e: ${pct(rows[rows.length-1].est)}`;
+
+  renderTable(rows);
+  renderCharts(rows);
+}
+
+function renderTable(rows){
+  document.getElementById('tbl-head').innerHTML = `
+    <tr>
+      <th>Fiscal Year</th>
+      <th>${ALU_LABEL[aluMode]} YoY</th>
+      <th>Corn YoY</th>
+      <th>${LEG3_LABEL[leg3Mode]} YoY</th>
+      <th>IGP-M</th>
+      <th>FX used</th>
+      <th>COGS inflation</th>
+    </tr>`;
+  document.getElementById('tbl-body').innerHTML = rows.map(r=>{
+    const fxUsed = r.year===projYear ? macro.fx : fxFor(r.year);
+    return `
+    <tr class="${r.year===projYear ? 'projected':''}">
+      <td>FY${String(r.year).slice(2)}${r.year===projYear?'e':''}</td>
+      <td class="${cls(r.a)}">${pct(r.a)}</td>
+      <td class="${cls(r.c)}">${pct(r.c)}</td>
+      <td class="${cls(r.b)}">${pct(r.b)}</td>
+      <td class="${cls(r.g)}">${pct(r.g)}</td>
+      <td>${fxUsed!=null ? fxUsed.toFixed(2) : '—'}</td>
+      <td class="ov">${pct(r.est)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderCharts(rows){
+  const labels = rows.map(r=>'FY'+String(r.year).slice(2)+(r.year===projYear?'e':''));
+
+  // Decomposition (stacked bar of weighted contributions).
+  // Fixed color/stack order, bottom to top: Corn (blue) - Barley/Wheat (gray)
+  // - Labor/IGP-M (black) - Aluminum (orange). Always the same regardless
+  // of sign/value, so the chart reads consistently every time.
+  const ctxD = document.getElementById('chartDecomp').getContext('2d');
+  const decompData = {
+    labels,
+    datasets: [
+      { label: 'Corn', data: rows.map(r=>r.c==null?null:+(W.corn*r.c*100).toFixed(2)), backgroundColor:'#1F6FB2' },
+      { label: LEG3_LABEL[leg3Mode], data: rows.map(r=>r.b==null?null:+(W.leg3*r.b*100).toFixed(2)), backgroundColor:'#888888' },
+      { label: 'Labor (IGP-M)', data: rows.map(r=>r.g==null?null:+(W.igpm*r.g*100).toFixed(2)), backgroundColor:'#333333' },
+      { label: ALU_LABEL[aluMode], data: rows.map(r=>r.a==null?null:+(W.alu*r.a*100).toFixed(2)), backgroundColor:'#FF5500' },
+    ]
+  };
+  if(chartDecomp){ chartDecomp.data = decompData; chartDecomp.update(); }
+  else {
+    chartDecomp = new Chart(ctxD, {
+      type:'bar',
+      data: decompData,
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } },
+          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}pp` } } },
+        scales:{
+          x:{ stacked:true, grid:{display:false}, ticks:{font:{size:10}} },
+          y:{ stacked:true, grid:{color:'#E5E5E5'}, ticks:{ callback:v=>(+v.toFixed(2))+'%', font:{size:10} } }
+        }
+      }
+    });
+  }
+
+  // Total trajectory: estimated (bars) vs. Ambev's actual reported result (line)
+  const ctxT = document.getElementById('chartTotal').getContext('2d');
+  const totalData = {
+    labels,
+    datasets: [
+      {
+        type:'bar', label:'Estimated',
+        data: rows.map(r=>r.est==null?null:+(r.est*100).toFixed(2)),
+        backgroundColor: rows.map(r=> r.est>=0 ? '#FF5500' : '#27AE60'),
+        borderColor: rows.map(r=> r.est>=0 ? '#FF5500' : '#27AE60'),
+        borderWidth:1.5, borderRadius:3, borderSkipped:false, order:2,
+      },
+      {
+        type:'line', label:'Reported (actual)',
+        data: rows.map(r=> REPORTED[r.year]==null ? null : +(REPORTED[r.year]*100).toFixed(2)),
+        borderColor:'#333333', backgroundColor:'#333333', borderWidth:2,
+        pointRadius:3, pointBackgroundColor:'#333333', tension:0, spanGaps:false, order:1,
+      },
+    ]
+  };
+  if(chartTotal){ chartTotal.data = totalData; chartTotal.update(); }
+  else {
+    chartTotal = new Chart(ctxT, {
+      data: totalData,
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:10, font:{size:10} } },
+          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:10}} },
+          y:{ grid:{color:'#E5E5E5'}, ticks:{ callback:v=>(+v.toFixed(2))+'%', font:{size:10} } }
+        }
+      }
+    });
+  }
+}
+
+// ══ PRICE HISTORY CHARTS ═════════════════════════════════════════════════════
+function rangeStartYm(){
+  if(rangeMode==='full') return null;
+  const n = rangeMode==='5y' ? 5 : 10;
+  return String(projYear-n+1)+'-01';
+}
+function filteredMonthly(key){
+  const start = rangeStartYm();
+  const series = MONTHLY[key]||[];
+  return start ? series.filter(p=>p.ym>=start) : series;
+}
+
+function buildDualLineChart(canvasId, existingChart, seriesA, labelA, seriesB, labelB, sameAxis){
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const allMonths = new Set(seriesA.map(p=>p.ym));
+  seriesB.forEach(p=>allMonths.add(p.ym));
+  const labels = [...allMonths].sort();
+  const mapA = Object.fromEntries(seriesA.map(p=>[p.ym,p.v]));
+  const mapB = Object.fromEntries(seriesB.map(p=>[p.ym,p.v]));
+
+  const data = {
+    labels,
+    datasets: [
+      { label:labelA, yAxisID:'y',
+        data: labels.map(ym=> mapA[ym]!=null ? +mapA[ym].toFixed(2) : null),
+        borderColor:'#FF5500', backgroundColor:'#FF5500', fill:false,
+        borderWidth:1.5, pointRadius:0, tension:0.15, spanGaps:true },
+      { label:labelB, yAxisID: sameAxis?'y':'y2',
+        data: labels.map(ym=> mapB[ym]!=null ? +mapB[ym].toFixed(2) : null),
+        borderColor:'#1F6FB2', backgroundColor:'#1F6FB2', fill:false,
+        borderWidth:1.5, pointRadius:0, tension:0.15, spanGaps:true },
+    ]
+  };
+  const scales = {
+    x:{ grid:{display:false}, ticks:{ maxTicksLimit:8, font:{size:10} } },
+    y:{ position:'left', grid:{color:'#E5E5E5'}, ticks:{ font:{size:10} },
+        title: sameAxis?undefined:{display:true, text:labelA, font:{size:10}, color:'#FF5500'} },
+  };
+  if(!sameAxis) scales.y2 = { position:'right', grid:{display:false}, ticks:{ font:{size:10} },
+    title:{display:true, text:labelB, font:{size:10}, color:'#1F6FB2'} };
+
+  if(existingChart){ existingChart.data = data; existingChart.options.scales = scales; existingChart.update(); return existingChart; }
+  return new Chart(ctx, {
+    type:'line', data,
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}` } } },
+      scales,
+    }
+  });
+}
+
+let chartPriceAlu, chartPriceGrain;
+function renderPriceCharts(){
+  chartPriceAlu = buildDualLineChart('chartPriceAlu', chartPriceAlu,
+    filteredMonthly('aluminum_spot'), 'Aluminum (spot)',
+    filteredMonthly('aluminum_future'), 'Aluminum (future 12M)', true);
+  chartPriceGrain = buildDualLineChart('chartPriceGrain', chartPriceGrain,
+    filteredMonthly('wheat'), 'Wheat (USD cents/bu)',
+    filteredMonthly('barley'), 'Barley (USD)', false);
+}
+
+// ══ REVISION HISTORY CHART ═══════════════════════════════════════════════════
+// Reconstructed retrospectively from daily data: for effective year E, walks
+// day by day through the HEDGE year (E-1) only, using the year-to-date
+// running average as of each day for the "current" leg, against the prior
+// hedge year's full (fixed) average -- i.e. what the estimate for E would
+// have shown on that day, using only market data (Option A FX, no company
+// override). Doesn't depend on the daily job having logged anything.
+let chartRevision;
+
+function cumulativeSeries(dailyRows, year){
+  const filtered = dailyRows.filter(r=>r.date.slice(0,4)===String(year) && r.v!=null);
+  filtered.sort((a,b)=> a.date<b.date?-1:1);
+  let sum=0, n=0;
+  return filtered.map(r=>{ sum+=r.v; n++; return {date:r.date, avg:sum/n}; });
+}
+function asOf(sortedSeries, dateStr, key){
+  let result = null;
+  for(const pt of sortedSeries){
+    if(pt.date<=dateStr) result=pt; else break;
+  }
+  return result ? result[key] : null;
+}
+
+// Projected full-year average for `year` as of a given cutoff date (or the
+// latest available date, if no cutoff given): actual realized average up
+// to that date, holding the LAST reported rate flat for the remaining
+// business days through Dec 31. When the cutoff is the last day of the
+// year (or the year is already complete), this is identical to the plain
+// average -- same formula covers both an in-progress and a closed year.
+function projectedFullYearAvg(dailySeries, year, asOfDate){
+  let rows = dailySeries.filter(r=>r.date.slice(0,4)===String(year) && r.v!=null);
+  if(asOfDate) rows = rows.filter(r=>r.date<=asOfDate);
+  rows.sort((a,b)=> a.date<b.date?-1:1);
+  if(!rows.length) return null;
+  const lastRate = rows[rows.length-1].v;
+  const lastDate = new Date(rows[rows.length-1].date+'T00:00:00');
+  let remaining = 0;
+  const d = new Date(lastDate); d.setDate(d.getDate()+1);
+  const yearEnd = new Date(year, 11, 31);
+  while(d <= yearEnd){
+    const dow = d.getDay();
+    if(dow!==0 && dow!==6) remaining++;
+    d.setDate(d.getDate()+1);
+  }
+  const sumYtd = rows.reduce((s,r)=>s+r.v,0);
+  return (sumYtd + lastRate*remaining) / (rows.length+remaining);
+}
+
+function computeRevisionTrajectory(effYear){
+  const hedgeYear = effYear-1, priorHedgeYear = effYear-2;
+  const aluKey = aluMode==='spot' ? 'aluminum_spot' : 'aluminum_future';
+
+  const priorAlu = ANNUAL[aluKey][priorHedgeYear];
+  const priorCorn = ANNUAL.corn[priorHedgeYear];
+  const priorLeg3 = ANNUAL[leg3Mode][priorHedgeYear];
+  const priorFx = fxForYear(hedgeYear); // same cascade as the main table: company guidance if available, else market fallback
+  if([priorAlu,priorCorn,priorLeg3,priorFx].some(v=>v==null)) return [];
+
+  const cumAlu = cumulativeSeries(DAILY[aluKey], hedgeYear);
+  const cumCorn = cumulativeSeries(DAILY.corn, hedgeYear);
+  const cumLeg3 = cumulativeSeries(DAILY[leg3Mode], hedgeYear);
+  const igpmHist = (IGPM_FOCUS_HISTORY[effYear]||[]).slice().sort((a,b)=>a.date<b.date?-1:1);
+
+  // Phase 1: within the hedge year itself -- commodities and FX are still
+  // accumulating day by day (FX uses the same hold-flat projection as the
+  // Macro default, so this chart's latest point always matches the
+  // Trajectory chart's current default for the same year).
+  const hedgeYearDates = DAILY.fx_market.filter(r=>r.date.slice(0,4)===String(hedgeYear) && r.v!=null).map(r=>r.date);
+
+  // Phase 2: the hedge year is over, so commodities and FX are locked at
+  // their final values -- but IGP-M is looked up directly by effective
+  // year, so it keeps getting revised even after the hedge year ends,
+  // for as long as Focus keeps publishing updates for that year.
+  const effYearDates = igpmHist.filter(r=>r.date.slice(0,4)===String(effYear)).map(r=>r.date);
+
+  const allDates = [...new Set([...hedgeYearDates, ...effYearDates])].sort();
+  const finalAlu = ANNUAL[aluKey][hedgeYear], finalCorn = ANNUAL.corn[hedgeYear], finalLeg3 = ANNUAL[leg3Mode][hedgeYear];
+  const finalFx = fxForYear(effYear); // once the hedge year is over, THIS year's own FX resolves the same way as everywhere else
+
+  return allDates.map(d=>{
+    let aluNow, cornNow, leg3Now, fxNow;
+    if(d.slice(0,4) === String(hedgeYear)){
+      aluNow = asOf(cumAlu, d, 'avg'); cornNow = asOf(cumCorn, d, 'avg'); leg3Now = asOf(cumLeg3, d, 'avg');
+      fxNow = projectedFullYearAvg(DAILY.fx_market, hedgeYear, d);
+    } else {
+      aluNow = finalAlu; cornNow = finalCorn; leg3Now = finalLeg3; fxNow = finalFx;
+    }
+    const igpmNow = asOf(igpmHist, d, 'v');
+    if([aluNow,cornNow,leg3Now,fxNow,igpmNow].some(v=>v==null)) return {date:d, est:null};
+    const aluYoy = (aluNow*fxNow)/(priorAlu*priorFx) - 1;
+    const cornYoy = (cornNow*fxNow)/(priorCorn*priorFx) - 1;
+    const leg3Yoy = (leg3Now*fxNow)/(priorLeg3*priorFx) - 1;
+    const est = W.alu*aluYoy + W.corn*cornYoy + W.leg3*leg3Yoy + W.igpm*igpmNow;
+    return {date:d, est};
+  });
+}
+
+function renderRevisionChart(){
+  const traj = computeRevisionTrajectory(revisionYear);
+  const ctx = document.getElementById('chartRevision').getContext('2d');
+  const note = document.getElementById('revision-note');
+  const hedgeYear = revisionYear-1;
+
+  note.textContent = traj.length
+    ? `Reconstructed day by day: commodities & FX accumulate through ${hedgeYear} (the hedge year), then lock -- IGP-M keeps moving into ${revisionYear} until its latest report. Market FX only, using the ${ALU_LABEL[aluMode]} / ${LEG3_LABEL[leg3Mode]} selection above.`
+    : `Not enough historical data to reconstruct FY${String(revisionYear).slice(2)} yet.`;
+
+  const data = {
+    labels: traj.map(r=>r.date),
+    datasets: [{
+      label:'Estimated COGS inflation',
+      data: traj.map(r=>r.est==null?null:+(r.est*100).toFixed(2)),
+      borderColor:'#FF5500', backgroundColor:'#FF5500', borderWidth:2, pointRadius:0, tension:0, spanGaps:true,
+    }]
+  };
+
+  // Tight y-axis fit around the actual data, so the line always uses the
+  // full height of the chart -- an early noisy day (few YTD observations)
+  // shouldn't stretch the scale and make the rest of the year look flat.
+  const validEst = traj.map(r=>r.est).filter(v=>v!=null).map(v=>v*100);
+  let yMin, yMax;
+  if(validEst.length){
+    const dataMin = Math.min(...validEst), dataMax = Math.max(...validEst);
+    const pad = Math.max((dataMax-dataMin)*0.12, 0.3);
+    yMin = Math.floor((dataMin-pad)*2)/2;   // round down to nearest 0.5
+    yMax = Math.ceil((dataMax+pad)*2)/2;    // round up to nearest 0.5
+  }
+
+  if(chartRevision){
+    chartRevision.data = data;
+    chartRevision.options.scales.y.min = yMin; chartRevision.options.scales.y.max = yMax;
+    chartRevision.update();
+  } else {
+    chartRevision = new Chart(ctx, {
+      type:'line', data,
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false},
+          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{ maxTicksLimit:8, font:{size:10} } },
+          y:{ min:yMin, max:yMax, grid:{color:'#E5E5E5'},
+              ticks:{ stepSize:0.5, callback:v=>(+v.toFixed(1))+'%', font:{size:10} } }
+        }
+      }
+    });
+  }
+}
+
+// ══ SCENARIO COMPARISON CHART ════════════════════════════════════════════════
+// Four fixed combinations, always shown together regardless of the
+// Aluminum/Component 3 toggles above -- Corn stays fixed in every scenario.
+const SCENARIOS = [
+  { key:'spot_barley',   alu:'aluminum_spot',   leg3:'barley', label:'Spot Alu + Corn + Barley', color:'#FF5500' },
+  { key:'spot_wheat',    alu:'aluminum_spot',   leg3:'wheat',  label:'Spot Alu + Corn + Wheat',   color:'#1F6FB2' },
+  { key:'future_barley', alu:'aluminum_future', leg3:'barley', label:'Future Alu + Corn + Barley',color:'#333333' },
+  { key:'future_wheat',  alu:'aluminum_future', leg3:'wheat',  label:'Future Alu + Corn + Wheat', color:'#888888' },
+];
+function computeScenarioRow(alu, leg3, effYear){
+  const a = yoy(alu, effYear), c = yoy('corn', effYear), b = yoy(leg3, effYear), g = igpmFor(effYear);
+  if([a,c,b,g].some(v=>v==null)) return null;
+  return W.alu*a + W.corn*c + W.leg3*b + W.igpm*g;
+}
+
+let chartScenario;
+function renderScenarioChart(){
+  const years = getFilteredYears();
+  const labels = years.map(y=>'FY'+String(y).slice(2)+(y===projYear?'e':''));
+  const ctx = document.getElementById('chartScenario').getContext('2d');
+  const datasets = SCENARIOS.map(s=>({
+    label: s.label,
+    data: years.map(y=>{ const v=computeScenarioRow(s.alu,s.leg3,y); return v==null?null:+(v*100).toFixed(2); }),
+    borderColor: s.color, backgroundColor: s.color, borderWidth:2, pointRadius:2, tension:0.1, spanGaps:true,
+  }));
+  datasets.push({
+    label: 'Ambev (reported)',
+    data: years.map(y=> REPORTED[y]==null ? null : +(REPORTED[y]*100).toFixed(2)),
+    borderColor:'#27AE60', backgroundColor:'#27AE60', borderWidth:2, borderDash:[5,3],
+    pointRadius:2, tension:0, spanGaps:false,
+  });
+  const data = { labels, datasets };
+  if(chartScenario){ chartScenario.data = data; chartScenario.update(); }
+  else {
+    chartScenario = new Chart(ctx, {
+      type:'line', data,
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:10,font:{size:9.5}}},
+          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
+        scales:{
+          x:{ grid:{display:false}, ticks:{font:{size:10}} },
+          y:{ grid:{color:'#E5E5E5'}, ticks:{ callback:v=>(+v.toFixed(2))+'%', font:{size:10} } }
+        }
+      }
+    });
+  }
+}
+
+init();
+</script>
+</body>
+</html>
