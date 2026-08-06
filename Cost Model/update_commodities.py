@@ -174,12 +174,57 @@ def create_schema(conn: sqlite3.Connection) -> None:
         );
 
         CREATE TABLE IF NOT EXISTS igpm_focus (
+            date              TEXT NOT NULL,      -- date the expectation was reported
+            reference_year    INTEGER NOT NULL,     -- which year's IGP-M this expectation is for
+            expectation_median REAL,
+            expectation_mean   REAL,
+            source            TEXT,
+            updated_at          TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (date, reference_year)
+        );
+
+        CREATE TABLE IF NOT EXISTS fx_focus (
             date              TEXT PRIMARY KEY,   -- date the expectation was reported
-            reference_year    INTEGER,              -- which year's IGP-M this expectation is for
+            reference_year    INTEGER,              -- which year's USD/BRL (end-of-period) this is for
             expectation_median REAL,
             expectation_mean   REAL,
             source            TEXT,
             updated_at          TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS fx_usdbrl_guidance (
+            effective_year    INTEGER PRIMARY KEY,   -- year this guidance is FOR (not when it was given)
+            rate              REAL,
+            source            TEXT DEFAULT 'manual_input',
+            updated_at          TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS beer_cost_inflation (
+            date              TEXT NOT NULL,   -- date this estimate was computed
+            effective_year    INTEGER NOT NULL, -- the P&L year this estimate is for
+            aluminum_yoy      REAL,
+            corn_yoy          REAL,
+            barley_yoy        REAL,
+            igpm_yoy          REAL,
+            estimated_market_fx    REAL,        -- uses realized market-average FX (fully automatic)
+            estimated_company_fx   REAL,        -- uses Ambev's disclosed FX guidance (NULL if not yet input)
+            weights           TEXT,             -- e.g. 'Alu 36% / Corn 6.4% / Barley 12% / IGP-M 45.6%'
+            updated_at          TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (date, effective_year)
+        );
+
+        CREATE TABLE IF NOT EXISTS igpm_realized (
+            year        INTEGER PRIMARY KEY,   -- calendar year
+            value       REAL,                   -- compounded Jan-Dec IGP-M for that year
+            source      TEXT DEFAULT 'bcb/sgs-189',
+            updated_at    TEXT DEFAULT (datetime('now'))
+        );
+
+        CREATE TABLE IF NOT EXISTS cogs_inflation_reported (
+            effective_year  INTEGER PRIMARY KEY,   -- the P&L year this actual result is for
+            value           REAL,                   -- Ambev's actual reported COGS/hl YoY growth
+            source          TEXT DEFAULT 'company_reported',
+            updated_at        TEXT DEFAULT (datetime('now'))
         );
         """
     )
@@ -308,6 +353,52 @@ def get_yfinance_inrbrl() -> tuple[str, float]:
     return last_date, float(last["Close"])
 
 
+def fetch_and_store_igpm_realized(conn) -> int:
+    """Fetches BCB SGS series 189 (IGP-M monthly % change) and stores the
+    compounded Jan-Dec value for every calendar year that has all 12
+    months reported. Safe to call repeatedly (upserts)."""
+    url = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados?formato=json"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    by_year = {}
+    for row in r.json():
+        day, month, year = row["data"].split("/")
+        by_year.setdefault(int(year), []).append(float(row["valor"]))
+
+    count = 0
+    for year, vals in by_year.items():
+        if len(vals) != 12:
+            continue
+        acc = 1.0
+        for v in vals:
+            acc *= (1 + v / 100)
+        conn.execute(
+            """INSERT INTO igpm_realized (year, value) VALUES (?, ?)
+               ON CONFLICT(year) DO UPDATE SET value=excluded.value, updated_at=datetime('now')""",
+            (year, acc - 1),
+        )
+        count += 1
+    return count
+
+
+def get_bcb_fx_focus_latest(year: int) -> tuple[str, float, float]:
+    """Returns (date_str, median, mean) for the most recently reported
+    Focus market expectation of end-of-period USD/BRL for the given
+    reference year."""
+    url = (
+        "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais"
+        f"?$filter=Indicador eq 'Câmbio' and DataReferencia eq '{year}' and baseCalculo eq 0"
+        "&$orderby=Data desc&$top=1&$format=json"
+    )
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    values = r.json().get("value", [])
+    if not values:
+        raise RuntimeError(f"BCB Focus: no Câmbio expectation found for reference year {year}")
+    row = values[0]
+    return row["Data"], float(row["Mediana"]), float(row["Media"])
+
+
 def get_bcb_igpm_focus_latest(year: int) -> tuple[str, float, float]:
     """Returns (date_str, median, mean) for the most recently reported
     Focus market expectation of IGP-M for the given reference year."""
@@ -406,6 +497,20 @@ def upsert_igpm(conn, trade_date, reference_year, median, mean, source):
         """
         INSERT INTO igpm_focus (date, reference_year, expectation_median, expectation_mean, source)
         VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(date, reference_year) DO UPDATE SET
+            expectation_median=excluded.expectation_median,
+            expectation_mean=excluded.expectation_mean,
+            source=excluded.source
+        """,
+        (trade_date, reference_year, median, mean, source),
+    )
+
+
+def upsert_fx_focus(conn, trade_date, reference_year, median, mean, source):
+    conn.execute(
+        """
+        INSERT INTO fx_focus (date, reference_year, expectation_median, expectation_mean, source)
+        VALUES (?, ?, ?, ?, ?)
         ON CONFLICT(date) DO UPDATE SET
             reference_year=excluded.reference_year,
             expectation_median=excluded.expectation_median,
@@ -413,6 +518,141 @@ def upsert_igpm(conn, trade_date, reference_year, median, mean, source):
             source=excluded.source
         """,
         (trade_date, reference_year, median, mean, source),
+    )
+
+
+# ----------------------------------------------------------------------
+# Beer Cost Inflation estimate
+#
+# Reproduces the "Beer Cost Inflation (BRL denominated)" line from the
+# Yearly Cost Model sheet:
+#
+#   Estimate(effective year E) =
+#       36.0% * YoY(Aluminum, E)  +
+#        6.4% * YoY(Corn, E)      +
+#       12.0% * YoY(Barley, E)    +
+#       45.6% * IGP-M expectation for E
+#
+#   YoY(commodity, E) = Index(E) / Index(E-1) - 1
+#   Index(E) = AvgPriceUSD(hedge year = E-1) * AvgUSDBRL(hedge year = E-1)
+#
+# i.e. each commodity's prior-year average USD spot price, converted to
+# BRL at that SAME year's own average exchange rate (this is the sheet's
+# own fallback convention for when no company FX guidance is available --
+# see conversation notes / README for the validation against the original
+# spreadsheet, which reproduced 4.8046% / 5.7815% exactly with the
+# original company-guidance FX).
+#
+# Weights source: "Beer Cost Breakdown", Yearly Cost Model sheet, cols X/Y.
+# ----------------------------------------------------------------------
+
+BEER_WEIGHTS = {"aluminum": 0.36, "corn": 0.064, "barley": 0.12, "igpm": 0.456}
+
+
+def _avg_year(conn, table, col, year):
+    return conn.execute(f"SELECT AVG({col}) FROM {table} WHERE date LIKE ?", (f"{year}-%",)).fetchone()[0]
+
+
+def _avg_barley_usd_year(conn, year):
+    rows = conn.execute(
+        """
+        SELECT b.close, f1.rate, f2.rate FROM barley_ncdex b
+        JOIN fx_usdbrl f1 ON f1.date = b.date
+        JOIN fx_inrbrl f2 ON f2.date = b.date
+        WHERE b.date LIKE ?
+        """,
+        (f"{year}-%",),
+    ).fetchall()
+    if not rows:
+        return None
+    vals = [inr / (usdbrl / inrbrl) for inr, usdbrl, inrbrl in rows]
+    return sum(vals) / len(vals)
+
+
+def _get_igpm_expectation(conn, year):
+    row = conn.execute(
+        "SELECT expectation_median FROM igpm_focus WHERE reference_year=? ORDER BY date DESC LIMIT 1",
+        (year,),
+    ).fetchone()
+    return row[0] / 100 if row else None
+
+
+def compute_beer_cost_inflation(conn, effective_year: int, fx_override: dict | None = None) -> dict:
+    """Computes the weighted Beer Cost Inflation estimate for the given
+    effective (P&L) year.
+
+    fx_override: optional {year: rate} dict (e.g. Ambev's disclosed FX
+    guidance for effective years E and E-1). When a year isn't in the
+    dict, falls back to that year's realized market-average USD/BRL --
+    this is the sheet's own fallback convention for years without
+    guidance (see module notes). Pass fx_override=None to use realized
+    market-average FX throughout."""
+    hy, hyp = effective_year - 1, effective_year - 2
+    fx_override = fx_override or {}
+
+    def fx_for(effective_yr, hedge_yr):
+        return fx_override.get(effective_yr, _avg_year(conn, "fx_usdbrl", "rate", hedge_yr))
+
+    fx_now = fx_for(effective_year, hy)
+    fx_prev = fx_for(hy, hyp)  # "effective year" for the comparison point is hy (=E-1)
+
+    def yoy(table, col, avg_fn=_avg_year):
+        now = avg_fn(conn, table, col, hy) if avg_fn is _avg_year else avg_fn(conn, hy)
+        prev = avg_fn(conn, table, col, hyp) if avg_fn is _avg_year else avg_fn(conn, hyp)
+        if None in (now, prev, fx_now, fx_prev):
+            raise RuntimeError(f"Missing input data for {table} in {hy} or {hyp}")
+        return (now * fx_now) / (prev * fx_prev) - 1
+
+    aluminum_yoy = yoy("aluminum_lme", "spot")
+    corn_yoy = yoy("corn_cbot", "close")
+    barley_yoy = yoy(None, None, avg_fn=_avg_barley_usd_year)
+    igpm_yoy = _get_igpm_expectation(conn, effective_year)
+    if igpm_yoy is None:
+        raise RuntimeError(f"No IGP-M Focus expectation found for reference year {effective_year}")
+
+    estimated = (
+        BEER_WEIGHTS["aluminum"] * aluminum_yoy
+        + BEER_WEIGHTS["corn"] * corn_yoy
+        + BEER_WEIGHTS["barley"] * barley_yoy
+        + BEER_WEIGHTS["igpm"] * igpm_yoy
+    )
+    return {
+        "aluminum_yoy": aluminum_yoy,
+        "corn_yoy": corn_yoy,
+        "barley_yoy": barley_yoy,
+        "igpm_yoy": igpm_yoy,
+        "estimated": estimated,
+    }
+
+
+def get_fx_guidance(conn) -> dict:
+    """Returns {effective_year: rate} for all manually-input Ambev FX
+    guidance currently in the database."""
+    rows = conn.execute("SELECT effective_year, rate FROM fx_usdbrl_guidance").fetchall()
+    return {year: rate for year, rate in rows}
+
+
+def upsert_beer_cost_inflation(conn, trade_date, effective_year, market_result: dict, company_result: dict | None):
+    conn.execute(
+        """
+        INSERT INTO beer_cost_inflation
+            (date, effective_year, aluminum_yoy, corn_yoy, barley_yoy, igpm_yoy,
+             estimated_market_fx, estimated_company_fx, weights)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(date, effective_year) DO UPDATE SET
+            aluminum_yoy=excluded.aluminum_yoy, corn_yoy=excluded.corn_yoy,
+            barley_yoy=excluded.barley_yoy, igpm_yoy=excluded.igpm_yoy,
+            estimated_market_fx=excluded.estimated_market_fx,
+            estimated_company_fx=excluded.estimated_company_fx,
+            weights=excluded.weights
+        """,
+        (
+            trade_date, effective_year,
+            market_result["aluminum_yoy"], market_result["corn_yoy"],
+            market_result["barley_yoy"], market_result["igpm_yoy"],
+            market_result["estimated"], company_result["estimated"] if company_result else None,
+            "Alu 36% / Corn 6.4% / Barley 12% / IGP-M 45.6%",
+        ),
     )
 
 
@@ -517,15 +757,54 @@ def run_daily_update() -> int:
         print(f"[INRBRL] FAILED: {e}", file=sys.stderr)
 
     # --- IGP-M (Focus) ---
+    for target_year in (datetime.now(timezone.utc).year, datetime.now(timezone.utc).year + 1):
+        try:
+            d, median, mean = get_bcb_igpm_focus_latest(target_year)
+            upsert_igpm(conn, d, target_year, median, mean, "bcb/focus")
+            conn.commit()
+            print(f"[IGP-M Focus {target_year}] OK: {d} (ref. {target_year}) -> median={median} mean={mean} (bcb/focus)")
+        except Exception as e:
+            had_error = True
+            print(f"[IGP-M Focus {target_year}] FAILED: {e}", file=sys.stderr)
+
+    # --- Câmbio (Focus) ---
+    for target_year in (datetime.now(timezone.utc).year, datetime.now(timezone.utc).year + 1):
+        try:
+            d, median, mean = get_bcb_fx_focus_latest(target_year)
+            upsert_fx_focus(conn, d, target_year, median, mean, "bcb/focus")
+            conn.commit()
+            print(f"[Câmbio Focus {target_year}] OK: {d} (ref. {target_year}) -> median={median} mean={mean} (bcb/focus)")
+        except Exception as e:
+            had_error = True
+            print(f"[Câmbio Focus {target_year}] FAILED: {e}", file=sys.stderr)
+
+    # --- IGP-M realized (annual, refreshed so the just-completed year updates) ---
     try:
-        year = datetime.now(timezone.utc).year
-        d, median, mean = get_bcb_igpm_focus_latest(year)
-        upsert_igpm(conn, d, year, median, mean, "bcb/focus")
+        n = fetch_and_store_igpm_realized(conn)
         conn.commit()
-        print(f"[IGP-M Focus] OK: {d} (ref. {year}) -> median={median} mean={mean} (bcb/focus)")
+        print(f"[IGP-M realized] OK: {n} complete calendar years refreshed")
     except Exception as e:
         had_error = True
-        print(f"[IGP-M Focus] FAILED: {e}", file=sys.stderr)
+        print(f"[IGP-M realized] FAILED: {e}", file=sys.stderr)
+
+    # --- Beer Cost Inflation estimate (current + next effective year) ---
+    guidance = get_fx_guidance(conn)
+    for eff_year in (datetime.now(timezone.utc).year, datetime.now(timezone.utc).year + 1):
+        try:
+            market_result = compute_beer_cost_inflation(conn, eff_year)
+            company_result = None
+            if eff_year in guidance and (eff_year - 1) in guidance:
+                company_result = compute_beer_cost_inflation(conn, eff_year, fx_override=guidance)
+            upsert_beer_cost_inflation(
+                conn, datetime.now(timezone.utc).strftime("%Y-%m-%d"), eff_year, market_result, company_result
+            )
+            conn.commit()
+            company_str = f"{company_result['estimated']:.4%}" if company_result else "n/a (no guidance)"
+            print(f"[Beer Cost Inflation {eff_year}] OK: market_fx={market_result['estimated']:.4%} "
+                  f"company_fx={company_str}")
+        except Exception as e:
+            had_error = True
+            print(f"[Beer Cost Inflation {eff_year}] FAILED: {e}", file=sys.stderr)
 
     conn.close()
     return 1 if had_error else 0
@@ -564,13 +843,25 @@ def find_last_real_data_row(ws, first_row: int, cols: list[int]) -> int:
     return min(cutoffs)
 
 
-def backfill_igpm(conn, start_year: int, end_date: date) -> int:
-    """Fetches the full daily history of Focus IGP-M expectations, year by
-    year, keeping for each date only the expectation whose reference year
-    matches that date's own calendar year (see module docstring)."""
+def backfill_igpm(conn, start_year: int, end_date: date, extra_years: int = 1) -> int:
+    """Fetches the FULL daily history of Focus IGP-M expectations for each
+    reference year -- not just the reports published during that year
+    itself, but every forward-looking projection made in prior years too
+    (Focus tracks a given year several years ahead). This lets the
+    dashboard reconstruct, retrospectively, what the projection for a
+    year looked like at any earlier point in time -- e.g. "what did the
+    market expect IGP-M 2020 to be back in mid-2019". The 'current
+    beer_cost_inflation estimate' logic elsewhere only ever reads the
+    LATEST row per reference_year, so this broader history is additive
+    and doesn't change any existing calculation.
+
+    extra_years: also fetches reference years beyond end_date's own year
+    (default 1), matching the daily job's "current + next year" coverage
+    -- otherwise the projected year (e.g. 2027, when end_date is in 2026)
+    would have zero rows until the daily job runs."""
     url = "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais"
     total = 0
-    for year in range(start_year, end_date.year + 1):
+    for year in range(start_year, end_date.year + 1 + extra_years):
         full_url = (
             f"{url}?$filter=Indicador eq 'IGP-M' and DataReferencia eq '{year}' and baseCalculo eq 0"
             "&$orderby=Data asc&$top=10000&$format=json"
@@ -581,8 +872,6 @@ def backfill_igpm(conn, start_year: int, end_date: date) -> int:
 
         for row in rows:
             d = datetime.strptime(row["Data"], "%Y-%m-%d").date()
-            if d.year != year:          # keep only same-calendar-year reports
-                continue
             if d > end_date:
                 continue
             if not is_weekday(d):
@@ -590,6 +879,45 @@ def backfill_igpm(conn, start_year: int, end_date: date) -> int:
             date_str = d.strftime("%Y-%m-%d")
             conn.execute(
                 """INSERT INTO igpm_focus
+                       (date, reference_year, expectation_median, expectation_mean, source)
+                   VALUES (?, ?, ?, ?, 'bcb/focus')
+                   ON CONFLICT(date, reference_year) DO UPDATE SET
+                       expectation_median=excluded.expectation_median,
+                       expectation_mean=excluded.expectation_mean,
+                       source=excluded.source""",
+                (date_str, year, float(row["Mediana"]), float(row["Media"])),
+            )
+            total += 1
+    return total
+
+
+def backfill_fx_focus(conn, start_year: int, end_date: date) -> int:
+    """Fetches the full daily history of Focus end-of-period USD/BRL
+    expectations, year by year, keeping for each date only the
+    expectation whose reference year matches that date's own calendar
+    year."""
+    url = "https://olinda.bcb.gov.br/olinda/servico/Expectativas/versao/v1/odata/ExpectativasMercadoAnuais"
+    total = 0
+    for year in range(start_year, end_date.year + 1):
+        full_url = (
+            f"{url}?$filter=Indicador eq 'Câmbio' and DataReferencia eq '{year}' and baseCalculo eq 0"
+            "&$orderby=Data asc&$top=10000&$format=json"
+        )
+        r = requests.get(full_url, timeout=60)
+        r.raise_for_status()
+        rows = r.json().get("value", [])
+
+        for row in rows:
+            d = datetime.strptime(row["Data"], "%Y-%m-%d").date()
+            if d.year != year:
+                continue
+            if d > end_date:
+                continue
+            if not is_weekday(d):
+                continue
+            date_str = d.strftime("%Y-%m-%d")
+            conn.execute(
+                """INSERT INTO fx_focus
                        (date, reference_year, expectation_median, expectation_mean, source)
                    VALUES (?, ?, ?, ?, 'bcb/focus')
                    ON CONFLICT(date) DO UPDATE SET
@@ -601,6 +929,33 @@ def backfill_igpm(conn, start_year: int, end_date: date) -> int:
             )
             total += 1
     return total
+
+
+def backfill_cogs_reported(conn, xlsx_path: str) -> int:
+    """Loads Ambev's actual reported COGS/hl YoY growth (row 44 of the
+    'Yearly Cost Model' sheet -- the 'Reported' line in the backtest
+    section) for every effective year available. One-time historical
+    load: this isn't a live-updating series, it's a fixed snapshot from
+    the original model file."""
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+
+    wb = openpyxl.load_workbook(xlsx_path, data_only=True)
+    ws = wb["Yearly Cost Model"]
+    count = 0
+    for col_idx in range(2, 30):
+        col = get_column_letter(col_idx)
+        year = ws[f"{col}14"].value
+        reported = ws[f"{col}44"].value
+        if year is None or not isinstance(reported, (int, float)):
+            continue
+        conn.execute(
+            """INSERT INTO cogs_inflation_reported (effective_year, value) VALUES (?, ?)
+               ON CONFLICT(effective_year) DO UPDATE SET value=excluded.value, updated_at=datetime('now')""",
+            (int(year), float(reported)),
+        )
+        count += 1
+    return count
 
 
 def run_backfill(xlsx_path: str, end_date: date | None = None) -> int:
@@ -709,6 +1064,18 @@ def run_backfill(xlsx_path: str, end_date: date | None = None) -> int:
     conn.commit()
     print(f"Backfilled igpm_focus: {igpm_count} rows ({first_year}..{igpm_end.year}, capped at {igpm_end})")
 
+    igpm_realized_count = fetch_and_store_igpm_realized(conn)
+    conn.commit()
+    print(f"Backfilled igpm_realized: {igpm_realized_count} complete calendar years")
+
+    fx_focus_count = backfill_fx_focus(conn, first_year, igpm_end)
+    conn.commit()
+    print(f"Backfilled fx_focus: {fx_focus_count} rows ({first_year}..{igpm_end.year}, capped at {igpm_end})")
+
+    reported_count = backfill_cogs_reported(conn, xlsx_path)
+    conn.commit()
+    print(f"Backfilled cogs_inflation_reported: {reported_count} years")
+
     conn.close()
     return 0
 
@@ -725,7 +1092,45 @@ def main() -> int:
         "--end-date", metavar="YYYY-MM-DD", default=None,
         help="Optional hard cap on the last date to backfill (only used with --backfill).",
     )
+    parser.add_argument(
+        "--set-fx-guidance", nargs=2, metavar=("EFFECTIVE_YEAR", "RATE"),
+        help="Manually record Ambev's disclosed USD/BRL guidance for a given effective (P&L) year, "
+             "e.g. --set-fx-guidance 2027 5.35",
+    )
+    parser.add_argument(
+        "--set-cogs-reported", nargs=2, metavar=("EFFECTIVE_YEAR", "VALUE_PCT"),
+        help="Manually record Ambev's actually-reported COGS/hl YoY growth for a given effective (P&L) "
+             "year (as a percent, e.g. 6.11 for 6.11%%), e.g. --set-cogs-reported 2025 6.11",
+    )
     args = parser.parse_args()
+
+    if args.set_fx_guidance:
+        year, rate = int(args.set_fx_guidance[0]), float(args.set_fx_guidance[1])
+        conn = sqlite3.connect(DB_PATH)
+        create_schema(conn)
+        conn.execute(
+            """INSERT INTO fx_usdbrl_guidance (effective_year, rate) VALUES (?, ?)
+               ON CONFLICT(effective_year) DO UPDATE SET rate=excluded.rate, updated_at=datetime('now')""",
+            (year, rate),
+        )
+        conn.commit()
+        conn.close()
+        print(f"Saved FX guidance: effective year {year} -> {rate}")
+        return 0
+
+    if args.set_cogs_reported:
+        year, value_pct = int(args.set_cogs_reported[0]), float(args.set_cogs_reported[1])
+        conn = sqlite3.connect(DB_PATH)
+        create_schema(conn)
+        conn.execute(
+            """INSERT INTO cogs_inflation_reported (effective_year, value) VALUES (?, ?)
+               ON CONFLICT(effective_year) DO UPDATE SET value=excluded.value, updated_at=datetime('now')""",
+            (year, value_pct / 100),
+        )
+        conn.commit()
+        conn.close()
+        print(f"Saved reported COGS: effective year {year} -> {value_pct}%")
+        return 0
 
     if args.backfill:
         end_date = datetime.strptime(args.end_date, "%Y-%m-%d").date() if args.end_date else None
