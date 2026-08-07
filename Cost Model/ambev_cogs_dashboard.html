@@ -46,6 +46,9 @@ canvas{max-height:215px;}
 .fb-lbl{font-size:11px;color:var(--bk);white-space:nowrap;}
 .fb-slider{width:100px;accent-color:var(--or);cursor:pointer;}
 .fb-val{font-size:11px;font-weight:700;color:var(--or);min-width:44px;text-align:right;background:#FFF3EA;border-radius:4px;padding:3px 6px;}
+.fb-val-input{border:1px solid var(--or);font-family:var(--font);cursor:text;width:56px;}
+.fb-val-input::-webkit-inner-spin-button,.fb-val-input::-webkit-outer-spin-button{opacity:0.5;}
+.fb-val-input:focus{outline:none;box-shadow:0 0 0 2px rgba(255,85,0,0.2);}
 .fb-val.auto{color:var(--gy);font-weight:400;}
 .btn-reset{padding:7px 16px;background:transparent;border:1.5px solid var(--or);color:var(--or);font-size:11px;font-weight:700;cursor:pointer;border-radius:4px;transition:all .15s;font-family:var(--font);white-space:nowrap;}
 .btn-reset:hover{background:var(--or);color:var(--wh);}
@@ -342,16 +345,17 @@ function setRange(mode, el){
 }
 
 function onMacroSlider(key, val){
+  if(val === '' || isNaN(parseFloat(val))) return;
   macro[key] = parseFloat(val);
   syncMacroLabels();
   renderAll();
   renderScenarioChart();
 }
 function syncMacroLabels(){
-  document.getElementById('v-fx').textContent   = macro.fx.toFixed(2);
-  document.getElementById('v-igpm').textContent = macro.igpm.toFixed(1)+'%';
-  document.getElementById('v-fx').classList.toggle('auto', macro.fx===macroDefault.fx);
-  document.getElementById('v-igpm').classList.toggle('auto', macro.igpm===macroDefault.igpm);
+  document.getElementById('sl-fx').value   = macro.fx;
+  document.getElementById('sl-igpm').value = macro.igpm;
+  document.getElementById('v-fx').value    = +macro.fx.toFixed(2);
+  document.getElementById('v-igpm').value  = +macro.igpm.toFixed(1);
 }
 
 function onWeightSlider(key, val){
@@ -423,13 +427,13 @@ function buildLayout(){
         <div class="fb-slider-wrap">
           <span class="fb-lbl">USD/BRL</span>
           <input id="sl-fx" class="fb-slider" type="range" min="4.00" max="7.00" step="0.01" oninput="onMacroSlider('fx', this.value)">
-          <span class="fb-val" id="v-fx">—</span>
+          <input id="v-fx" class="fb-val fb-val-input" type="number" step="0.01" oninput="onMacroSlider('fx', this.value)">
           <span class="info-icon" title="Average USD/BRL expected for FY${String(projYear-1).slice(2)}, carried forward to convert FY${String(projYear).slice(2)} COGS.">ⓘ</span>
         </div>
         <div class="fb-slider-wrap">
           <span class="fb-lbl">IGP-M</span>
           <input id="sl-igpm" class="fb-slider" type="range" min="-5" max="15" step="0.1" oninput="onMacroSlider('igpm', this.value)">
-          <span class="fb-val" id="v-igpm">—</span>
+          <input id="v-igpm" class="fb-val fb-val-input" type="number" step="0.1" oninput="onMacroSlider('igpm', this.value)">
           <span class="info-icon" title="IGP-M expected for FY${String(projYear).slice(2)}.">ⓘ</span>
         </div>
         <button class="btn-reset" onclick="resetAll()">↺ Reset to defaults</button>
@@ -610,32 +614,64 @@ function renderCharts(rows){
     });
   }
 
-  // Total trajectory: estimated (bars) vs. Ambev's actual reported result (line)
+  // Total trajectory: Estimated vs. Ambev's actual reported result, both as
+  // lines, with a callout bubble on the two most recent points (current +
+  // projected year) showing the number directly -- like the chart in the
+  // original spreadsheet's "Yearly" tab.
   const ctxT = document.getElementById('chartTotal').getContext('2d');
+  const highlightYears = [projYear-1, projYear];
   const totalData = {
     labels,
     datasets: [
       {
-        type:'bar', label:'Estimated',
+        type:'line', label:'Estimated',
         data: rows.map(r=>r.est==null?null:+(r.est*100).toFixed(2)),
-        backgroundColor: rows.map(r=> r.est>=0 ? '#FF5500' : '#27AE60'),
-        borderColor: rows.map(r=> r.est>=0 ? '#FF5500' : '#27AE60'),
-        borderWidth:1.5, borderRadius:3, borderSkipped:false, order:2,
+        borderColor:'#FF5500', backgroundColor:'#FF5500', borderWidth:2,
+        pointRadius: rows.map(r=> highlightYears.includes(r.year) ? 0 : 3),
+        pointBackgroundColor:'#FF5500', tension:0.15, spanGaps:true, order:1,
       },
       {
         type:'line', label:'Reported (actual)',
         data: rows.map(r=> REPORTED[r.year]==null ? null : +(REPORTED[r.year]*100).toFixed(2)),
         borderColor:'#333333', backgroundColor:'#333333', borderWidth:2,
-        pointRadius:3, pointBackgroundColor:'#333333', tension:0, spanGaps:false, order:1,
+        pointRadius:3, pointBackgroundColor:'#333333', tension:0, spanGaps:false, order:2,
       },
     ]
   };
-  if(chartTotal){ chartTotal.data = totalData; chartTotal.update(); }
-  else {
+
+  const bubblePlugin = {
+    id: 'highlightBubbles',
+    afterDatasetsDraw(chart){
+      const chRows = chart.$rows, chProjYear = chart.$projYear;
+      if(!chRows) return;
+      const {ctx} = chart;
+      const meta = chart.getDatasetMeta(0); // Estimated
+      chRows.forEach((r,i)=>{
+        if(![chProjYear-1, chProjYear].includes(r.year) || r.est==null) return;
+        const pt = meta.data[i]; if(!pt) return;
+        const {x,y} = pt.tooltipPosition();
+        const color = r.year===chProjYear ? '#FF5500' : '#333333';
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+        ctx.lineWidth=2; ctx.strokeStyle='#fff'; ctx.stroke();
+        const yOffset = r.year===chProjYear ? -14 : -28;
+        ctx.font='bold 11px Segoe UI, Arial, sans-serif'; ctx.fillStyle='#1A1A1A'; ctx.textAlign='center';
+        ctx.fillText(`${(r.est*100).toFixed(2)}%`, x, y + yOffset);
+        ctx.restore();
+      });
+    }
+  };
+
+  if(chartTotal){
+    chartTotal.$rows = rows; chartTotal.$projYear = projYear;
+    chartTotal.data = totalData; chartTotal.update();
+  } else {
     chartTotal = new Chart(ctxT, {
       data: totalData,
+      plugins: [bubblePlugin],
       options: {
         responsive:true, maintainAspectRatio:false,
+        layout:{ padding:{ top:28 } },
         plugins:{ legend:{ display:true, position:'bottom', labels:{ boxWidth:10, font:{size:10} } },
           tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
         scales:{
@@ -644,6 +680,8 @@ function renderCharts(rows){
         }
       }
     });
+    chartTotal.$rows = rows; chartTotal.$projYear = projYear;
+    chartTotal.update();
   }
 }
 
@@ -789,11 +827,18 @@ function computeRevisionTrajectory(effYear){
   const finalAlu = ANNUAL[aluKey][hedgeYear], finalCorn = ANNUAL.corn[hedgeYear], finalLeg3 = ANNUAL[leg3Mode][hedgeYear];
   const finalFx = fxForYear(effYear); // once the hedge year is over, THIS year's own FX resolves the same way as everywhere else
 
+  // If company guidance for THIS effective year is already disclosed, it's
+  // a fixed number -- use it for both phases, not just phase 2. Otherwise
+  // the FX leg would silently jump on Jan 1 from a market-based projection
+  // to the (usually different) company figure, producing a step in the
+  // line right at the year turn that has nothing to do with new data.
+  const companyFxForTarget = FX_COMPANY[effYear];
+
   return allDates.map(d=>{
     let aluNow, cornNow, leg3Now, fxNow;
     if(d.slice(0,4) === String(hedgeYear)){
       aluNow = asOf(cumAlu, d, 'avg'); cornNow = asOf(cumCorn, d, 'avg'); leg3Now = asOf(cumLeg3, d, 'avg');
-      fxNow = projectedFullYearAvg(DAILY.fx_market, hedgeYear, d);
+      fxNow = companyFxForTarget !== undefined ? companyFxForTarget : projectedFullYearAvg(DAILY.fx_market, hedgeYear, d);
     } else {
       aluNow = finalAlu; cornNow = finalCorn; leg3Now = finalLeg3; fxNow = finalFx;
     }
