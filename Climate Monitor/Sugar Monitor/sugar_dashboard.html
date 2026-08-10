@@ -80,8 +80,13 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 .flist .fr:last-child{border-bottom:none;}
 .flist .fr .nm{font-weight:600;color:var(--gray-dark);}
 .flist .fr .co{color:var(--gray-mid);font-size:10.5px;}
-.flist .fr .rm{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--gray-mid);font-size:14px;font-family:var(--font);}
+.flist .fr .rm{cursor:pointer;border:none;background:none;color:var(--gray-mid);font-size:14px;font-family:var(--font);}
 .flist .fr .rm:hover{color:var(--red);}
+.flist .fr .sh{margin-left:auto;font-weight:700;color:var(--orange);font-size:11.5px;font-variant-numeric:tabular-nums;}
+.flist .fr .sh.zero{color:var(--gray-mid);font-weight:400;}
+.flist .fr:not(:has(.sh)) .rm{margin-left:auto;}
+.flist .fr.tot{background:#FAFAFA;border-top:1px solid var(--border);}
+.flist .fr.tot .nm{color:var(--gray-mid);text-transform:uppercase;font-size:10px;letter-spacing:.4px;}
 .mdl-msg{font-size:11.5px;color:var(--red);min-height:14px;}
 .mdl-hint{font-size:11px;color:var(--gray-mid);line-height:1.5;}
 .note-bar{background:#FFFBF8;border-top:1px solid #FFD9C8;padding:6px 20px;font-size:10.5px;color:var(--gray-mid);}
@@ -226,7 +231,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
         <div class="fld"><label>&nbsp;</label><button class="btn" onclick="addFarm()">＋ Add point</button></div>
       </div>
       <div class="mdl-msg" id="mine-msg"></div>
-      <div class="mdl-hint">Decimal degrees, negative for South/West. Each point snaps to the ~55 × 67 km grid cell that contains it — the cell id is shown next to each mill.</div>
+      <div class="mdl-hint">Decimal degrees, negative for South/West. Each point snaps to the ~55 × 67 km grid cell that contains it — the cell id is shown next to each mill, and a point outside the Brazilian grid is refused. Weight takes any unit you like (hectares, bags, head) — only the proportion matters, and the share of each point is recalculated as you add or remove.</div>
     </div>
     <div class="mdl-ft">
       <button class="btn dgr" id="mine-del" onclick="deleteCluster()" style="margin-right:auto">Delete cluster</button>
@@ -368,12 +373,35 @@ async function ensureMineSeries(gid){
 
 /* Pontos do cluster no mesmo formato dos demais, para reaproveitar
    computeSeries/renderTable/renderChart sem tocar neles. */
+const mineShare=(w,tot)=>tot>0?(100*(w||0)/tot).toFixed(1).replace(".",",")+"%":null;
 function minePoints(gid){
   const g=MINE.byId[gid];if(!g)return [];
-  return g.farms.map(f=>({id:"mine|"+f.id,grp:"my|"+gid,nome:f.name,
-    sub:f.cell_id||cellKey(f.lat,f.lon),lat:f.lat,lon:f.lon,
-    w:f.weight||0,mineCell:f.cell_id||cellKey(f.lat,f.lon),
-    h:(g.series||{})[f.cell_id||cellKey(f.lat,f.lon)]||null}));
+  const tot=g.farms.reduce((s,f)=>s+(f.weight||0),0);
+  return g.farms.map(f=>{
+    const ck=f.cell_id||cellKey(f.lat,f.lon),sh=mineShare(f.weight,tot);
+    return {id:"mine|"+f.id,grp:"my|"+gid,nome:f.name,
+      sub:ck+(sh?" · "+sh+" of weight":""),lat:f.lat,lon:f.lon,
+      w:f.weight||0,mineCell:ck,h:(g.series||{})[ck]||null};});
+}
+/* Pontos salvos cuja célula não veio do banco. Antes eles simplesmente sumiam
+   da tabela (groupPts filtra por p.h) — o usuário adicionava e nada aparecia,
+   sem uma linha de explicação. */
+function mineOrphans(gid){
+  const g=MINE.byId[gid];if(!g||!g.series)return [];
+  return g.farms.filter(f=>!g.series[f.cell_id||cellKey(f.lat,f.lon)]);
+}
+/* A grade cobre o Brasil, e o bounding box do Brasil não é o Brasil: −30,−60
+   cai em Santa Fe, na Argentina. Quem sabe o que existe é o banco, então é
+   ele que responde — uma consulta de ~100 ms na hora de adicionar, em vez de
+   um ponto que salva e depois desaparece do gráfico. */
+async function cellHasData(cellId){
+  const c=sb();if(!c)return true;                  // sem banco, não bloqueia
+  try{
+    const {data,error}=await c.from("climate_cell")
+      .select("cell_id").eq("cell_id",cellId).eq("model","nasa").limit(1);
+    if(error)return true;
+    return !!(data&&data.length);
+  }catch(e){return true;}
 }
 function syncMinePoints(gid){
   STATE.pts=STATE.pts.filter(p=>!isMine(p.grp)||p.grp!=="my|"+gid).concat(minePoints(gid));
@@ -393,17 +421,31 @@ function openMine(gid){
   document.getElementById("mine-mdl").classList.add("open");
 }
 function closeMine(){document.getElementById("mine-mdl").classList.remove("open");MINE.draft=null;}
+/* O peso é em unidade livre (hectare, saca, cabeça, o que o usuário quiser) —
+   o que importa para a média ponderada é a PROPORÇÃO. Por isso a lista mostra
+   a participação de cada ponto recalculada a cada inclusão/remoção: dá para
+   conferir o rateio antes de salvar, sem precisar somar de cabeça. */
 function renderDraft(){
   const d=MINE.draft,el=document.getElementById("mine-list");
   const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   if(!d.farms.length){el.innerHTML=`<div class="fr"><span class="co">No points yet — add at least one below.</span></div>`;return;}
-  el.innerHTML=d.farms.map((f,i)=>`<div class="fr">
+  const tot=d.farms.reduce((s,f)=>s+(f.weight||0),0);
+  const nw=d.farms.filter(f=>f.weight>0).length;
+  const fmtW=v=>v.toLocaleString("pt-BR",{maximumFractionDigits:2});
+  el.innerHTML=d.farms.map((f,i)=>{
+    const sh=mineShare(f.weight,tot);
+    return `<div class="fr">
     <span class="nm">${esc(f.name)}</span>
-    <span class="co">${f.lat.toFixed(3)}, ${f.lon.toFixed(3)} · cell ${cellKey(f.lat,f.lon)}${f.weight?" · w "+f.weight:""}</span>
-    <button class="rm" title="Remove" onclick="removeFarm(${i})">×</button></div>`).join("");
+    <span class="co">${f.lat.toFixed(3)}, ${f.lon.toFixed(3)} · cell ${cellKey(f.lat,f.lon)}</span>
+    ${tot>0?`<span class="sh${f.weight>0?"":" zero"}">${sh}</span>`:""}
+    <button class="rm" title="Remove" onclick="removeFarm(${i})">×</button></div>`;}).join("")
+    +(tot>0?`<div class="fr tot"><span class="nm">Total</span>
+       <span class="co">${d.farms.length} point(s)${nw<d.farms.length?` · ${d.farms.length-nw} with no weight count as 0%`:""}</span>
+       <span class="sh">${fmtW(tot)}</span></div>`
+     :`<div class="fr tot"><span class="co">No weights — all points count equally (simple mean).</span></div>`);
 }
 function removeFarm(i){MINE.draft.farms.splice(i,1);renderDraft();}
-function addFarm(){
+async function addFarm(){
   const d=MINE.draft,msg=document.getElementById("mine-msg");
   const nm=document.getElementById("f-name").value.trim();
   const la=parseFloat(document.getElementById("f-lat").value.replace(",","."));
@@ -412,11 +454,13 @@ function addFarm(){
   const w=wv===""?null:parseFloat(wv.replace(",","."));
   if(!nm)return msg.textContent="Give the point a name.";
   if(!isFinite(la)||!isFinite(lo))return msg.textContent="Latitude and longitude must be numbers in decimal degrees.";
-  /* Fora do Brasil a célula não está em climate_cell e o ponto viria vazio —
-     avisar aqui é melhor que um gráfico em branco sem explicação. */
-  if(la<-34||la>6||lo<-75||lo>-33)
-    return msg.textContent="Outside Brazil — only the Brazilian grid is loaded.";
   if(w!==null&&(!isFinite(w)||w<0))return msg.textContent="Weight must be a positive number, or blank.";
+  const ck=cellKey(la,lo);
+  msg.style.color="";msg.textContent="Checking the grid…";
+  if(!await cellHasData(ck)){
+    msg.textContent=`No climate data for cell ${ck} — that point is outside the Brazilian grid.`;
+    return;
+  }
   d.farms.push({name:nm,lat:la,lon:lo,weight:w});
   ["f-name","f-lat","f-lon","f-w"].forEach(i=>document.getElementById(i).value="");
   msg.textContent="";renderDraft();
@@ -698,6 +742,17 @@ function renderTable(){
       <td><span class="pill" style="background:${vc.bg};color:${vc.fg}">${r.vs==null?"—":(r.vs>0?"+":"−")+fmtV(Math.abs(r.vs))}</span></td>
       <td class="muted" style="font-size:10.5px">${r.min==null?"—":fmtV(r.min)+"–"+fmtV(r.max)}</td></tr>`;};
   document.getElementById("tbody").innerHTML=rowsData.slice(0,nHead).map(rowHtml).join("")+body.map(rowHtml).join("");
+  /* Ponto salvo cuja célula não existe no banco não entra em groupPts (filtra
+     por p.h) e antes desaparecia calado. Agora aparece listado com o motivo. */
+  if(isMine(STATE.grp)){
+    const orf=mineOrphans(mineId(STATE.grp));
+    if(orf.length)document.getElementById("tbody").innerHTML+=
+      `<tr><td colspan="5" style="padding:10px 8px;text-align:left;font-weight:400;color:var(--gray-mid);white-space:normal;line-height:1.5;background:#FFFBF8">
+        ⚠ Not charted — outside the Brazilian grid, no data for their cell:
+        <strong>${orf.map(f=>f.name+" ("+(f.cell_id||cellKey(f.lat,f.lon))+")").join(", ")}</strong>.
+        <a href="#" onclick="openMine('${mineId(STATE.grp)}');return false;" style="color:var(--orange);font-weight:600">Edit the cluster</a> to fix or remove them.
+      </td></tr>`;
+    }
 }
 
 /* ── GRÁFICO ── */
