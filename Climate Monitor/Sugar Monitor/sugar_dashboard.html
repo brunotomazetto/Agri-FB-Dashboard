@@ -54,6 +54,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 .stat{display:flex;flex-direction:column;}.stat .k{font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.3px;}
 .stat .v{font-size:17px;font-weight:700;color:var(--black);margin-top:2px;}
 /* ── clusters do usuário ── */
+.ctrl-break{flex-basis:100%;height:0;}
 .view-btn.mine{border-style:dashed;}
 .view-btn.mine.active{border-style:solid;}
 .mine-add{color:var(--orange);border-color:#FFD9C8;font-weight:700;}
@@ -155,8 +156,15 @@ tbody tr.grp.sel td{background:#FFE9DC;}
     <button class="view-btn" data-grp="jall" onclick="setGrp('jall')">Jalles Machado</button>
     <button class="view-btn" data-grp="agro" onclick="setGrp('agro')">Adecoagro</button>
   </div>
-  <!-- clusters do próprio usuário: preenchido em renderMyButtons() -->
+  <!-- Clusters do usuário em linha própria, logo abaixo dos grupos padrão: a
+       barra é flex-wrap, então um elemento de largura total força a quebra.
+       Preenchido em renderMyButtons(); começa oculto e aparece quando o
+       Supabase responde — sem cluster nenhum, a linha traz só o "＋". -->
+  <div class="ctrl-break" id="mine-break" style="display:none"></div>
+  <span class="view-label" id="lbl-mine" style="display:none">My portfolio:</span>
   <div class="view-btns" id="mine-btns" style="display:none"></div>
+  <div class="ctrl-break" id="mine-break2" style="display:none"></div>
+  <div class="ctrl-sep" id="sep-after-mine"></div>
   <div class="ctrl-sep"></div>
   <span class="view-label">Granularity:</span>
   <div class="view-btns">
@@ -348,6 +356,10 @@ function renderMyButtons(){
     .join("")+btn("my|new","＋ My mills","mine-add","openMine(null)");
   for(const x of MINE.groups)if(!SCOPE_GROUPS.includes("my|"+x.id))SCOPE_GROUPS.push("my|"+x.id);
   box.style.display="flex";
+  ["mine-break","mine-break2"].forEach(i=>document.getElementById(i).style.display="");
+  document.getElementById("lbl-mine").style.display="";
+  /* o separador vertical ficaria sozinho no começo da linha seguinte */
+  document.getElementById("sep-after-mine").style.display="none";
   document.getElementById("sep-grp").style.display="";
   document.getElementById("lbl-grp").style.display="";
   act("grp",STATE.grp);
@@ -422,27 +434,50 @@ function openMine(gid){
 }
 function closeMine(){document.getElementById("mine-mdl").classList.remove("open");MINE.draft=null;}
 /* O peso é em unidade livre (hectare, saca, cabeça, o que o usuário quiser) —
-   o que importa para a média ponderada é a PROPORÇÃO. Por isso a lista mostra
-   a participação de cada ponto recalculada a cada inclusão/remoção: dá para
-   conferir o rateio antes de salvar, sem precisar somar de cabeça. */
+   o que importa para a média ponderada é a PROPORÇÃO. Por isso o peso é
+   editável na própria lista, e o % de cada ponto é recalculado enquanto se
+   digita: dá para calibrar o rateio olhando o resultado, sem somar de cabeça
+   e sem ter que apagar o ponto para corrigir um número. */
+const fmtW=v=>v.toLocaleString("pt-BR",{maximumFractionDigits:2});
 function renderDraft(){
   const d=MINE.draft,el=document.getElementById("mine-list");
   const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
   if(!d.farms.length){el.innerHTML=`<div class="fr"><span class="co">No points yet — add at least one below.</span></div>`;return;}
-  const tot=d.farms.reduce((s,f)=>s+(f.weight||0),0);
-  const nw=d.farms.filter(f=>f.weight>0).length;
-  const fmtW=v=>v.toLocaleString("pt-BR",{maximumFractionDigits:2});
-  el.innerHTML=d.farms.map((f,i)=>{
-    const sh=mineShare(f.weight,tot);
-    return `<div class="fr">
+  el.innerHTML=`<div class="fr hd"><span class="nm">Point</span><span class="co"></span>
+      <span class="wi-h">Weight</span><span class="sh">Share</span><span class="rm-h"></span></div>`
+    +d.farms.map((f,i)=>`<div class="fr">
     <span class="nm">${esc(f.name)}</span>
     <span class="co">${f.lat.toFixed(3)}, ${f.lon.toFixed(3)} · cell ${cellKey(f.lat,f.lon)}</span>
-    ${tot>0?`<span class="sh${f.weight>0?"":" zero"}">${sh}</span>`:""}
-    <button class="rm" title="Remove" onclick="removeFarm(${i})">×</button></div>`;}).join("")
-    +(tot>0?`<div class="fr tot"><span class="nm">Total</span>
-       <span class="co">${d.farms.length} point(s)${nw<d.farms.length?` · ${d.farms.length-nw} with no weight count as 0%`:""}</span>
-       <span class="sh">${fmtW(tot)}</span></div>`
-     :`<div class="fr tot"><span class="co">No weights — all points count equally (simple mean).</span></div>`);
+    <input class="wi" value="${f.weight==null?"":f.weight}" placeholder="—"
+           oninput="setFarmWeight(${i},this.value)" title="Any unit — only the proportion matters"/>
+    <span class="sh" data-sh="${i}"></span>
+    <button class="rm" title="Remove" onclick="removeFarm(${i})">×</button></div>`).join("")
+    +`<div class="fr tot"><span class="nm">Total</span><span class="co" id="mine-totmsg"></span>
+        <span class="sh" id="mine-tot"></span></div>`;
+  syncShares();
+}
+/* Reescreve só os percentuais. Um renderDraft() inteiro a cada tecla trocaria
+   o innerHTML e o input perderia o foco no meio da digitação. */
+function syncShares(){
+  const d=MINE.draft;if(!d||!d.farms.length)return;
+  const tot=d.farms.reduce((s,f)=>s+(f.weight||0),0);
+  const nw=d.farms.filter(f=>f.weight>0).length;
+  d.farms.forEach((f,i)=>{
+    const el=document.querySelector(`[data-sh="${i}"]`);if(!el)return;
+    el.textContent=tot>0?mineShare(f.weight,tot):"—";
+    el.classList.toggle("zero",!(tot>0&&f.weight>0));
+  });
+  const t=document.getElementById("mine-tot"),m=document.getElementById("mine-totmsg");
+  if(t)t.textContent=tot>0?fmtW(tot):"";
+  if(m)m.textContent=tot>0
+    ?`${d.farms.length} point(s)`+(nw<d.farms.length?` · ${d.farms.length-nw} with no weight count as 0%`:"")
+    :`${d.farms.length} point(s) · no weights, all count equally (simple mean)`;
+}
+function setFarmWeight(i,v){
+  const s=String(v).trim().replace(",",".");
+  const n=s===""?null:parseFloat(s);
+  MINE.draft.farms[i].weight=(n!=null&&isFinite(n)&&n>=0)?n:null;
+  syncShares();
 }
 function removeFarm(i){MINE.draft.farms.splice(i,1);renderDraft();}
 async function addFarm(){
