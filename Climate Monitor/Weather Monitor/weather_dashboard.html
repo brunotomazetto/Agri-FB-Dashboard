@@ -390,7 +390,7 @@ async function ensureMineSeries(gid){
    computeSeries/renderTable/renderChart sem tocar neles. */
 function minePoints(gid){
   const g=MINE.byId[gid];if(!g)return [];
-  return g.farms.map(f=>({id:"u|"+f.id,grp:"my|"+gid,nome:f.name,
+  return g.farms.map(f=>({id:"mine|"+f.id,grp:"my|"+gid,nome:f.name,
     sub:f.cell_id||cellKey(f.lat,f.lon),lat:f.lat,lon:f.lon,
     w:f.weight||0,mineCell:f.cell_id||cellKey(f.lat,f.lon),
     h:(g.series||{})[f.cell_id||cellKey(f.lat,f.lon)]||null}));

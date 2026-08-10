@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Brazil Sugar &amp; Ethanol Climate Monitor — Agribusiness, F&B DataHouse</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.1/dist/umd/supabase.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{--orange:#FF5500;--black:#1A1A1A;--gray-dark:#333;--gray-mid:#888;--gray-light:#F4F4F4;--border:#E5E5E5;--white:#fff;--green:#27AE60;--red:#C0392B;--blue:#2C6FB5;--brown:#A0552B;--font:'Segoe UI',Helvetica,Arial,sans-serif;}
@@ -52,6 +53,37 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 .stat-row{display:flex;gap:18px;flex-wrap:wrap;padding:8px 14px 12px;border-top:1px solid var(--border);}
 .stat{display:flex;flex-direction:column;}.stat .k{font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.3px;}
 .stat .v{font-size:17px;font-weight:700;color:var(--black);margin-top:2px;}
+/* ── clusters do usuário ── */
+.view-btn.mine{border-style:dashed;}
+.view-btn.mine.active{border-style:solid;}
+.mine-add{color:var(--orange);border-color:#FFD9C8;font-weight:700;}
+.mdl-bg{position:fixed;inset:0;background:rgba(26,26,26,.45);display:none;align-items:center;justify-content:center;z-index:60;}
+.mdl-bg.open{display:flex;}
+.mdl{background:var(--white);border-radius:6px;width:min(560px,94vw);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.22);}
+.mdl-hd{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--border);}
+.mdl-hd h3{font-size:14px;color:var(--black);}
+.mdl-hd .x{margin-left:auto;cursor:pointer;border:none;background:none;font-size:18px;color:var(--gray-mid);font-family:var(--font);}
+.mdl-bd{padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
+.mdl-ft{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.fld{display:flex;flex-direction:column;gap:4px;}
+.fld label{font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.4px;}
+.fld input,.fld select{padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-family:var(--font);font-size:12.5px;color:var(--gray-dark);background:var(--white);}
+.fld input:focus,.fld select:focus{outline:none;border-color:var(--orange);}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.btn{padding:6px 14px;font-size:12px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:none;color:var(--gray-mid);font-family:var(--font);}
+.btn:hover{border-color:#ccc;color:var(--gray-dark);}
+.btn.pri{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:700;}
+.btn.pri:disabled{opacity:.5;cursor:default;}
+.btn.dgr{color:var(--red);border-color:#F0CFCB;}
+.flist{border:1px solid var(--border);border-radius:4px;max-height:220px;overflow:auto;}
+.flist .fr{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;}
+.flist .fr:last-child{border-bottom:none;}
+.flist .fr .nm{font-weight:600;color:var(--gray-dark);}
+.flist .fr .co{color:var(--gray-mid);font-size:10.5px;}
+.flist .fr .rm{margin-left:auto;cursor:pointer;border:none;background:none;color:var(--gray-mid);font-size:14px;font-family:var(--font);}
+.flist .fr .rm:hover{color:var(--red);}
+.mdl-msg{font-size:11.5px;color:var(--red);min-height:14px;}
+.mdl-hint{font-size:11px;color:var(--gray-mid);line-height:1.5;}
 .note-bar{background:#FFFBF8;border-top:1px solid #FFD9C8;padding:6px 20px;font-size:10.5px;color:var(--gray-mid);}
 .note-bar em{color:var(--orange);font-style:normal;font-weight:600;}
 #loading{position:fixed;inset:0;background:rgba(255,255,255,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:999;}
@@ -118,6 +150,8 @@ tbody tr.grp.sel td{background:#FFE9DC;}
     <button class="view-btn" data-grp="jall" onclick="setGrp('jall')">Jalles Machado</button>
     <button class="view-btn" data-grp="agro" onclick="setGrp('agro')">Adecoagro</button>
   </div>
+  <!-- clusters do próprio usuário: preenchido em renderMyButtons() -->
+  <div class="view-btns" id="mine-btns" style="display:none"></div>
   <div class="ctrl-sep"></div>
   <span class="view-label">Granularity:</span>
   <div class="view-btns">
@@ -162,7 +196,44 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 
 <div class="note-bar">
   Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (observed, to bridge the gap since the last historical refresh). <em>Observed data only — no forecast</em>: the series ends on the last day that has actually happened. Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
+  <em>My mills</em>: your own clusters are stored in your account, not in this browser — signing out or clearing the cache does not lose them, and they stay until you delete them. Only you can see them. Each point snaps to the NASA POWER grid cell (0.5° × 0.625°, ~55 × 67 km) that contains it, so two points less than ~50 km apart legitimately share the same series.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. Mill location is a proxy for the surrounding cane-supply region. A multi-mill average has a naturally narrow band (spatial cancellation) — select a single mill to see the real spread.
+</div>
+
+<!-- ── editor de clusters do usuário ── -->
+<div class="mdl-bg" id="mine-mdl" onclick="if(event.target===this)closeMine()">
+  <div class="mdl">
+    <div class="mdl-hd">
+      <h3 id="mine-title">My mills</h3>
+      <button class="x" onclick="closeMine()">×</button>
+    </div>
+    <div class="mdl-bd">
+      <div class="fld">
+        <label>Cluster name</label>
+        <input id="mine-name" maxlength="60" placeholder="e.g. My mills"/>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.4px">Points</label>
+        <div class="flist" id="mine-list" style="margin-top:4px"></div>
+      </div>
+      <div class="row3">
+        <div class="fld"><label>Mill</label><input id="f-name" maxlength="60" placeholder="Usina"/></div>
+        <div class="fld"><label>Latitude</label><input id="f-lat" placeholder="-14.08"/></div>
+        <div class="fld"><label>Longitude</label><input id="f-lon" placeholder="-57.45"/></div>
+      </div>
+      <div class="row3">
+        <div class="fld" style="grid-column:span 2"><label>Weight (optional)</label><input id="f-w" placeholder="crushing capacity, Mt — blank = simple mean"/></div>
+        <div class="fld"><label>&nbsp;</label><button class="btn" onclick="addFarm()">＋ Add point</button></div>
+      </div>
+      <div class="mdl-msg" id="mine-msg"></div>
+      <div class="mdl-hint">Decimal degrees, negative for South/West. Each point snaps to the ~55 × 67 km grid cell that contains it — the cell id is shown next to each mill.</div>
+    </div>
+    <div class="mdl-ft">
+      <button class="btn dgr" id="mine-del" onclick="deleteCluster()" style="margin-right:auto">Delete cluster</button>
+      <button class="btn" onclick="closeMine()">Close</button>
+      <button class="btn pri" id="mine-save" onclick="saveCluster()">Save</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -174,7 +245,232 @@ const FORECAST_URL="https://api.open-meteo.com/v1/forecast";
 const PAST_DAYS=92,FC_DAYS=0;
 const GRPLBL={smto:"São Martinho",jall:"Jalles Machado",agro:"Adecoagro"};
 const WLBL={smto:"crushing capacity",jall:"crushing capacity",agro:"crushing capacity"};
-const hasW=g=>true;
+const CELL_LAT=0.5,CELL_LON=0.625;   /* grade do NASA POWER */
+/* ══ CLUSTERS DO USUÁRIO ═══════════════════════════════════════════════
+   Os grupos padrão (capitais, SLC, BrasilAgro, regiões) continuam vindo do
+   locations.json + history.json: são iguais para todo mundo e não têm por que
+   virar linha de banco. O que mora no Supabase é só o que o usuário cria.
+
+   Duas tabelas, uma RLS: farm_group/farm são filtrados por
+   lower(owner_email) = lower(auth.jwt()->>'email'), então o portfólio é
+   privado no banco — não depende deste JavaScript esconder nada. Por isso
+   também sobrevive a logout e a limpeza de cache: nada aqui é localStorage.
+
+   A série histórica NÃO é baixada do NASA na hora: as ~2.450 células que
+   cobrem o Brasil já estão em climate_cell (ver seed_grid_supabase.py), e a
+   fazenda só aponta para a célula que a contém. Adicionar ponto é instantâneo.
+   Ver supabase/migration_climate_grid.sql. */
+const MINE={groups:[],byId:{},loaded:false,draft:null};
+const isMine=g=>typeof g==="string"&&g.startsWith("my|");
+const mineId=g=>g.slice(3);
+
+/* Cliente isolado do portal: mesma origem significa que compartilharíamos o
+   localStorage do pai, e dois clientes renovando o mesmo token derrubam a
+   sessão um do outro. O JWT é emprestado só para estas chamadas — a RLS
+   continua enxergando o usuário autenticado. Mesmo padrão do sector_news. */
+let _sb=null;
+function authToken(){
+  try{const p=window.parent;
+    if(p&&p!==window&&typeof p.__portalAccessToken==="function")return p.__portalAccessToken();
+  }catch(e){}
+  return null;
+}
+function sb(){
+  const token=authToken();
+  if(_sb&&_sb.__tok===token)return _sb;
+  if(typeof supabase==="undefined")return null;
+  try{
+    /* Se o build.sh não trocou os placeholders (arquivo aberto direto do
+       disco), createClient lança — e o dashboard tem que continuar servindo os
+       grupos padrão em vez de morrer no boot. */
+    _sb=supabase.createClient("__SUPABASE_URL__","__SUPABASE_ANON_KEY__",{
+      auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
+      global:token?{headers:{Authorization:"Bearer "+token}}:{}});
+  }catch(e){console.warn("Supabase unavailable:",e);return null;}
+  _sb.__tok=token;
+  return _sb;
+}
+
+/* floor(x/d + 0.5), não Math.round(): o round() do Python arredonda
+   meio-para-o-par e o do JS/Postgres meio-para-cima, então um ponto exatamente
+   na fronteira (lat −14,75) cairia em células diferentes conforme quem
+   calculou. Quem grava de fato é o trigger em farm — isto aqui é só para
+   mostrar a célula na tela antes de salvar. */
+function cellOf(lat,lon){
+  return [Math.floor(lat/CELL_LAT+0.5)*CELL_LAT, Math.floor(lon/CELL_LON+0.5)*CELL_LON];}
+function cellKey(lat,lon){const c=cellOf(lat,lon);return c[0].toFixed(4)+","+c[1].toFixed(4);}
+
+/* base64(int16[366] ×10) -> array de 366 com null onde não há dado. Mesmo
+   índice-do-dia do history.json (0 = 1/jan, 59 = 29/fev, 365 = 31/dez). */
+function decodeSeries(b64){
+  if(!b64)return null;
+  const bin=atob(b64),a=new Array(366);
+  for(let i=0;i<366;i++){
+    let v=bin.charCodeAt(i*2)|(bin.charCodeAt(i*2+1)<<8);
+    if(v&0x8000)v-=0x10000;
+    a[i]=v===-32768?null:v/10;
+  }
+  return a;
+}
+
+async function loadMine(){
+  const c=sb();if(!c)return;
+  try{
+    const [g,f]=await Promise.all([
+      c.from("farm_group").select("id,name,weight_label").order("created_at"),
+      c.from("farm").select("id,group_id,name,lat,lon,weight,cell_id").order("name")]);
+    if(g.error)throw g.error;
+    if(f.error)throw f.error;
+    MINE.groups=(g.data||[]).map(x=>({...x,farms:(f.data||[]).filter(y=>y.group_id===x.id)}));
+    MINE.byId={};
+    for(const x of MINE.groups){
+      MINE.byId[x.id]=x;
+      x.hasW=x.farms.some(y=>y.weight>0);
+      GRPLBL["my|"+x.id]=x.name;
+      WLBL["my|"+x.id]=x.weight_label||"weight";
+    }
+    MINE.loaded=true;
+    renderMyButtons();
+  }catch(e){console.warn("clusters unavailable:",e);}
+}
+
+function renderMyButtons(){
+  const box=document.getElementById("mine-btns");
+  const btn=(g,lbl,cls,on)=>`<button class="view-btn ${cls}" data-grp="${g}" onclick="${on}">${lbl}</button>`;
+  const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  box.innerHTML=MINE.groups.map(x=>
+      btn("my|"+x.id,esc(x.name)+` <span style="opacity:.7">(${x.farms.length})</span>`,"mine","setGrp('my|"+x.id+"')"))
+    .join("")+btn("my|new","＋ My mills","mine-add","openMine(null)");
+  for(const x of MINE.groups)if(!SCOPE_GROUPS.includes("my|"+x.id))SCOPE_GROUPS.push("my|"+x.id);
+  box.style.display="flex";
+  document.getElementById("sep-grp").style.display="";
+  document.getElementById("lbl-grp").style.display="";
+  act("grp",STATE.grp);
+}
+
+/* Um round-trip por cluster, não um por fazenda: climate_series_for_group faz
+   o DISTINCT das células no servidor, então 30 fazendas em 20 células custam
+   uma leitura de 20 células — e as vizinhas que dividem célula, nenhuma. */
+async function ensureMineSeries(gid){
+  const g=MINE.byId[gid];if(!g)return;
+  if(g.series)return;
+  const c=sb();if(!c)throw new Error("not signed in");
+  const {data,error}=await c.rpc("climate_series_for_group",{p_group_id:gid,p_model:"nasa"});
+  if(error)throw error;
+  const cells={};
+  for(const r of data||[]){
+    const h=cells[r.cell_id]||(cells[r.cell_id]={t:{},p:{}});
+    h.t[r.year]=decodeSeries(r.t);
+    h.p[r.year]=decodeSeries(r.p);
+  }
+  g.series=cells;
+}
+
+/* Pontos do cluster no mesmo formato dos demais, para reaproveitar
+   computeSeries/renderTable/renderChart sem tocar neles. */
+function minePoints(gid){
+  const g=MINE.byId[gid];if(!g)return [];
+  return g.farms.map(f=>({id:"mine|"+f.id,grp:"my|"+gid,nome:f.name,
+    sub:f.cell_id||cellKey(f.lat,f.lon),lat:f.lat,lon:f.lon,
+    w:f.weight||0,mineCell:f.cell_id||cellKey(f.lat,f.lon),
+    h:(g.series||{})[f.cell_id||cellKey(f.lat,f.lon)]||null}));
+}
+function syncMinePoints(gid){
+  STATE.pts=STATE.pts.filter(p=>!isMine(p.grp)||p.grp!=="my|"+gid).concat(minePoints(gid));
+}
+
+/* ── editor ── */
+function openMine(gid){
+  const g=gid?MINE.byId[gid]:null;
+  MINE.draft={id:gid||null,name:g?g.name:"",weight_label:g?g.weight_label:null,
+    farms:g?g.farms.map(f=>({name:f.name,lat:f.lat,lon:f.lon,weight:f.weight})):[]};
+  document.getElementById("mine-title").textContent=gid?"Edit cluster":"New cluster";
+  document.getElementById("mine-name").value=MINE.draft.name;
+  document.getElementById("mine-del").style.display=gid?"":"none";
+  document.getElementById("mine-msg").textContent="";
+  ["f-name","f-lat","f-lon","f-w"].forEach(i=>document.getElementById(i).value="");
+  renderDraft();
+  document.getElementById("mine-mdl").classList.add("open");
+}
+function closeMine(){document.getElementById("mine-mdl").classList.remove("open");MINE.draft=null;}
+function renderDraft(){
+  const d=MINE.draft,el=document.getElementById("mine-list");
+  const esc=s=>String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  if(!d.farms.length){el.innerHTML=`<div class="fr"><span class="co">No points yet — add at least one below.</span></div>`;return;}
+  el.innerHTML=d.farms.map((f,i)=>`<div class="fr">
+    <span class="nm">${esc(f.name)}</span>
+    <span class="co">${f.lat.toFixed(3)}, ${f.lon.toFixed(3)} · cell ${cellKey(f.lat,f.lon)}${f.weight?" · w "+f.weight:""}</span>
+    <button class="rm" title="Remove" onclick="removeFarm(${i})">×</button></div>`).join("");
+}
+function removeFarm(i){MINE.draft.farms.splice(i,1);renderDraft();}
+function addFarm(){
+  const d=MINE.draft,msg=document.getElementById("mine-msg");
+  const nm=document.getElementById("f-name").value.trim();
+  const la=parseFloat(document.getElementById("f-lat").value.replace(",","."));
+  const lo=parseFloat(document.getElementById("f-lon").value.replace(",","."));
+  const wv=document.getElementById("f-w").value.trim();
+  const w=wv===""?null:parseFloat(wv.replace(",","."));
+  if(!nm)return msg.textContent="Give the point a name.";
+  if(!isFinite(la)||!isFinite(lo))return msg.textContent="Latitude and longitude must be numbers in decimal degrees.";
+  /* Fora do Brasil a célula não está em climate_cell e o ponto viria vazio —
+     avisar aqui é melhor que um gráfico em branco sem explicação. */
+  if(la<-34||la>6||lo<-75||lo>-33)
+    return msg.textContent="Outside Brazil — only the Brazilian grid is loaded.";
+  if(w!==null&&(!isFinite(w)||w<0))return msg.textContent="Weight must be a positive number, or blank.";
+  d.farms.push({name:nm,lat:la,lon:lo,weight:w});
+  ["f-name","f-lat","f-lon","f-w"].forEach(i=>document.getElementById(i).value="");
+  msg.textContent="";renderDraft();
+}
+async function saveCluster(){
+  const d=MINE.draft,msg=document.getElementById("mine-msg"),btn=document.getElementById("mine-save");
+  d.name=document.getElementById("mine-name").value.trim();
+  if(!d.name)return msg.textContent="Give the cluster a name.";
+  if(!d.farms.length)return msg.textContent="Add at least one point.";
+  const c=sb();if(!c)return msg.textContent="Not signed in.";
+  btn.disabled=true;msg.textContent="";
+  try{
+    let gid=d.id;
+    if(gid){
+      const {error}=await c.from("farm_group").update({name:d.name}).eq("id",gid);
+      if(error)throw error;
+    }else{
+      const {data,error}=await c.from("farm_group").insert({name:d.name,scope:"sugar"}).select("id").single();
+      if(error)throw error;
+      gid=data.id;
+    }
+    /* Apaga e reinsere em vez de casar linha a linha: a lista é curta e um
+       diff errado silencioso é pior que um round-trip a mais. */
+    if(d.id){const {error}=await c.from("farm").delete().eq("group_id",gid);if(error)throw error;}
+    const {error:e2}=await c.from("farm").insert(
+      d.farms.map(f=>({group_id:gid,name:f.name,lat:f.lat,lon:f.lon,weight:f.weight})));
+    if(e2)throw e2;
+    closeMine();
+    await loadMine();
+    await setGrp("my|"+gid);
+  }catch(e){
+    msg.textContent=(e&&e.message)||"Could not save.";
+    console.error(e);
+  }finally{btn.disabled=false;}
+}
+async function deleteCluster(){
+  const d=MINE.draft;if(!d||!d.id)return;
+  const g=MINE.byId[d.id];
+  if(!confirm(`Delete "${g?g.name:"this cluster"}" and its ${g?g.farms.length:0} point(s)? This cannot be undone.`))return;
+  const c=sb();if(!c)return;
+  try{
+    const {error}=await c.from("farm_group").delete().eq("id",d.id);   // farm cai por cascade
+    if(error)throw error;
+    STATE.pts=STATE.pts.filter(p=>p.grp!=="my|"+d.id);
+    const i=SCOPE_GROUPS.indexOf("my|"+d.id);if(i>=0)SCOPE_GROUPS.splice(i,1);
+    closeMine();
+    await loadMine();
+    if(STATE.grp==="my|"+d.id)await setGrp(SCOPE_GROUPS[0]);
+  }catch(e){document.getElementById("mine-msg").textContent=(e&&e.message)||"Could not delete.";}
+}
+/* ══════════════════════════════════════════════════════════════════════ */
+/* clusters do usuário só ganham a linha ▣ ponderada se algum ponto tem peso;
+   os grupos das companhias sempre têm (moagem) */
+const hasW=g=>isMine(g)?!!(MINE.byId[mineId(g)]||{}).hasW:true;
 const SCOPE_GROUPS=["smto","jall","agro"];
 const SUBTITLE="Sugarcane mills — current year vs. historical distribution (São Martinho · Jalles Machado · Adecoagro)";
 const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -215,6 +511,10 @@ async function boot(){
     try{await fetchLive(STATE.pts);}catch(e){console.warn("live fetch failed — using history only:",e);}
     document.getElementById("loading").style.display="none";
     render();
+    /* Os clusters não bloqueiam o load: as usinas das companhias já estão na
+       tela quando os botões do usuário aparecem. Se o Supabase estiver fora, o
+       dashboard segue funcionando sem eles. */
+    loadMine();
   }catch(e){document.getElementById("load-msg").innerHTML='<span class="err">Error: '+e.message+'</span>';console.error(e);}
 }
 function collectPoints(loc){
@@ -223,7 +523,17 @@ function collectPoints(loc){
 function applyHist(hist){
   STATE.hist=hist;STATE.years=hist.years.slice();STATE.curYear=Math.max(...hist.years);
   STATE.histPts=Object.entries(hist.points).map(([k,v])=>{const[la,lo]=k.split(",").map(Number);return{la,lo,v};});
-  STATE.pts.forEach(p=>{p.h=matchHist(p.lat,p.lon);});
+  STATE.pts.forEach(p=>{
+    /* Pontos de cluster não estão no history.json: a série vem de
+       climate_cell, por célula. Só o NASA POWER foi carregado na grade, então
+       no ERA5 eles ficam sem série e a tabela cai no aviso abaixo. */
+    if(p.mineCell){
+      const g=MINE.byId[mineId(p.grp)];
+      p.h=(STATE.model==="nasa"&&g&&g.series)?(g.series[p.mineCell]||null):null;
+      return;
+    }
+    p.h=matchHist(p.lat,p.lon);
+  });
 }
 async function setModel(m){
   if(m===STATE.model)return;
@@ -248,7 +558,29 @@ async function fetchLive(pts){
 
 /* ── CONTROLES ── */
 function setVar(v){STATE.vr=v;act("var",v);render();}
-function setGrp(v){STATE.grp=v;STATE.entity=hasW(v)?"wavg":"group";act("grp",v);render();}
+async function setGrp(v){
+  STATE.grp=v;act("grp",v);
+  /* A série do cluster é buscada uma vez e fica em MINE.byId[].series; trocar
+     de grupo e voltar não custa round-trip. */
+  if(isMine(v)){
+    const ld=document.getElementById("loading"),msg=document.getElementById("load-msg");
+    if(!(MINE.byId[mineId(v)]||{}).series){msg.textContent="Loading your mills…";ld.style.display="flex";}
+    try{await ensureMineSeries(mineId(v));}
+    catch(e){msg.innerHTML='<span class="err">Could not load your mills: '+((e&&e.message)||e)+'</span>';console.error(e);return;}
+    ld.style.display="none";
+    syncMinePoints(mineId(v));
+    applyHist(STATE.hist);
+    /* O sugar busca o observado de TODOS os pontos no boot; os do cluster
+       chegam depois, então precisam do próprio fetch — uma vez só. */
+    const novos=STATE.pts.filter(p=>p.grp===v&&!p.liveFetched);
+    if(novos.length){
+      try{await fetchLive(novos);novos.forEach(p=>p.liveFetched=true);}
+      catch(e){console.warn("live fetch failed:",e);}
+    }
+  }
+  STATE.entity=hasW(v)?"wavg":"group";
+  render();
+}
 function setGran(v){STATE.gran=v;act("gran",v);render();}
 function setYrs(v){STATE.yrs=v;act("yrs",v);render();}
 function act(a,v){document.querySelectorAll(`[data-${a}]`).forEach(b=>b.classList.toggle("active",b.dataset[a]==String(v)));}
@@ -334,8 +666,20 @@ function stampUpdated(){
 }
 function render(){renderTable();renderChart();stampUpdated();}
 function renderTable(){
-  document.getElementById("tbl-title").textContent="Mills — "+GRPLBL[STATE.grp];
+  const ttl=document.getElementById("tbl-title");
+  ttl.textContent="Mills — "+GRPLBL[STATE.grp];
+  if(isMine(STATE.grp))
+    ttl.innerHTML=ttl.innerHTML+` <a href="#" onclick="openMine('${mineId(STATE.grp)}');return false;" style="color:var(--orange);font-weight:600;font-size:11px">✎ edit</a>`;
   const g=groupPts();
+  if(!g.length){                       // modelo sem série para este grupo
+    document.getElementById("thead").innerHTML="";
+    document.getElementById("tbody").innerHTML=
+      `<tr><td colspan="5" style="padding:16px;text-align:left;font-weight:400;color:var(--gray-mid);white-space:normal;line-height:1.5">
+        No <strong>${MODELLBL[STATE.model]}</strong> series for your mills yet — the Brazil-wide grid is currently built on NASA POWER only.
+        <a href="#" onclick="setModel('nasa');return false;" style="color:var(--orange);font-weight:600">Switch to NASA POWER</a>
+      </td></tr>`;
+    return;
+  }
   const head=[];
   head.push({id:"wavg",nome:"▣ Weighted by "+WLBL[STATE.grp],sub:g.length+" mills",grpRow:true,...summary(g,true)});
   head.push({id:"group",nome:"▣ Group average (simple)",sub:g.length+" mills",grpRow:true,...summary(g,false)});
