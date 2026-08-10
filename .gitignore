@@ -13,3 +13,9 @@ _cells_era5.json
 # SQLite transient sidecar files (WAL/shared-memory)
 *.db-wal
 *.db-shm
+
+# Climate grid: progresso do seeder e malha do IBGE (regeneráveis)
+_grid_done.json
+_br_mesh.json
+**/_grid_done.json
+**/_br_mesh.json

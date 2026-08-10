@@ -1,0 +1,60 @@
+name: Update Climate Grid (Brazil → Supabase)
+
+# Semanal: rebaixa o ANO CORRENTE das ~2.450 células que cobrem o Brasil e
+# regrava em climate_cell (Supabase). Os anos fechados foram baixados uma vez
+# no seed e nunca mais mudam.
+#
+# Por que o ano corrente inteiro e não só os dias novos: o NASA POWER REVISA os
+# ~30 dias mais recentes (medido em 03/08/2026 — 28 dias de junho mudaram entre
+# dois builds, |Δ| médio 0,42 °C, máx 1,30 °C). Um refresh incremental
+# congelaria o valor preliminar para sempre, e em um ano a série teria 12
+# janelas de dado nunca corrigido. Rebaixar o ano corrente absorve a revisão e
+# custa 1/17 do payload completo.
+#
+# Diferente do update_climate.yml, este job NÃO commita nada: o dado vai para o
+# Supabase, não para o repositório. É o que permite carregar o Brasil inteiro
+# (~57 MB) sem inchar o git — o history.json de 12 MB já era o teto do que dava
+# para versionar semanalmente.
+#
+# Seed inicial (uma vez, antes do primeiro run deste workflow):
+#   python "Climate Monitor/Weather Monitor/seed_grid_supabase.py" --full
+#
+# Secrets necessários: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (service role —
+# ignora RLS; é o único caminho de escrita em climate_cell fora de um admin).
+
+on:
+  schedule:
+    - cron: "0 11 * * 1"   # toda segunda, 11:00 UTC (após o update_climate.yml)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "tail (ano corrente) ou full (seed 2010→hoje)"
+        required: false
+        default: tail
+        type: choice
+        options: [tail, full]
+
+concurrency:
+  group: climate-grid
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90     # ~2.450 células levam ~7 min com 8 paralelas; folga para retry
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configura Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh climate_cell
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python "Climate Monitor/Weather Monitor/seed_grid_supabase.py" \
+            --${{ github.event.inputs.mode || 'tail' }}
