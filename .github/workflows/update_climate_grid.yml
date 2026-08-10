@@ -28,11 +28,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "tail (ano corrente) ou full (seed 2010→hoje)"
+        description: "tail (ano corrente) · full (seed 2010→hoje) · missing (só o que faltou)"
         required: false
         default: tail
         type: choice
-        options: [tail, full]
+        options: [tail, full, missing]
 
 concurrency:
   group: climate-grid

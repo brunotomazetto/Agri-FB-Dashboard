@@ -10,10 +10,14 @@ NASA POWER é 0,5° lat × 0,625° lon: o Brasil são ~2.450 células, não
 infinitos pontos. Duas coordenadas na mesma célula devolvem a mesma série,
 então o universo de downloads possíveis é finito e pequeno.
 
-Dois modos
+Três modos
 ----------
   --full   (padrão)  baixa 2010→hoje. Roda UMA vez, no seed inicial.
   --tail             baixa só o ano corrente. É o que roda toda semana.
+  --missing          pergunta ao banco quais células faltam e baixa só essas.
+                     É o conserto depois de um seed que terminou com falhas —
+                     no primeiro (10/08/2026) a POWER devolveu 429 em 16 das
+                     2.447, e rebaixar tudo por causa disso é desperdício.
 
 O --tail não é uma otimização preguiçosa: o POWER REVISA os ~30 dias mais
 recentes (medido em 03/08/2026: 28 dias de junho mudaram entre dois builds,
@@ -26,8 +30,9 @@ Uso
 ---
   export SUPABASE_URL=https://xxxx.supabase.co
   export SUPABASE_SERVICE_ROLE_KEY=...        # service role: ignora RLS
-  python seed_grid_supabase.py --full         # ~15 min, uma vez
+  python seed_grid_supabase.py --full         # ~13 min, uma vez
   python seed_grid_supabase.py --tail         # ~10 min, semanal
+  python seed_grid_supabase.py --missing      # segundos, se sobraram falhas
 
   python seed_grid_supabase.py --cells-only   # só gera grid_br.json e sai
   python seed_grid_supabase.py --dry-run --limit 5   # não escreve no banco
@@ -151,7 +156,14 @@ MD = md_index()
 
 def fetch(lat, lon, y0, tries=8):
     """Baixa de y0 até hoje. Backoff longo: um blip de DNS não pode matar
-    um job de 15 min."""
+    um job de 15 min.
+
+    O 429 tem backoff próprio, bem mais largo. A POWER não publica limite e de
+    uma máquina isolada aguenta 30 requisições simultâneas sem reclamar — mas
+    do runner do GitHub, cujo IP é compartilhado e já chega usado, o seed de
+    2.447 células levou 429 em 16 delas (10/08/2026). Esperar 5-40 s como nos
+    outros erros só devolve 429; a janela do limite é de minutos.
+    """
     end = datetime.date.today().strftime("%Y%m%d")
     url = (f"{POWER}?parameters=T2M,PRECTOTCORR&community=AG"
            f"&longitude={lon}&latitude={lat}"
@@ -161,6 +173,13 @@ def fetch(lat, lon, y0, tries=8):
         try:
             with urllib.request.urlopen(url, timeout=180) as r:
                 return json.loads(r.read().decode())["properties"]["parameter"]
+        except urllib.error.HTTPError as e:
+            last = e
+            if e.code == 429:
+                ra = e.headers.get("Retry-After")
+                time.sleep(float(ra) if ra and ra.isdigit() else min(240, 30 * (t + 1)))
+            else:
+                time.sleep(min(60, 5 * (t + 1)))
         except Exception as e:
             last = e
             time.sleep(min(60, 5 * (t + 1)))
@@ -196,9 +215,33 @@ def rows_for(cell, y0):
 class Supa:
     def __init__(self, url, key):
         self.url = url.rstrip("/") + "/rest/v1/climate_cell"
-        self.h = {"apikey": key, "Authorization": "Bearer " + key,
-                  "Content-Type": "application/json",
+        auth = {"apikey": key, "Authorization": "Bearer " + key}
+        # O GET precisa de headers próprios: "return=minimal" no Prefer faria o
+        # PostgREST devolver corpo vazio e existing_cells() veria zero células.
+        self.hget = dict(auth)
+        self.h = {**auth, "Content-Type": "application/json",
                   "Prefer": "resolution=merge-duplicates,return=minimal"}
+
+    def existing_cells(self, year):
+        """Células já gravadas, perguntando ao próprio banco.
+
+        Sonda por UM ano só (as 17 linhas de uma célula são gravadas juntas),
+        então a resposta é ~1 linha por célula em vez de 17. Isto substitui o
+        _grid_done.json quando o job roda em CI: o runner é novo a cada
+        execução e o cache local não sobrevive, então sem esta consulta um
+        re-run rebaixaria as 2.447 de novo por causa de meia dúzia de falhas.
+        """
+        out, off, PAGE = set(), 0, 1000
+        while True:
+            u = (f"{self.url}?select=cell_id&model=eq.nasa&year=eq.{year}"
+                 f"&order=cell_id&limit={PAGE}&offset={off}")
+            req = urllib.request.Request(u, headers=self.hget, method="GET")
+            with urllib.request.urlopen(req, timeout=120) as r:
+                page = json.loads(r.read().decode())
+            out.update(x["cell_id"] for x in page)
+            if len(page) < PAGE:
+                return out
+            off += PAGE
 
     def upsert(self, rows, tries=5):
         body = json.dumps(rows).encode()
@@ -225,6 +268,8 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--full", action="store_true", help=f"baixa {Y0}→hoje (seed inicial)")
     g.add_argument("--tail", action="store_true", help=f"baixa só {Y1} (refresh semanal)")
+    g.add_argument("--missing", action="store_true",
+                   help="completa só as células que ainda não estão no banco")
     ap.add_argument("--cells-only", action="store_true", help="só gera grid_br.json")
     ap.add_argument("--dry-run", action="store_true", help="não escreve no Supabase")
     ap.add_argument("--limit", type=int, default=0, help="processa só N células (teste)")
@@ -235,19 +280,9 @@ def main():
     if a.cells_only:
         return
 
-    tail = a.tail and not a.full
+    tail = a.tail
     y0 = Y1 if tail else Y0
-    mode = f"tail ({Y1})" if tail else f"full ({Y0}-{Y1})"
-
-    # O cache de progresso só vale para o --full: no --tail toda célula
-    # precisa voltar, senão o ano corrente congela na data do cache.
-    done = set()
-    if not tail and os.path.exists(DONE):
-        done = set(json.load(open(DONE, encoding="utf-8")))
-
-    todo = [c for c in cells if c["cell_id"] not in done]
-    if a.limit:
-        todo = todo[:a.limit]
+    mode = f"tail ({Y1})" if tail else f"missing ({Y0}-{Y1})" if a.missing else f"full ({Y0}-{Y1})"
 
     supa = None
     if not a.dry_run:
@@ -256,6 +291,27 @@ def main():
             sys.exit("SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY são obrigatórios "
                      "(ou use --dry-run)")
         supa = Supa(url, key)
+
+    # O cache de progresso só vale para o --full local: no --tail toda célula
+    # precisa voltar (senão o ano corrente congela na data do cache) e no
+    # --missing quem responde o que já existe é o banco, não o disco.
+    done = set()
+    if a.missing:
+        if not supa:
+            sys.exit("--missing consulta o banco; não combina com --dry-run")
+        done = supa.existing_cells(Y0)
+        print(f"banco já tem {len(done)} células", flush=True)
+    elif not tail and os.path.exists(DONE):
+        done = set(json.load(open(DONE, encoding="utf-8")))
+
+    todo = [c for c in cells if c["cell_id"] not in done]
+    if a.limit:
+        todo = todo[:a.limit]
+
+    if not todo:
+        print(f"modo {mode}: nada a fazer — as {len(cells)} células já estão no banco",
+              flush=True)
+        return
 
     print(f"modo {mode} | {len(cells)} células | {len(done)} já feitas | "
           f"{len(todo)} a baixar | {a.par} paralelas", flush=True)
