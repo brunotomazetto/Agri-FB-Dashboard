@@ -5,6 +5,47 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Short Interest</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Rotulos do eixo X: horizontais enquanto couberem; quando nao couberem, vao
+// para 90 graus (leitura de baixo para cima, topo do texto a esquerda). Nunca
+// na diagonal — sozinho o Chart.js escolheria qualquer angulo entre 0 e 50.
+(function(){
+  function tickFontString(scale){
+    var f = scale.options.ticks.font || {}, d = Chart.defaults.font;
+    var size = f.size || d.size || 12, fam = f.family || d.family, w = f.weight || '';
+    return (w ? w + ' ' : '') + size + 'px ' + fam;
+  }
+  // Quantos rotulos vao mesmo aparecer. Este hook roda ANTES do autoSkip, entao
+  // scale.ticks ainda tem a lista inteira. Com autoSkip livre o Chart.js pula
+  // rotulos ate nao haver sobreposicao — nesse caso girar seria desnecessario;
+  // o aperto so acontece quando maxTicksLimit forca uma quantidade fixa.
+  function shownTickCount(scale){
+    var n = (scale.ticks || []).length, o = scale.options.ticks;
+    if (o.autoSkip === false) return n;
+    return o.maxTicksLimit ? Math.min(n, o.maxTicksLimit) : 0;
+  }
+  function overflows(scale){
+    if (!scale.isHorizontal()) return false;
+    var n = shownTickCount(scale);
+    if (!n) return false;
+    var ctx = scale.ctx, widest = 0, ticks = scale.ticks;
+    ctx.save();
+    ctx.font = tickFontString(scale);
+    for (var i = 0; i < ticks.length; i++){
+      var l = ticks[i].label;
+      var s = Array.isArray(l) ? l.join(' ') : String(l == null ? '' : l);
+      widest = Math.max(widest, ctx.measureText(s).width);
+    }
+    ctx.restore();
+    return widest + 6 > scale.width / n;   // 6px de respiro entre rotulos
+  }
+  function snapRotation(scale){ scale.labelRotation = overflows(scale) ? 90 : 0; }
+  ['category','linear','logarithmic','time','timeseries'].forEach(function(t){
+    Chart.defaults.scales[t] = Chart.defaults.scales[t] || {};
+    Chart.defaults.scales[t].afterCalculateLabelRotation = snapRotation;
+  });
+})();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{--orange:#FF5500;--black:#1A1A1A;--gray-dark:#333;--gray-mid:#888;
