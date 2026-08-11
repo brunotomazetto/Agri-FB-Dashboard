@@ -65,7 +65,11 @@ FARELO_STALE_DAYS = 25   # mensal
 # Fatores de conversão do esmagamento
 FATOR_FARELO    = 0.77
 FATOR_BIODIESEL = 0.19
-CONV_SC60_TON   = 1000 / 60  # R$/sc60kg → R$/ton
+CONV_SC60_TON   = 1000 / 60  # BRL/sc60kg → BRL/ton
+# Densidade do biodiesel (t/m³). O preço ANP é BRL/m³ (volume) e o fator de
+# rendimento 0.19 é mássico (t de bio por t de soja); dividir pela densidade
+# converte a massa em volume: 0.19 t → 0.19/0.89 m³.
+DENSIDADE_BIO   = 0.89
 
 # ── CONAB — API preços ao produtor ───────────────────────────────────────────
 # Mesmo endpoint usado no extractor_imea.py
@@ -876,7 +880,7 @@ def run_spread(conn):
             p_farelo_ton  = p_farelo_usdkg * 1000 * ptax  # USD/kg → R$/ton
 
             receita_farelo    = p_farelo_ton * FATOR_FARELO
-            receita_biodiesel = p_bio_m3     * FATOR_BIODIESEL
+            receita_biodiesel = p_bio_m3     * FATOR_BIODIESEL / DENSIDADE_BIO
             custo_soja        = p_soja_ton
             spread            = receita_farelo + receita_biodiesel - custo_soja
 
@@ -1085,7 +1089,7 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   <div class="filter-group">
     <div class="filter-label">Formula</div>
     <div style="font-size:11.5px;color:var(--gray-mid);line-height:1.7;padding-top:2px;">
-      Spread = (Meal &times;0.77) + (Bio &times;0.19) &minus; Soy &nbsp;|&nbsp;
+      Spread = (Meal &times;0.77) + (Bio &times;0.19 &divide; 0.89) &minus; Soy &nbsp;|&nbsp;
       <span style="color:var(--gray-dark);font-weight:600;" id="updated-label">&mdash;</span>
     </div>
   </div>
@@ -1101,7 +1105,7 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   <div class="chart-card" style="margin-bottom:12px;">
     <div id="comp-chart-view">
       <div class="chart-title">Revenue &amp; Cost Components</div>
-      <div class="chart-sub">BRL/t of soy &mdash; total revenue, meal revenue, biodiesel revenue, soy cost</div>
+      <div class="chart-sub">BRL/ton of soy &mdash; total revenue, meal revenue, biodiesel revenue, soy cost</div>
       <div class="chart-wrap-tall"><canvas id="chartComp"></canvas></div>
     </div>
     <div id="comp-table-view" style="display:none;">
@@ -1112,13 +1116,13 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   <div class="section-hdr"><span class="section-title">Crushing Spread</span></div>
   <div class="chart-grid g2">
     <div class="chart-card">
-      <div class="chart-title">Historical (BRL/t)</div>
+      <div class="chart-title">Historical (BRL/ton)</div>
       <div class="chart-sub">Meal FOB SECEX &middot; Biodiesel B100 ANP &middot; CONAB farm gate</div>
       <div class="chart-wrap"><canvas id="chartSpread"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Seasonality</div>
-      <div class="chart-sub" id="seas-sub-spread">BRL/t &middot; each line = one year &middot; bold = historical avg</div>
+      <div class="chart-sub" id="seas-sub-spread">BRL/ton &middot; each line = one year &middot; bold = historical avg</div>
       <div class="chart-wrap"><canvas id="chartSpreadSeas"></canvas></div>
     </div>
   </div>
@@ -1138,13 +1142,13 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   <div class="section-hdr"><span class="section-title">Soybean Meal FOB</span></div>
   <div class="chart-grid g2">
     <div class="chart-card">
-      <div class="chart-title">Historical (BRL/t)</div>
+      <div class="chart-title">Historical (BRL/ton)</div>
       <div class="chart-sub" id="meal-sub">SECEX NCM 23040090 &middot; port</div>
       <div class="chart-wrap"><canvas id="chartMeal"></canvas></div>
     </div>
     <div class="chart-card">
       <div class="chart-title">Seasonality</div>
-      <div class="chart-sub" id="seas-sub-meal">BRL/t &middot; each line = one year &middot; bold = historical avg</div>
+      <div class="chart-sub" id="seas-sub-meal">BRL/ton &middot; each line = one year &middot; bold = historical avg</div>
       <div class="chart-wrap"><canvas id="chartMealSeas"></canvas></div>
     </div>
   </div>
@@ -1199,7 +1203,7 @@ function filterData(s){{
 function periodKey(d){{
   return freq==='M' ? d.slice(0,7) : d.slice(0,4)+'-Q'+(Math.floor((+d.slice(5,7)-1)/3)+1);
 }}
-function periodLabel(k){{ return freq==='M'?k:k.replace('-',' '); }}
+function periodLabel(k){{ return freq==='M'?k:(k.slice(6,7)+'Q'+k.slice(2,4)); }}
 function aggregate(s){{
   const g={{}}, order=[];
   for(const p of s){{
@@ -1246,6 +1250,7 @@ function seasDatasets(seas){{
   }});
   return ds;
 }}
+const tickFmt=v=>Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:0,maximumFractionDigits:0}});
 function baseOpts(yFmt){{
   return {{
     responsive:true,maintainAspectRatio:false,
@@ -1260,7 +1265,7 @@ function baseOpts(yFmt){{
     }},
     scales:{{
       x:{{grid:{{color:'rgba(0,0,0,.04)'}},ticks:{{color:'#aaa',font:{{size:10}},maxTicksLimit:12,maxRotation:0}}}},
-      y:{{grid:{{color:'rgba(0,0,0,.04)'}},ticks:{{color:'#aaa',font:{{size:10}},callback:yFmt}}}}
+      y:{{grid:{{color:'rgba(0,0,0,.04)'}},ticks:{{color:'#aaa',font:{{size:10}},callback:tickFmt}}}}
     }}
   }};
 }}
@@ -1307,18 +1312,18 @@ function renderPL(){{
   const thead='<thead><tr><th class="lbl">Item</th>'+cols.map(c=>`<th>${{c.label}}</th>`).join('')+'</tr></thead>';
   const tbody=`<tbody>
     <tr class="group-hdr"><td class="lbl" colspan="${{cols.length+1}}">REVENUE</td></tr>
-    ${{row('sub','Meal Revenue (BRL/t)','rec_farelo',fmtV)}}
-    ${{row('sub','Biodiesel Revenue (BRL/t)','rec_bio',fmtV)}}
-    ${{calc('total','Total Revenue (BRL/t)',c=>(c.rec_farelo==null||c.rec_bio==null)?null:c.rec_farelo+c.rec_bio,fmtV)}}
+    ${{row('sub','Meal Revenue (BRL/ton)','rec_farelo',fmtV)}}
+    ${{row('sub','Biodiesel Revenue (BRL/ton)','rec_bio',fmtV)}}
+    ${{calc('total','Total Revenue (BRL/ton)',c=>(c.rec_farelo==null||c.rec_bio==null)?null:c.rec_farelo+c.rec_bio,fmtV)}}
     <tr class="group-hdr"><td class="lbl" colspan="${{cols.length+1}}">COST</td></tr>
-    ${{row('sub','Soy Cost (BRL/t)','custo',fmtV)}}
+    ${{row('sub','Soy Cost (BRL/ton)','custo',fmtV)}}
     <tr class="group-hdr"><td class="lbl" colspan="${{cols.length+1}}">INPUTS</td></tr>
     ${{row('sub','Soy Farm Gate (BRL/sc60)','soja_sc',fmtV)}}
-    ${{row('sub','Meal FOB (BRL/t)','farelo_t',fmtV)}}
+    ${{row('sub','Meal FOB (BRL/ton)','farelo_t',fmtV)}}
     ${{row('sub','Biodiesel B100 (BRL/m³)','bio_m3',fmtV)}}
     ${{row('sub','PTAX (BRL/USD)','ptax',fmtR)}}
     <tr class="group-hdr"><td class="lbl" colspan="${{cols.length+1}}">RESULT</td></tr>
-    ${{row('total spread','Crushing Spread (BRL/t)','spread',fmtN)}}
+    ${{row('total spread','Crushing Spread (BRL/ton)','spread',fmtN)}}
   </tbody>`;
   document.getElementById('pl-table').innerHTML=thead+tbody;
 }}
@@ -1328,16 +1333,15 @@ function render(){{
   const aggAll=aggregate(raw);
   const lbl=agg.map(p=>p.label);
   const fmtK=v=>'BRL '+Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:0,maximumFractionDigits:0}});
-  const fmtP=v=>Number(v).toLocaleString('pt-BR',{{minimumFractionDigits:0,maximumFractionDigits:0}});
   const d=new Date(RAW.last_date+'T12:00:00');
   const per=freq==='M'?'month':'quarter';
   document.getElementById('updated-label').textContent='Updated '+d.toLocaleDateString('en-GB',{{day:'2-digit',month:'short',year:'numeric'}});
   document.getElementById('meal-sub').textContent='SECEX NCM 23040090 · '+CFG[region].port+' port';
   document.getElementById('bio-sub').textContent='ANP weighted avg · '+CFG[region].bio+' region';
   const seasSub=u=>u+' · avg by '+per+' · each line = one year · bold = historical avg';
-  document.getElementById('seas-sub-spread').textContent=seasSub('BRL/t');
+  document.getElementById('seas-sub-spread').textContent=seasSub('BRL/ton');
   document.getElementById('seas-sub-bio').textContent=seasSub('BRL/m³');
-  document.getElementById('seas-sub-meal').textContent=seasSub('BRL/t');
+  document.getElementById('seas-sub-meal').textContent=seasSub('BRL/ton');
   document.getElementById('seas-sub-soja').textContent=seasSub('BRL/sc 60 kg');
   mk('chartComp',lbl,[
     {{label:'Total Revenue',data:agg.map(p=>(p.rec_farelo==null||p.rec_bio==null)?null:p.rec_farelo+p.rec_bio),borderColor:PAL.p1,borderWidth:2,pointRadius:0,tension:.3,backgroundColor:'transparent'}},
@@ -1346,14 +1350,14 @@ function render(){{
     {{label:'Soy Cost',     data:agg.map(p=>p.custo),borderColor:PAL.p4,borderWidth:2,pointRadius:0,tension:.3,backgroundColor:'transparent'}},
   ],baseOpts(fmtK));
   if(compView==='table')renderPL();
-  mk('chartSpread',lbl,[{{label:'Spread (BRL/t)',data:agg.map(p=>p.spread),borderColor:PAL.p1,backgroundColor:PAL.p1+'18',borderWidth:2,pointRadius:0,pointHoverRadius:3,fill:true,tension:.35}}],baseOpts(fmtK));
+  mk('chartSpread',lbl,[{{label:'Spread (BRL/ton)',data:agg.map(p=>p.spread),borderColor:PAL.p1,backgroundColor:PAL.p1+'18',borderWidth:2,pointRadius:0,pointHoverRadius:3,fill:true,tension:.35}}],baseOpts(fmtK));
   mk('chartSpreadSeas',seasLabels(),seasDatasets(buildSeas(aggAll,'spread')),seasOpts(fmtK));
   mk('chartBio',lbl,[{{label:'Biodiesel B100 (BRL/m³)',data:agg.map(p=>p.bio_m3),borderColor:PAL.p1,backgroundColor:PAL.p1+'18',borderWidth:1.5,pointRadius:0,fill:true,tension:.3}}],baseOpts(fmtK));
   mk('chartBioSeas',seasLabels(),seasDatasets(buildSeas(aggAll,'bio_m3')),seasOpts(fmtK));
-  mk('chartMeal',lbl,[{{label:'Meal FOB (BRL/t)',data:agg.map(p=>p.farelo_t),borderColor:PAL.p1,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3}}],baseOpts(fmtK));
+  mk('chartMeal',lbl,[{{label:'Meal FOB (BRL/ton)',data:agg.map(p=>p.farelo_t),borderColor:PAL.p1,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3}}],baseOpts(fmtK));
   mk('chartMealSeas',seasLabels(),seasDatasets(buildSeas(aggAll,'farelo_t')),seasOpts(fmtK));
-  mk('chartSoja',lbl,[{{label:'Soy (BRL/sc60)',data:agg.map(p=>p.soja_sc),borderColor:PAL.p1,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3}}],baseOpts(fmtP));
-  mk('chartSojaSeas',seasLabels(),seasDatasets(buildSeas(aggAll,'soja_sc')),seasOpts(fmtP));
+  mk('chartSoja',lbl,[{{label:'Soy (BRL/sc60)',data:agg.map(p=>p.soja_sc),borderColor:PAL.p1,backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3}}],baseOpts(fmtK));
+  mk('chartSojaSeas',seasLabels(),seasDatasets(buildSeas(aggAll,'soja_sc')),seasOpts(fmtK));
 }}
 const RAW = {data_json};
 render();
