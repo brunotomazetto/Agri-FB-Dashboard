@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Brazil Pork Spread Tracker — Agribusiness, F&B DataHouse</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+// Fonte dos graficos = fonte da pagina (--font). Sem a cadeia completa,
+// 'Segoe UI' nao resolve no macOS e o canvas cai no serif padrao.
+Chart.defaults.font.family = "'Segoe UI',Helvetica,Arial,sans-serif";
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.min.js"></script>
 <style>
@@ -887,7 +892,7 @@ function renderCharts() {
         },
       },
       scales: {
-        x: { ticks: { color: '#999', font: { size: 9, family: 'Arial' },
+        x: { ticks: { color: '#999', font: { size: 9, family: "'Segoe UI',Helvetica,Arial,sans-serif" },
               maxTicksLimit: 10, maxRotation: 0 },
              grid: { color: 'rgba(0,0,0,0.04)' } },
         yBag: {
@@ -927,10 +932,10 @@ function chartOpts({ yCallback, tooltipCb }) {
       },
     },
     scales: {
-      x: { ticks: { color: '#999', font: { size: 9, family: 'Arial' },
+      x: { ticks: { color: '#999', font: { size: 9, family: "'Segoe UI',Helvetica,Arial,sans-serif" },
             maxTicksLimit: 10, maxRotation: 0 },
            grid: { color: 'rgba(0,0,0,0.04)' } },
-      y: { ticks: { color: '#999', font: { size: 9, family: 'Arial' },
+      y: { ticks: { color: '#999', font: { size: 9, family: "'Segoe UI',Helvetica,Arial,sans-serif" },
             callback: yCallback },
            grid: { color: 'rgba(0,0,0,0.05)' } },
     },
@@ -1024,7 +1029,7 @@ function renderSeasonalityChart() {
           display: true, position: 'right',
           labels: {
             filter: item => !item.text.match(/^\d{4}$/) && !item.text.startsWith('_'),
-            font: { size: 10, family: 'Segoe UI,Arial,sans-serif' },
+            font: { size: 10, family: "'Segoe UI',Helvetica,Arial,sans-serif" },
             boxWidth: 14, color: '#666', padding: 10,
           },
         },
@@ -1043,7 +1048,7 @@ function renderSeasonalityChart() {
         },
       },
       scales: {
-        x: { ticks: { color: '#999', font: { size: 10, family: 'Arial' }, maxRotation: 0 },
+        x: { ticks: { color: '#999', font: { size: 10, family: "'Segoe UI',Helvetica,Arial,sans-serif" }, maxRotation: 0 },
              grid: { color: 'rgba(0,0,0,0.04)' } },
         y: { ticks: { color: '#888', font: { size: 9 },
               callback: v => v.toFixed(2) + '×' },

@@ -425,6 +425,11 @@ select.map-select:focus{border-color:var(--orange);}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Fonte dos graficos = fonte da pagina (--font). Sem a cadeia completa,
+// 'Segoe UI' nao resolve no macOS e o canvas cai no serif padrao.
+Chart.defaults.font.family = "'Segoe UI',Helvetica,Arial,sans-serif";
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 /* ══ DATA ══ */
@@ -511,7 +516,7 @@ function baseOpts(yLabel,extra){
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     plugins:{
-      legend:{display:true,labels:{font:{size:10,family:'Segoe UI'},boxWidth:10,usePointStyle:true,color:'#333'}},
+      legend:{display:true,labels:{font:{size:10,family:"'Segoe UI',Helvetica,Arial,sans-serif"},boxWidth:10,usePointStyle:true,color:'#333'}},
       tooltip:{backgroundColor:'#fff',borderColor:'#e5e5e5',borderWidth:1,titleColor:'#333',bodyColor:'#555',padding:8},
       ...(extra?.plugins||{})
     },
