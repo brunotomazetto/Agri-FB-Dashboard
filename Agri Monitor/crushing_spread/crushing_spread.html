@@ -194,6 +194,9 @@ const CFG = {
   RS:    { port:'Rio Grande',            bio:'Sul'                   },
   BLEND: { port:'Santos + Rio Grande',   bio:'Centro-Oeste + Sul'    },
 };
+const FONT = "'Segoe UI',Helvetica,Arial,sans-serif";  // mesma stack do CSS da pagina
+Chart.defaults.font.family = FONT;
+Chart.defaults.color = '#888';
 const PAL = { p1:'#FF5500', p2:'#1A1A1A', p3:'#8C8C8C', p4:'#BDBDBD', p5:'#123B63' };
 const SEAS_COLORS = ['#FF5500','#123B63','#8C8C8C','#BDBDBD','#D8D8D8','#EDEDED'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -277,16 +280,16 @@ function baseOpts(yFmt){
     responsive:true,maintainAspectRatio:false,
     interaction:{mode:'index',intersect:false},
     plugins:{
-      legend:{labels:{color:'#888',font:{family:'Segoe UI',size:11},boxWidth:10,padding:10}},
+      legend:{labels:{color:'#888',font:{family:FONT,size:11},boxWidth:10,padding:10}},
       tooltip:{backgroundColor:'#fff',borderColor:'#e5e5e5',borderWidth:1,
         titleColor:'#1A1A1A',bodyColor:'#888',
-        titleFont:{family:'Segoe UI',size:11,weight:'700'},
-        bodyFont:{family:'Segoe UI',size:11},padding:10,
+        titleFont:{family:FONT,size:11,weight:'700'},
+        bodyFont:{family:FONT,size:11},padding:10,
         callbacks:{label:ctx=>ctx.parsed.y==null?'':' '+yFmt(ctx.parsed.y)}}
     },
     scales:{
-      x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#aaa',font:{size:10},maxTicksLimit:12,maxRotation:0}},
-      y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#aaa',font:{size:10},callback:tickFmt}}
+      x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#aaa',font:{family:FONT,size:10},maxTicksLimit:12,maxRotation:0}},
+      y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{color:'#aaa',font:{family:FONT,size:10},callback:tickFmt}}
     }
   };
 }
