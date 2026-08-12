@@ -192,7 +192,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 <div class="top-bar">
   <button class="back-btn" onclick="goBack()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3L5 8l5 5"/></svg>Back</button>
   <div class="top-bar-divider"></div>
-  <div><div class="top-title">🌡️ Brazil Weather Monitor</div><div class="top-sub" id="top-sub">Current year vs. historical distribution</div></div>
+  <div><div class="top-title" id="top-title">🌡️ Brazil Weather Monitor</div><div class="top-sub" id="top-sub">Current year vs. historical distribution</div></div>
   <div class="top-latest">Updated: <strong id="updated">—</strong></div>
 </div>
 <div class="orange-rule"></div>
@@ -276,7 +276,7 @@ tbody tr.grp.sel td{background:#FFE9DC;}
 <div class="note-bar">
   Source: <em>NASA POWER</em> / <em>ERA5</em> (selectable model, historical) + <em>Open-Meteo</em> (observed, to bridge the gap since the last historical refresh). <em>Observed data only — no forecast</em>: the series ends on the last day that has actually happened. Always the <em>current year</em> vs. the distribution of recent years. Thick line = current year · thin = individual years · shading = min–max range · dashed = mean.
   Temperature = monthly/weekly mean · Rainfall = monthly/weekly total. A multi-point average has a naturally narrow band (spatial cancellation) — select a single point to see the real spread.
-  <em>My farms</em>: your own clusters are stored in your account, not in this browser — signing out or clearing the cache does not lose them, and they stay until you delete them. Only you can see them. Each point snaps to the NASA POWER grid cell (0.5° × 0.625°, ~55 × 67 km) that contains it, so two farms less than ~50 km apart legitimately share the same series.
+  <span id="note-mine"><em>My farms</em>: your own clusters are stored in your account, not in this browser — signing out or clearing the cache does not lose them, and they stay until you delete them. Only you can see them. Each point snaps to the NASA POWER grid cell (0.5° × 0.625°, ~55 × 67 km) that contains it, so two farms less than ~50 km apart legitimately share the same series.</span>
   <em>State groups</em> (RS · PR · MS · MT · GO · MATOPIBA): each region row is averaged over <em>every</em> municipality it contains (2,359 in total, 51 regions) — MT by the 7 <em>Imea</em> macro-regions (official municipal list, 141/141), the other eight states by <em>IBGE</em> meso-regions. MATOPIBA pools MA, TO, PI and BA, and opens buttons to isolate each. The three ▣ rows are the state mean under different municipal weights: simple, corn output and soybean output (IBGE/SIDRA 1612, average of 2022–24 to damp a single bad harvest) — the crop-weighted ones pull the state average toward where that crop actually is, which matters most where output is concentrated (Extremo Oeste Baiano alone is 99.6% of BA soybean). The live observed layer samples the highest-weight grid cells of each region; the historical series uses all of them.
 </div>
 
@@ -646,6 +646,8 @@ const SCOPE_GROUPS=SCOPE==="agri"?["slc","ba",...UFGRPS]:SCOPE==="fnb"?["cap"]:[
 const SUBTITLE=SCOPE==="agri"?"Current year vs. historical distribution — SLC &amp; BrasilAgro farms · growing regions of RS, PR, MS, MT, GO &amp; MATOPIBA"
   :SCOPE==="fnb"?"Current year vs. historical distribution — state capitals (beverage demand proxy)"
   :"Current year vs. historical distribution — capitals (bars) · farms (SLC · BrasilAgro) · growing regions of RS, PR, MS, MT, GO &amp; MATOPIBA";
+const TITLE=SCOPE==="agri"?"🌱 Brazil Weather Monitor":SCOPE==="fnb"?"🍺 Brazil Weather Monitor":"🌡️ Brazil Weather Monitor";
+const ALLOW_MINE=SCOPE!=="fnb";
 const POP={"São Paulo":11451245,"Rio de Janeiro":6211423,"Brasília":2817381,"Fortaleza":2428708,"Salvador":2418005,"Belo Horizonte":2315560,"Manaus":2063547,"Curitiba":1773718,"Recife":1488920,"Goiânia":1437237,"Porto Alegre":1332570,"Belém":1303389,"São Luís":1037775,"Maceió":957916,"Campo Grande":897938,"Teresina":866300,"João Pessoa":833932,"Natal":751300,"Cuiabá":650912,"Aracaju":602757,"Florianópolis":537213,"Porto Velho":460434,"Macapá":442933,"Boa Vista":413486,"Rio Branco":364756,"Vitória":322869,"Palmas":302692};
 const MES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* grade do NASA POWER — a mesma usada em build_regions.py para deduplicar os
@@ -674,6 +676,10 @@ const dm=d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padSt
 
 function applyScope(){
   document.getElementById("top-sub").innerHTML=SUBTITLE;
+  document.getElementById("top-title").textContent=TITLE;
+  /* Staples são as capitais (proxy de demanda de bebida): clusters próprios de
+     fazenda não fazem sentido ali, então nem os botões nem a nota aparecem. */
+  if(!ALLOW_MINE)document.getElementById("note-mine").style.display="none";
   document.querySelectorAll("[data-grp]").forEach(b=>{if(!SCOPE_GROUPS.includes(b.dataset.grp))b.style.display="none";});
   if(SCOPE_GROUPS.length<2){["sep-grp","lbl-grp","grp-btns"].forEach(id=>document.getElementById(id).style.display="none");}
   act("var",STATE.vr);act("grp",STATE.grp);act("gran",STATE.gran);act("yrs",STATE.yrs);
@@ -692,7 +698,7 @@ async function boot(){
     /* Os clusters não bloqueiam o load: os grupos padrão já estão na tela
        quando os botões do usuário aparecem. Se o Supabase estiver fora, o
        dashboard segue funcionando sem eles. */
-    loadMine();
+    if(ALLOW_MINE)loadMine();
     await ensureLive();
   }catch(e){document.getElementById("load-msg").innerHTML='<span class="err">Error: '+e.message+'</span>';console.error(e);}
 }
