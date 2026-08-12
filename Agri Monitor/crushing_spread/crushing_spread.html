@@ -117,12 +117,12 @@ html,body{font-family:var(--font);background:var(--gray-light);color:var(--gray-
   <div class="filter-group">
     <div class="filter-label">Region</div>
     <div class="seg" id="seg-region">
-      <button class="seg-btn on" onclick="setRegion('MT',this)">Mato Grosso</button>
+      <button class="seg-btn"    onclick="setRegion('MT',this)">Mato Grosso</button>
       <button class="seg-btn"    onclick="setRegion('RS',this)">Rio Grande do Sul</button>
-      <button class="seg-btn"    onclick="setRegion('BLEND',this)">Blend MT + RS</button>
+      <button class="seg-btn on" onclick="setRegion('BLEND',this)">Blend MT + RS</button>
     </div>
   </div>
-  <div class="filter-group blend-group" id="blend-group" style="display:none;">
+  <div class="filter-group blend-group" id="blend-group">
     <div class="filter-label">Blend weight</div>
     <div class="blend-row">
       <input type="range" class="blend-range" id="blend-range" min="0" max="100" step="5" value="50"
@@ -243,7 +243,7 @@ const SEAS_COLORS = ['#FF5500','#123B63','#8C8C8C','#BDBDBD','#D8D8D8','#EDEDED'
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const QUARTERS = ['Q1','Q2','Q3','Q4'];
 const FIELDS = ['soja_sc','farelo_t','farelo_usdkg','ptax','bio_m3','rec_farelo','rec_bio','custo','spread'];
-let region='MT', period='all', freq='M', compView='chart', blendW=50, charts={};
+let region='BLEND', period='all', freq='M', compView='chart', blendW=50, charts={};
 
 function blendSeries(){
   const w=blendW/100, byD={};
