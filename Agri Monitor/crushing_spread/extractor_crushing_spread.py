@@ -1096,12 +1096,12 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   <div class="filter-group">
     <div class="filter-label">Region</div>
     <div class="seg" id="seg-region">
-      <button class="seg-btn on" onclick="setRegion('MT',this)">Mato Grosso</button>
+      <button class="seg-btn"    onclick="setRegion('MT',this)">Mato Grosso</button>
       <button class="seg-btn"    onclick="setRegion('RS',this)">Rio Grande do Sul</button>
-      <button class="seg-btn"    onclick="setRegion('BLEND',this)">Blend MT + RS</button>
+      <button class="seg-btn on" onclick="setRegion('BLEND',this)">Blend MT + RS</button>
     </div>
   </div>
-  <div class="filter-group blend-group" id="blend-group" style="display:none;">
+  <div class="filter-group blend-group" id="blend-group">
     <div class="filter-label">Blend weight</div>
     <div class="blend-row">
       <input type="range" class="blend-range" id="blend-range" min="0" max="100" step="5" value="50"
@@ -1136,6 +1136,19 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
   </div>
 </div>
 <div class="body">
+  <div class="section-hdr"><span class="section-title">Crushing Spread</span></div>
+  <div class="chart-grid g2">
+    <div class="chart-card">
+      <div class="chart-title">Historical (BRL/ton)</div>
+      <div class="chart-sub">Meal FOB SECEX &middot; Biodiesel B100 ANP &middot; CONAB farm gate</div>
+      <div class="chart-wrap"><canvas id="chartSpread"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Seasonality</div>
+      <div class="chart-sub" id="seas-sub-spread">BRL/ton &middot; each line = one year &middot; bold = historical avg</div>
+      <div class="chart-wrap"><canvas id="chartSpreadSeas"></canvas></div>
+    </div>
+  </div>
   <div class="section-hdr">
     <span class="section-title">Revenue &amp; Cost Components</span>
     <div class="view-toggle">
@@ -1152,19 +1165,6 @@ html,body{{font-family:var(--font);background:var(--gray-light);color:var(--gray
     <div id="comp-table-view" style="display:none;">
       <div class="chart-title" style="margin-bottom:12px;">P&amp;L &mdash; Revenue &amp; Cost Components</div>
       <div class="pl-wrap"><table class="pl-table" id="pl-table"></table></div>
-    </div>
-  </div>
-  <div class="section-hdr"><span class="section-title">Crushing Spread</span></div>
-  <div class="chart-grid g2">
-    <div class="chart-card">
-      <div class="chart-title">Historical (BRL/ton)</div>
-      <div class="chart-sub">Meal FOB SECEX &middot; Biodiesel B100 ANP &middot; CONAB farm gate</div>
-      <div class="chart-wrap"><canvas id="chartSpread"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Seasonality</div>
-      <div class="chart-sub" id="seas-sub-spread">BRL/ton &middot; each line = one year &middot; bold = historical avg</div>
-      <div class="chart-wrap"><canvas id="chartSpreadSeas"></canvas></div>
     </div>
   </div>
   <div class="section-hdr"><span class="section-title">Biodiesel B100 &mdash; Producer Price</span></div>
@@ -1222,7 +1222,7 @@ const SEAS_COLORS = ['#FF5500','#123B63','#8C8C8C','#BDBDBD','#D8D8D8','#EDEDED'
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const QUARTERS = ['Q1','Q2','Q3','Q4'];
 const FIELDS = ['soja_sc','farelo_t','farelo_usdkg','ptax','bio_m3','rec_farelo','rec_bio','custo','spread'];
-let region='MT', period='all', freq='M', compView='chart', blendW=50, charts={{}};
+let region='BLEND', period='all', freq='M', compView='chart', blendW=50, charts={{}};
 
 function blendSeries(){{
   const w=blendW/100, byD={{}};
