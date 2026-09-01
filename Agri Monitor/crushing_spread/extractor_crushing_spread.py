@@ -847,17 +847,15 @@ def run_spread(conn):
             if p_soja_sc60 is None:
                 continue
 
-            # Farelo — mes corrente, fallback mes anterior
+            # Farelo — exige mes exato realizado/publicado pela SECEX.
+            # Sem fallback para mes anterior: se a SECEX ainda nao liberou o
+            # mes de d_str, a linha (data_referencia, regiao) simplesmente
+            # nao e calculada/gravada — evita "carregar" o preco do mes
+            # anterior disfarçado de dado do mes corrente.
             porto_df   = farelo_df[farelo_df["porto"] == cfg["porto"]]
             farelo_row = porto_df[
                 (porto_df["ano"] == ano) & (porto_df["mes"] == mes)
             ]
-            if farelo_row.empty:
-                prev_mes = mes - 1 if mes > 1 else 12
-                prev_ano = ano if mes > 1 else ano - 1
-                farelo_row = porto_df[
-                    (porto_df["ano"] == prev_ano) & (porto_df["mes"] == prev_mes)
-                ]
             if farelo_row.empty:
                 continue
             p_farelo_usdkg = float(farelo_row.iloc[-1]["preco_usd_kg"])
