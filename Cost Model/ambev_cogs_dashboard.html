@@ -755,7 +755,7 @@ function buildDualLineChart(canvasId, existingChart, seriesA, labelA, seriesB, l
         borderWidth:1.5, pointRadius:0, tension:0.15, spanGaps:true },
       { label:labelB, yAxisID: sameAxis?'y':'y2',
         data: labels.map(ym=> mapB[ym]!=null ? +mapB[ym].toFixed(2) : null),
-        borderColor:'#1F6FB2', backgroundColor:'#1F6FB2', fill:false,
+        borderColor:'#333333', backgroundColor:'#333333', fill:false,
         borderWidth:1.5, pointRadius:0, tension:0.15, spanGaps:true },
     ]
   };
@@ -765,7 +765,7 @@ function buildDualLineChart(canvasId, existingChart, seriesA, labelA, seriesB, l
         title: sameAxis?undefined:{display:true, text:labelA, font:{size:10}, color:'#FF5500'} },
   };
   if(!sameAxis) scales.y2 = { position:'right', grid:{display:false}, ticks:{ font:{size:10} },
-    title:{display:true, text:labelB, font:{size:10}, color:'#1F6FB2'} };
+    title:{display:true, text:labelB, font:{size:10}, color:'#333333'} };
 
   if(existingChart){ existingChart.data = data; existingChart.options.scales = scales; existingChart.update(); return existingChart; }
   return new Chart(ctx, {
@@ -950,9 +950,9 @@ function renderRevisionChart(){
 // Aluminum/Component 3 toggles above -- Corn stays fixed in every scenario.
 const SCENARIOS = [
   { key:'spot_barley',   alu:'aluminum_spot',   leg3:'barley', label:'Spot Alu + Corn + Barley', color:'#FF5500' },
-  { key:'spot_wheat',    alu:'aluminum_spot',   leg3:'wheat',  label:'Spot Alu + Corn + Wheat',   color:'#1F6FB2' },
-  { key:'future_barley', alu:'aluminum_future', leg3:'barley', label:'Future Alu + Corn + Barley',color:'#333333' },
-  { key:'future_wheat',  alu:'aluminum_future', leg3:'wheat',  label:'Future Alu + Corn + Wheat', color:'#888888' },
+  { key:'spot_wheat',    alu:'aluminum_spot',   leg3:'wheat',  label:'Spot Alu + Corn + Wheat',   color:'#333333' },
+  { key:'future_barley', alu:'aluminum_future', leg3:'barley', label:'Future Alu + Corn + Barley',color:'#888888' },
+  { key:'future_wheat',  alu:'aluminum_future', leg3:'wheat',  label:'Future Alu + Corn + Wheat', color:'#1F6FB2' },
 ];
 function computeScenarioRow(alu, leg3, effYear){
   const a = yoy(alu, effYear), c = yoy('corn', effYear), b = yoy(leg3, effYear), g = igpmFor(effYear);
