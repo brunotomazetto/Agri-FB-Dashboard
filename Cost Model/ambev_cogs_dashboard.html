@@ -17,18 +17,21 @@
     return (w ? w + ' ' : '') + size + 'px ' + fam;
   }
   // Quantos rotulos vao mesmo aparecer. Este hook roda ANTES do autoSkip, entao
-  // scale.ticks ainda tem a lista inteira. Com autoSkip livre o Chart.js pula
-  // rotulos ate nao haver sobreposicao — nesse caso girar seria desnecessario;
-  // o aperto so acontece quando maxTicksLimit forca uma quantidade fixa.
-  function shownTickCount(scale){
+  // scale.ticks ainda tem a lista inteira. Com maxTicksLimit definido, usamos
+  // esse teto direto. Sem ele, o Chart.js so decide quantos rotulos cabem
+  // DEPOIS deste hook -- entao estimamos aqui a mesma conta que o autoSkip
+  // faria (largura disponivel / largura do rotulo mais largo), pra manter o
+  // fallback pra 90 graus funcionando mesmo sem um teto fixo: so gira quando
+  // nem um unico rotulo cabe, largura nenhuma, o que aumentar o intervalo
+  // resolveria (autoSkip livre ja aumenta o intervalo sozinho ate caber).
+  function shownTickCount(scale, widest){
     var n = (scale.ticks || []).length, o = scale.options.ticks;
     if (o.autoSkip === false) return n;
-    return o.maxTicksLimit ? Math.min(n, o.maxTicksLimit) : 0;
+    if (o.maxTicksLimit) return Math.min(n, o.maxTicksLimit);
+    return widest ? Math.max(1, Math.floor(scale.width / (widest + 6))) : 0;
   }
   function overflows(scale){
     if (!scale.isHorizontal()) return false;
-    var n = shownTickCount(scale);
-    if (!n) return false;
     var ctx = scale.ctx, widest = 0, ticks = scale.ticks;
     ctx.save();
     ctx.font = tickFontString(scale);
@@ -38,6 +41,8 @@
       widest = Math.max(widest, ctx.measureText(s).width);
     }
     ctx.restore();
+    var n = shownTickCount(scale, widest);
+    if (!n) return false;
     return widest + 6 > scale.width / n;   // 6px de respiro entre rotulos
   }
   function snapRotation(scale){ scale.labelRotation = overflows(scale) ? 90 : 0; }
@@ -158,6 +163,13 @@ const PRICE_LABELS = {
   aluminum_spot:'Aluminum (spot)', aluminum_future:'Aluminum (future 12M)',
   corn:'Corn', wheat:'Wheat', barley:'Barley (USD)',
 };
+
+// Axis-label date format used across all time-series charts: "Mmm-YY".
+// Accepts "YYYY-MM" or "YYYY-MM-DD" strings.
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtMonthYY(ymOrDate){
+  return MONTHS_SHORT[+ymOrDate.slice(5,7)-1] + '-' + ymOrDate.slice(2,4);
+}
 
 // ══ STATE ════════════════════════════════════════════════════════════════════
 let aluMode='spot', leg3Mode='barley';
@@ -760,7 +772,10 @@ function buildDualLineChart(canvasId, existingChart, seriesA, labelA, seriesB, l
     ]
   };
   const scales = {
-    x:{ grid:{display:false}, ticks:{ maxTicksLimit:8, font:{size:10} } },
+    // No maxTicksLimit: autoSkip picks as many "Mmm-YY" labels as fit
+    // without overlapping, widening the interval on dense ranges instead
+    // of the 90deg rotation (see afterCalculateLabelRotation hook above).
+    x:{ grid:{display:false}, ticks:{ font:{size:10}, callback:v=>fmtMonthYY(labels[v]) } },
     y:{ position:'left', grid:{color:'#E5E5E5'}, ticks:{ font:{size:10} },
         title: sameAxis?undefined:{display:true, text:labelA, font:{size:10}, color:'#FF5500'} },
   };
@@ -773,7 +788,7 @@ function buildDualLineChart(canvasId, existingChart, seriesA, labelA, seriesB, l
     options: {
       responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:true, position:'bottom', labels:{boxWidth:10,font:{size:10}}},
-        tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}` } } },
+        tooltip:{ callbacks:{ title:(items)=>fmtMonthYY(items[0].label), label:(c)=>`${c.dataset.label}: ${c.parsed.y}` } } },
       scales,
     }
   });
@@ -924,8 +939,15 @@ function renderRevisionChart(){
     yMax = Math.ceil((dataMax+pad)*2)/2;    // round up to nearest 0.5
   }
 
+  // Daily data means many x-axis entries share the same calendar month --
+  // cap ticks at the number of distinct months so autoSkip lands close to
+  // one label per month instead of packing several same-month "Mmm-YY"
+  // duplicates side by side (it only avoids overlapping TEXT, not repeats).
+  const monthTicks = Math.max(1, new Set(traj.map(r=>r.date.slice(0,7))).size);
+
   if(chartRevision){
     chartRevision.data = data;
+    chartRevision.options.scales.x.ticks.maxTicksLimit = monthTicks;
     chartRevision.options.scales.y.min = yMin; chartRevision.options.scales.y.max = yMax;
     chartRevision.update();
   } else {
@@ -934,9 +956,13 @@ function renderRevisionChart(){
       options: {
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false},
-          tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
+          tooltip:{ callbacks:{ title:(items)=>fmtMonthYY(items[0].label), label:(c)=>`${c.dataset.label}: ${c.parsed.y}%` } } },
         scales:{
-          x:{ grid:{display:false}, ticks:{ maxTicksLimit:8, font:{size:10} } },
+          // This chart's x scale is created once, so read data.labels live
+          // via `this.chart` rather than closing over this call's `data`,
+          // which goes stale once revisionYear changes and the chart is
+          // just updated (maxTicksLimit is likewise refreshed above).
+          x:{ grid:{display:false}, ticks:{ maxTicksLimit:monthTicks, font:{size:10}, callback:function(v){ return fmtMonthYY(this.chart.data.labels[v]); } } },
           y:{ min:yMin, max:yMax, grid:{color:'#E5E5E5'},
               ticks:{ stepSize:0.5, callback:v=>(+v.toFixed(1))+'%', font:{size:10} } }
         }
