@@ -849,16 +849,19 @@ def run_spread(conn):
 
             # Farelo — exige mes exato realizado/publicado pela SECEX.
             # Sem fallback para mes anterior: se a SECEX ainda nao liberou o
-            # mes de d_str, a linha (data_referencia, regiao) simplesmente
-            # nao e calculada/gravada — evita "carregar" o preco do mes
-            # anterior disfarçado de dado do mes corrente.
+            # mes de d_str, farelo (e tudo que depende dele) fica None —
+            # evita "carregar" o preco do mes anterior disfarçado de dado
+            # do mes corrente. Soja e biodiesel, que sao semanais e podem
+            # estar disponiveis mesmo sem o farelo do mes, continuam sendo
+            # gravados normalmente.
             porto_df   = farelo_df[farelo_df["porto"] == cfg["porto"]]
             farelo_row = porto_df[
                 (porto_df["ano"] == ano) & (porto_df["mes"] == mes)
             ]
-            if farelo_row.empty:
-                continue
-            p_farelo_usdkg = float(farelo_row.iloc[-1]["preco_usd_kg"])
+            p_farelo_usdkg = (
+                float(farelo_row.iloc[-1]["preco_usd_kg"])
+                if not farelo_row.empty else None
+            )
 
             # Biodiesel — semana ANP, fallback 21 dias
             bio_reg  = bio_df[bio_df["regiao"] == cfg["bio"]]
@@ -869,19 +872,29 @@ def run_spread(conn):
             if bio_rows.empty:
                 cutoff   = (d - timedelta(days=21)).strftime("%Y-%m-%d")
                 bio_rows = bio_reg[bio_reg["data_final"] >= cutoff]
-                if bio_rows.empty:
-                    continue
-            p_bio_m3 = float(bio_rows.iloc[-1]["preco_brl_m3"])
+            p_bio_m3 = (
+                float(bio_rows.iloc[-1]["preco_brl_m3"])
+                if not bio_rows.empty else None
+            )
 
-            # Calculo do spread
-            p_soja_ton    = p_soja_sc60 * CONV_SC60_TON
-            p_farelo_ton  = p_farelo_usdkg * 1000 * ptax  # USD/kg → R$/ton
+            # Calculo do spread — soja e custo sempre existem (soja e
+            # obrigatoria acima); farelo/bio/spread ficam None quando a
+            # respectiva fonte ainda nao tem dado para a data.
+            p_soja_ton   = p_soja_sc60 * CONV_SC60_TON
+            custo_soja   = p_soja_ton
+            p_farelo_ton = (p_farelo_usdkg * 1000 * ptax  # USD/kg → R$/ton
+                             if p_farelo_usdkg is not None else None)
+            receita_farelo    = (p_farelo_ton * FATOR_FARELO
+                                  if p_farelo_ton is not None else None)
+            receita_biodiesel = (p_bio_m3 * FATOR_BIODIESEL / DENSIDADE_BIO
+                                  if p_bio_m3 is not None else None)
+            spread = (
+                receita_farelo + receita_biodiesel - custo_soja
+                if receita_farelo is not None and receita_biodiesel is not None
+                else None
+            )
 
-            receita_farelo    = p_farelo_ton * FATOR_FARELO
-            receita_biodiesel = p_bio_m3     * FATOR_BIODIESEL / DENSIDADE_BIO
-            custo_soja        = p_soja_ton
-            spread            = receita_farelo + receita_biodiesel - custo_soja
-
+            r = lambda v, n=4: round(v, n) if v is not None else None
             conn.execute(
                 "INSERT OR REPLACE INTO crushing_spread "
                 "(data_referencia, regiao, preco_soja_sc60, preco_soja_ton, "
@@ -889,11 +902,11 @@ def run_spread(conn):
                 " receita_farelo, receita_biodiesel, custo_soja, spread_brl_ton, "
                 " updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (d_str, regiao,
-                 round(p_soja_sc60,    4), round(p_soja_ton,    4),
-                 round(p_farelo_usdkg, 6), round(p_farelo_ton,  4),
-                 round(ptax,           4), round(p_bio_m3,      4),
-                 round(receita_farelo, 4), round(receita_biodiesel, 4),
-                 round(custo_soja,     4), round(spread,         4),
+                 r(p_soja_sc60),    r(p_soja_ton),
+                 r(p_farelo_usdkg, 6), r(p_farelo_ton),
+                 r(ptax),           r(p_bio_m3),
+                 r(receita_farelo), r(receita_biodiesel),
+                 r(custo_soja),     r(spread),
                  NOW_STR),
             )
             if conn.execute("SELECT changes()").fetchone()[0]:
@@ -935,19 +948,22 @@ def generate_dashboard(conn) -> None:
         (BIO_START,)
     ).fetchone()[0] or ""
 
+    def rr(v, n=2):
+        return round(v, n) if v is not None else None
+
     series = {"MT": [], "RS": []}
     for r in rows:
         series[r["regiao"]].append({
             "d":         r["data_referencia"],
-            "soja_sc":   round(r["preco_soja_sc60"],    2),
-            "farelo_t":  round(r["preco_farelo_ton"],   2),
-            "farelo_usdkg": round(r["preco_farelo_usdkg"], 6),
-            "ptax":      round(r["ptax"],               4),
-            "bio_m3":    round(r["preco_bio_m3"],       2),
-            "rec_farelo":round(r["receita_farelo"],     2),
-            "rec_bio":   round(r["receita_biodiesel"],  2),
-            "custo":     round(r["custo_soja"],         2),
-            "spread":    round(r["spread_brl_ton"],     2),
+            "soja_sc":   rr(r["preco_soja_sc60"]),
+            "farelo_t":  rr(r["preco_farelo_ton"]),
+            "farelo_usdkg": rr(r["preco_farelo_usdkg"], 6),
+            "ptax":      rr(r["ptax"], 4),
+            "bio_m3":    rr(r["preco_bio_m3"]),
+            "rec_farelo":rr(r["receita_farelo"]),
+            "rec_bio":   rr(r["receita_biodiesel"]),
+            "custo":     rr(r["custo_soja"]),
+            "spread":    rr(r["spread_brl_ton"]),
         })
 
     # Últimos valores por regiao para o P&L
@@ -961,15 +977,15 @@ def generate_dashboard(conn) -> None:
         """, (regiao, regiao)).fetchone()
         if r:
             latest[regiao] = {
-                "soja_sc":      round(r["preco_soja_sc60"],    2),
-                "farelo_usdkg": round(r["preco_farelo_usdkg"], 6),
-                "farelo_t":     round(r["preco_farelo_ton"],   2),
-                "ptax":         round(r["ptax"],               4),
-                "bio_m3":       round(r["preco_bio_m3"],       2),
-                "rec_farelo":   round(r["receita_farelo"],     2),
-                "rec_bio":      round(r["receita_biodiesel"],  2),
-                "custo":        round(r["custo_soja"],         2),
-                "spread":       round(r["spread_brl_ton"],     2),
+                "soja_sc":      rr(r["preco_soja_sc60"]),
+                "farelo_usdkg": rr(r["preco_farelo_usdkg"], 6),
+                "farelo_t":     rr(r["preco_farelo_ton"]),
+                "ptax":         rr(r["ptax"], 4),
+                "bio_m3":       rr(r["preco_bio_m3"]),
+                "rec_farelo":   rr(r["receita_farelo"]),
+                "rec_bio":      rr(r["receita_biodiesel"]),
+                "custo":        rr(r["custo_soja"]),
+                "spread":       rr(r["spread_brl_ton"]),
             }
 
     import json as _json
