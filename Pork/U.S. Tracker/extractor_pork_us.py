@@ -996,8 +996,22 @@ def _parse_hog_price_from_text(text: str) -> Optional[float]:
         if re.search(r"NATIONAL.*LM_HG203|LM_HG203.*NATIONAL", line, re.IGNORECASE):
             for j in range(i + 1, min(i + 9, len(lines))):
                 if re.search(r"[Ww]eighted\s+[Aa]verage\s*:", lines[j]):
-                    # "Weighted Average: $96.11 $71.03 $100"
-                    prices = [float(p) for p in re.findall(r"\$([\d.]+)", lines[j])
+                    if "*" in lines[j]:
+                        # This is an intraday "as of HH:MM" report — USDA marks
+                        # a not-yet-posted or suppressed value with "*" right
+                        # on this line. A stray chart Y-axis gridline label
+                        # ($100, $110… no cents, since it's an axis tick, not a
+                        # price) can land on the very same line during PDF
+                        # text extraction and looks like real data. Confirmed
+                        # live 2026-09-04: "Weighted Average: * * $100" was
+                        # being read as a genuine $100.00 hog price. Refuse
+                        # the whole line rather than risk grabbing that label.
+                        print(f"  [Hog Format-A] price suppressed this report: {lines[j].strip()}")
+                        break
+                    # "Weighted Average: $96.11 $71.03" — require a decimal so
+                    # a bare axis label (no cents) can never match even if it
+                    # ever slips in without an adjacent "*".
+                    prices = [float(p) for p in re.findall(r"\$(\d+\.\d+)", lines[j])
                               if 40.0 <= float(p) <= 200.0]
                     if prices:
                         price = prices[0]   # Carcass Base (first); Live (second)
