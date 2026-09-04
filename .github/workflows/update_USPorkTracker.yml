@@ -10,16 +10,6 @@ on:
         description: 'Reason for manual trigger'
         required: false
         default: 'Manual update'
-      backfill:
-        description: 'Force a full MARS API history pull (carcass/hog/corn/sbm, 2015→now) instead of the normal latest-only fetch'
-        required: false
-        type: boolean
-        default: false
-      debug_mars:
-        description: 'TEMP: dump raw MARS API JSON for reports 2680/2675/3192/3511 (diagnostic only)'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
   update-pork-db:
@@ -44,111 +34,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests openpyxl pdfplumber
 
-      - name: Debug MARS API (temporary diagnostic)
-        if: ${{ inputs.debug_mars }}
-        working-directory: 'Pork/U.S. Tracker'
-        env:
-          USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
-        run: |
-          python3 - <<'EOF'
-          import requests, json, os, re
-          from datetime import datetime, timedelta
-          key = os.environ.get("USDA_API_KEY", "")
-          auth = (key, "") if key else None
-          end = datetime.now().strftime("%m/%d/%Y")
-          start90 = (datetime.now() - timedelta(days=90)).strftime("%m/%d/%Y")
-
-          print("=== sbm (3511) Report Detail — every distinct commodity string ===")
-          r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports/3511",
-                            params={"startDate": start90, "endDate": end,
-                                    "allSections":"true","allCommodities":"true"},
-                            auth=auth, timeout=60)
-          print("status", r.status_code)
-          if r.status_code == 200:
-              items = r.json()
-              items = items.get("results", items) if isinstance(items, dict) else items
-              for it in items:
-                  if it.get("reportSection") == "Report Detail":
-                      rows = it.get("results", [])
-                      print(f"  Report Detail rows: {len(rows)}")
-                      commodities = sorted(set(x.get("commodity") for x in rows if x.get("commodity")))
-                      print("  commodities:", commodities)
-                      soy = [x for x in rows if x.get("commodity") == "Soybean Meal"
-                             and x.get("quote_type") == "Price"]
-                      print(f"  soy-meal Price rows: {len(soy)}")
-                      if soy:
-                          locs = sorted(set((x.get("trade Loc") or x.get("trade_loc"), x.get("protein")) for x in soy))
-                          print("  trade_loc/protein combos:", locs[:25])
-                          il = [x for x in soy if "illinois" in str(x.get("trade Loc") or x.get("trade_loc","")).lower()]
-                          print(f"  Illinois-location rows: {len(il)}")
-                          print("  sample (any):", json.dumps(soy[0], indent=2)[:900])
-                          if il:
-                              print("  sample (Illinois):", json.dumps(il[0], indent=2)[:900])
-
-          # Corn (3192): how far back does the Report Header narrative go, 2015->now?
-          print("=== corn (3192) narrative history, 2015-01-01 -> now ===")
-          r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports/3192",
-                            params={"startDate":"01/01/2015","endDate":end,
-                                    "allSections":"true","allCommodities":"true"},
-                            auth=auth, timeout=60)
-          print("status", r.status_code)
-          if r.status_code == 200:
-              items = r.json()
-              items = items.get("results", items) if isinstance(items, dict) else items
-              for it in items:
-                  if it.get("reportSection") == "Report Header":
-                      rows = it.get("results", [])
-                      print(f"  Report Header rows: {len(rows)}")
-                      dates = sorted(set(x.get("report_date") for x in rows))
-                      print("  earliest:", dates[:3], "latest:", dates[-3:])
-                      print("  sample narrative:", rows[0].get("report_narrative"))
-
-          # SBM (3511): which commodity string + locations exist in "Report Comprehensive Values"?
-          print("\n=== sbm (3511) Report Comprehensive Values — commodities/locations ===")
-          r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports/3511",
-                            params={"startDate": start90, "endDate": end,
-                                    "allSections":"true","allCommodities":"true"},
-                            auth=auth, timeout=60)
-          print("status", r.status_code)
-          if r.status_code == 200:
-              items = r.json()
-              items = items.get("results", items) if isinstance(items, dict) else items
-              for it in items:
-                  if it.get("reportSection") == "Report Comprehensive Values":
-                      rows = it.get("results", [])
-                      print(f"  rows: {len(rows)}")
-                      soy = [x for x in rows if x.get("commodity") and "soybean meal" in x["commodity"].lower()]
-                      print(f"  soybean-meal rows: {len(soy)}")
-                      locs = sorted(set((x.get("market_location_name"), x.get("trade_loc")) for x in soy))
-                      print("  locations:", locs[:15])
-                      if soy:
-                          print("  sample:", json.dumps(soy[0], indent=2)[:700])
-
-          # Report catalog — try a text-search style query for hog/carcass
-          print("\n=== catalog probes ===")
-          for params in [{"q":"hog"}, {"q":"carcass"}, {"category":"Livestock"}]:
-              try:
-                  r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports",
-                                    params=params, auth=auth, timeout=30)
-                  print(f"  params={params} status={r.status_code} len={len(r.text)}")
-                  if r.status_code == 200:
-                      cat = r.json()
-                      cat_items = cat.get("results", cat) if isinstance(cat, dict) else cat
-                      print(f"    {len(cat_items)} items")
-                      for it in cat_items[:8]:
-                          print("   ", json.dumps(it)[:200])
-              except Exception as e:
-                  print(f"  ERROR: {e}")
-          EOF
-
       - name: Run extractor_pork_us.py
         working-directory: 'Pork/U.S. Tracker'
-        run: |
-          if [ "${{ inputs.backfill }}" = "true" ]; then
-            python extractor_pork_us.py --backfill
-          else
-            python extractor_pork_us.py
-          fi
+        run: python extractor_pork_us.py
         env:
           USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
 
