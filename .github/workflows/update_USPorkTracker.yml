@@ -45,7 +45,7 @@ jobs:
           pip install requests openpyxl pdfplumber
 
       - name: Debug MARS API (temporary diagnostic)
-        if: ${{ inputs.debug_mars == 'true' }}
+        if: ${{ inputs.debug_mars }}
         working-directory: 'Pork/U.S. Tracker'
         env:
           USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
