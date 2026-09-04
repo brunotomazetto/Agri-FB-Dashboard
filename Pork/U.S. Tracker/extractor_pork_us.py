@@ -815,6 +815,45 @@ def get(url, **kwargs):
     return None
 
 
+def fetch_mars_range(report_id: str, value_fields: tuple, date_from: str = "01/01/2015") -> list[dict]:
+    """
+    Query the USDA MARS API for a report's FULL historical range (not just the
+    latest snapshot the PDF gives). Used both as a PDF-failure fallback and for
+    one-off historical backfills (--backfill).
+
+    value_fields: candidate field names to try, in order (MARS field names vary
+    slightly by report; first non-null match wins — mirrors extractor_chicken.py).
+    """
+    r = get(f"{AMS_BASE}/{report_id}", params={
+        "startDate":     date_from,
+        "endDate":       datetime.now().strftime("%m/%d/%Y"),
+        "allSections":   "true",
+        "allCommodities": "true",
+    })
+    if not r:
+        return []
+    try:
+        payload = r.json()
+    except Exception:
+        return []
+    items = payload.get("results", []) if isinstance(payload, dict) else payload
+    results = []
+    for item in items:
+        try:
+            dt = datetime.strptime(item.get("report_date", ""), "%m/%d/%Y")
+        except (ValueError, TypeError):
+            continue
+        for field in value_fields:
+            v = item.get(field)
+            if v is not None:
+                try:
+                    results.append({"date": dt, "value": float(v)})
+                except (TypeError, ValueError):
+                    continue
+                break
+    return results
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # DATE PARSER (shared)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1104,9 +1143,9 @@ def fetch_hog() -> list[dict]:
 # ══════════════════════════════════════════════════════════════════════════════
 # FETCH CORN & SBM  (reused from chicken tracker logic)
 # ══════════════════════════════════════════════════════════════════════════════
-def fetch_corn() -> list[dict]:
-    """Corn Central IL $/bu — AMS_3192.pdf with MARS fallback."""
-    print("  Fetching Corn (AMS_3192.pdf) …")
+def fetch_corn_from_pdf() -> list[dict]:
+    """Corn Central IL $/bu — parse AMS_3192.pdf. Returns [] on any failure
+    (network, parse, or price-not-found) — caller falls back to MARS."""
     try:
         import pdfplumber, io
     except ImportError:
@@ -1156,9 +1195,21 @@ def fetch_corn() -> list[dict]:
     return []
 
 
-def fetch_sbm() -> list[dict]:
-    """SBM Illinois FOB $/ton — ams_3511.pdf with MARS fallback."""
-    print("  Fetching SBM (ams_3511.pdf) …")
+def fetch_corn() -> list[dict]:
+    """Corn Central IL $/bu — PDF primary, MARS API fallback (full history)."""
+    print("  Fetching Corn (AMS_3192.pdf) …")
+    rows = fetch_corn_from_pdf()
+    if rows:
+        return rows
+    print("  PDF failed — trying MARS API …")
+    rows = fetch_mars_range("3192", ("central_illinois", "central_il", "price", "avg_price"))
+    print(f"  MARS API corn: {len(rows)} rows")
+    return rows
+
+
+def fetch_sbm_from_pdf() -> list[dict]:
+    """SBM Illinois FOB $/ton — parse ams_3511.pdf. Returns [] on any failure
+    (network, parse, or price-not-found) — caller falls back to MARS."""
     try:
         import pdfplumber, io
     except ImportError:
@@ -1206,6 +1257,18 @@ def fetch_sbm() -> list[dict]:
         return [{"date": dt, "value": price}]
     print("  ⚠ SBM PDF: price not found")
     return []
+
+
+def fetch_sbm() -> list[dict]:
+    """SBM Illinois FOB $/ton — PDF primary, MARS API fallback (full history)."""
+    print("  Fetching SBM (ams_3511.pdf) …")
+    rows = fetch_sbm_from_pdf()
+    if rows:
+        return rows
+    print("  PDF failed — trying MARS API …")
+    rows = fetch_mars_range("3511", ("illinois_fob_truck", "il_fob_truck", "price", "avg_price"))
+    print(f"  MARS API sbm: {len(rows)} rows")
+    return rows
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1427,6 +1490,86 @@ def materialise_quarterly(conn):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# FEED-COST FALLBACKS (weekly level)
+# ══════════════════════════════════════════════════════════════════════════════
+def fill_fc_spot(conn):
+    """Compute fc_spot for any weekly row that has corn & sbm but no fc_spot yet
+    (MARS-backfilled rows land with corn/sbm set but fc_spot untouched)."""
+    rows = conn.execute(
+        "SELECT report_date, corn, sbm FROM weekly "
+        "WHERE corn IS NOT NULL AND sbm IS NOT NULL AND fc_spot IS NULL"
+    ).fetchall()
+    if not rows:
+        return
+    ts = datetime.now().isoformat(timespec="seconds")
+    for dt, corn, sbm in rows:
+        fc_spot = round(CORN_SHARE * corn * CORN_BU_PER_TON + SBM_SHARE * sbm, 4)
+        conn.execute("UPDATE weekly SET fc_spot=?, updated_at=? WHERE report_date=?",
+                     (fc_spot, ts, dt))
+    conn.commit()
+    print(f"  fc_spot backfilled for {len(rows)} weeks")
+
+
+def fill_feed_grain_6m_fallback(conn):
+    """
+    The hard-coded/xlsx seed only carries feed_grain_6m (USD/kg) through
+    ~Apr 2026 — live-fetched weeks never set it (main() leaves it None,
+    "requires feed_grain_6m — set at quarterly level"). Once the seed runs
+    out, spread_integrated freezes for every week/quarter after it, even
+    though corn+sbm keep coming in, because nothing derives feed_grain_6m
+    from them at the weekly level.
+
+    This fills that gap: for any week still missing feed_grain_6m, derive it
+    from the corn/SBM feed basket (fc_spot) two quarters (~6 months) prior —
+    the same GRAIN_LAG_Q lag materialise_quarterly() uses — converted from
+    $/ton to USD/kg (÷1000, since 1 metric ton = 1000 kg). Never overwrites
+    an existing (seed-sourced) value.
+    """
+    fc_rows = conn.execute(
+        "SELECT report_date, fc_spot FROM weekly WHERE fc_spot IS NOT NULL"
+    ).fetchall()
+    if not fc_rows:
+        return
+
+    from collections import defaultdict
+    q_vals = defaultdict(list)
+    for dt, fc_spot in fc_rows:
+        yr, mo = int(dt[:4]), int(dt[5:7])
+        q_vals[(yr, (mo - 1) // 3 + 1)].append(fc_spot)
+    q_avg = {k: sum(v) / len(v) for k, v in q_vals.items()}
+
+    def lag_quarter(yr, q):
+        yr2, q2 = yr, q - GRAIN_LAG_Q
+        while q2 <= 0:
+            q2 += 4
+            yr2 -= 1
+        return (yr2, q2)
+
+    targets = conn.execute(
+        "SELECT report_date, carcass FROM weekly WHERE feed_grain_6m IS NULL"
+    ).fetchall()
+    ts = datetime.now().isoformat(timespec="seconds")
+    filled = 0
+    for dt, carcass in targets:
+        yr, mo = int(dt[:4]), int(dt[5:7])
+        fc_6m = q_avg.get(lag_quarter(yr, (mo - 1) // 3 + 1))
+        if fc_6m is None:
+            continue
+        feed_grain_6m = fc_6m / 1000.0
+        spread_int = (round((carcass / 45.36) / (feed_grain_6m * HOG_FCR), 4)
+                      if carcass else None)
+        conn.execute(
+            "UPDATE weekly SET feed_grain_6m=?, fc_6m=?, spread_integrated=?, updated_at=? "
+            "WHERE report_date=?",
+            (round(feed_grain_6m, 6), round(fc_6m, 4), spread_int, ts, dt)
+        )
+        filled += 1
+    conn.commit()
+    if filled:
+        print(f"  feed_grain_6m fallback (corn/SBM 2Q-lag) filled for {filled} weeks")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
@@ -1434,6 +1577,10 @@ def main():
     parser = argparse.ArgumentParser(description="Refresh pork_us.db")
     parser.add_argument("--seed", metavar="PATH",
                         help="Seed from Support_-_Weekly.xlsx (one-time setup)")
+    parser.add_argument("--backfill", action="store_true",
+                        help="Force a full MARS API history pull (2015→now) for "
+                             "carcass/hog/corn/sbm, regardless of PDF status, to "
+                             "recover any gaps in the weekly table (one-off recovery)")
     args = parser.parse_args()
 
     print("=" * 60)
@@ -1449,6 +1596,27 @@ def main():
         seed_from_xlsx(conn, args.seed)
     else:
         seed_from_hardcoded(conn)
+
+    if args.backfill:
+        print("\n[B] Forcing full MARS API history pull (2015 → now) …")
+        for label, field, report_id, value_fields in [
+            ("carcass",   "carcass",   "2680", ("carcass", "cutout_value", "weighted_avg", "price")),
+            ("hog_price", "hog_price", "2675", ("weighted_avg", "avg_price", "national_wtd_avg", "price")),
+            ("corn",      "corn",      "3192", ("central_illinois", "central_il", "price", "avg_price")),
+            ("sbm",       "sbm",       "3511", ("illinois_fob_truck", "il_fob_truck", "price", "avg_price")),
+        ]:
+            rows = fetch_mars_range(report_id, value_fields, date_from="01/01/2015")
+            print(f"  MARS {label} (report {report_id}): {len(rows)} rows")
+            upsert_weekly(conn, [{"report_date": r["date"].strftime("%Y-%m-%d"), field: r["value"]}
+                                  for r in rows], label=f"MARS backfill {label} — ")
+        fill_fc_spot(conn)
+        fill_feed_grain_6m_fallback(conn)
+        print("\n[2] Materialising quarterly table …")
+        materialise_quarterly(conn)
+        conn.close()
+        db_size = Path(DB_PATH).stat().st_size // 1024
+        print(f"\n✓ Backfill done. pork_us.db = {db_size} KB")
+        return
 
     # ── Step 1: Fetch latest from USDA PDFs ───────────────────────────────────
     print("\n[1] Fetching latest USDA data …")
@@ -1479,10 +1647,20 @@ def main():
         ("corn",      "corn",      corn_rows),
         ("sbm",       "sbm",       sbm_rows),
     ]:
-        for r in data:
-            # All fresh fields go onto the canonical_dt row (newest date wins)
-            fresh.setdefault(canonical_dt, {})["report_date"] = canonical_dt
-            fresh[canonical_dt][field] = r["value"]
+        if not data:
+            continue
+        data_sorted = sorted(data, key=lambda r: r["date"])
+        if len(data_sorted) > 1:
+            # PDF failed and the MARS fallback returned its *full* history
+            # (fetch_mars_range), not just the latest snapshot — backfill every
+            # earlier date straight into `weekly` at its true report_date
+            # instead of collapsing it all onto canonical_dt.
+            backfill_rows = [{"report_date": r["date"].strftime("%Y-%m-%d"), field: r["value"]}
+                              for r in data_sorted[:-1]]
+            upsert_weekly(conn, backfill_rows, label=f"{label} MARS backfill — ")
+        # Most recent reading goes onto the canonical_dt row (newest date wins)
+        fresh.setdefault(canonical_dt, {})["report_date"] = canonical_dt
+        fresh[canonical_dt][field] = data_sorted[-1]["value"]
 
     # Compute derived fields for fresh rows
     for dt, row in fresh.items():
@@ -1497,12 +1675,13 @@ def main():
         hog_price = row.get("hog_price")
         fc_spot   = row.get("fc_spot")
 
-        # For spread_integrated: use fc_spot as best available (6m lag computed in quarterly)
-        # At weekly level, store fc_6m = None (materialise_quarterly handles lag)
+        # fc_6m / feed_grain_6m need the corn/SBM 2-quarter lag, which requires
+        # a full quarter of history — left None here and filled in by
+        # fill_feed_grain_6m_fallback() below, once fc_spot has accumulated.
         row["fc_6m"]                 = None
         row["feed_grain_6m"]         = None
         # spread_non_integrated = (Carcass/Hog) / 45.36
-        row["spread_integrated"]     = None  # requires feed_grain_6m — set at quarterly level
+        row["spread_integrated"]     = None  # filled by fill_feed_grain_6m_fallback()
         row["spread_non_integrated"] = (
             round((carcass / hog_price) / 45.36, 6) if (carcass and hog_price) else None
         )
@@ -1511,6 +1690,10 @@ def main():
         upsert_weekly(conn, list(fresh.values()), label="USDA fresh — ")
     else:
         print("  No fresh data fetched (network unavailable in this environment)")
+
+    # ── Step 1b: Derive feed-grain fallback for weeks past the seed's cutoff ──
+    fill_fc_spot(conn)
+    fill_feed_grain_6m_fallback(conn)
 
     # ── Step 2: Materialise quarterly ────────────────────────────────────────
     print("\n[2] Materialising quarterly table …")

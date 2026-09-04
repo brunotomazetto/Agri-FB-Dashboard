@@ -10,6 +10,11 @@ on:
         description: 'Reason for manual trigger'
         required: false
         default: 'Manual update'
+      backfill:
+        description: 'Force a full MARS API history pull (carcass/hog/corn/sbm, 2015→now) instead of the normal latest-only fetch'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   update-pork-db:
@@ -36,7 +41,12 @@ jobs:
 
       - name: Run extractor_pork_us.py
         working-directory: 'Pork/U.S. Tracker'
-        run: python extractor_pork_us.py
+        run: |
+          if [ "${{ inputs.backfill }}" = "true" ]; then
+            python extractor_pork_us.py --backfill
+          else
+            python extractor_pork_us.py
+          fi
         env:
           USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
 
