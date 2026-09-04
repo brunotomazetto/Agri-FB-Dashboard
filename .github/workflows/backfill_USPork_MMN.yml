@@ -1,0 +1,71 @@
+name: Backfill U.S. Pork from MMN archive
+
+# One-off recovery job. The live extractor only sees today's PDF (USDA
+# overwrites it), so weeks the scheduler missed are only recoverable from
+# the MyMarketNews archive. Manual trigger only — never on a schedule.
+on:
+  workflow_dispatch:
+    inputs:
+      from_month:
+        description: 'Primeiro mês a recuperar (YYYY-MM)'
+        required: true
+        default: '2026-04'
+      to_month:
+        description: 'Último mês a recuperar (YYYY-MM)'
+        required: true
+        default: '2026-09'
+      dry_run:
+        description: 'Só listar o que seria gravado, sem alterar o .db'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  backfill:
+    name: Backfill pork_us.db
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests openpyxl pdfplumber
+
+      - name: Run backfill
+        working-directory: 'Pork/U.S. Tracker'
+        env:
+          USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python backfill_from_mmn_archive.py \
+              --from "${{ inputs.from_month }}" --to "${{ inputs.to_month }}" --dry-run
+          else
+            python backfill_from_mmn_archive.py \
+              --from "${{ inputs.from_month }}" --to "${{ inputs.to_month }}"
+          fi
+
+      - name: Commit updated pork_us.db
+        if: ${{ inputs.dry_run == false }}
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name  "github-actions[bot]"
+          git add "Pork/U.S. Tracker/pork_us.db"
+          if git diff --staged --quiet; then
+            echo "No changes to pork_us.db — skipping commit."
+          else
+            git commit -m "backfill: pork_us.db from MMN archive ${{ inputs.from_month }}..${{ inputs.to_month }}"
+            git push
+            echo "pork_us.db committed and pushed."
+          fi

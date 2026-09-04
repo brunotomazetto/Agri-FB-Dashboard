@@ -884,6 +884,16 @@ def fetch_carcass_from_pdf() -> list[dict]:
         print(f"  ✗ Carcass PDF parse: {e}")
         return []
 
+    return parse_carcass_from_text(text)
+
+
+def parse_carcass_from_text(text: str) -> list[dict]:
+    """
+    Pull (date, 5-day-average carcass) out of an already-extracted LM_PK601
+    PDF text. Split out of fetch_carcass_from_pdf() so the MMN archive
+    backfill (backfill_from_mmn_archive.py) parses historical PDFs through
+    exactly the same logic as the live daily fetch.
+    """
     lines = text.splitlines()
     dt = None
     price = None  # 5-day weighted average carcass
