@@ -51,13 +51,13 @@ jobs:
           USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
         run: |
           python3 - <<'EOF'
-          import requests, json, os
+          import requests, json, os, re
           from datetime import datetime, timedelta
           key = os.environ.get("USDA_API_KEY", "")
           auth = (key, "") if key else None
           end = datetime.now().strftime("%m/%d/%Y")
           start = (datetime.now() - timedelta(days=60)).strftime("%m/%d/%Y")
-          for report_id, label in [("2680","carcass"),("2675","hog"),("3192","corn"),("3511","sbm")]:
+          for report_id, label in [("2497","carcass_2497"),("3192","corn"),("3511","sbm")]:
               url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}"
               params = {"startDate": start, "endDate": end, "allSections":"true","allCommodities":"true"}
               try:
@@ -68,12 +68,35 @@ jobs:
                       continue
                   data = r.json()
                   items = data.get("results", []) if isinstance(data, dict) else data
-                  print(f"  {len(items)} items")
-                  if items:
-                      print("  keys:", list(items[0].keys()))
-                      print("  sample:", json.dumps(items[0], indent=2)[:1200])
+                  print(f"  {len(items)} top-level items")
+                  for it in items:
+                      sec = it.get("reportSection")
+                      rows = it.get("results", [])
+                      print(f"  section={sec!r} rows={len(rows)}")
+                      if rows:
+                          print("  row keys:", list(rows[0].keys()))
+                          print("  row0:", json.dumps(rows[0], indent=2)[:900])
+                          if len(rows) > 1:
+                              print("  row1 narrative:", rows[1].get("report_narrative"))
               except Exception as e:
                   print(f"  ERROR: {e}")
+
+          # Search the report catalog for the right slug ids (carcass cutout, hog price)
+          print("\n=== report catalog search ===")
+          try:
+              r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports",
+                                auth=auth, timeout=30)
+              print(f"catalog status {r.status_code}")
+              if r.status_code == 200:
+                  cat = r.json()
+                  cat_items = cat.get("results", cat) if isinstance(cat, dict) else cat
+                  print(f"  {len(cat_items)} reports in catalog")
+                  for it in cat_items:
+                      name = json.dumps(it)
+                      if re.search(r"pork|hog|carcass|cutout", name, re.IGNORECASE):
+                          print(" ", name[:300])
+          except Exception as e:
+              print(f"  catalog ERROR: {e}")
           EOF
 
       - name: Run extractor_pork_us.py
