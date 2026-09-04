@@ -15,6 +15,11 @@ on:
         required: false
         type: boolean
         default: false
+      debug_mars:
+        description: 'TEMP: dump raw MARS API JSON for reports 2680/2675/3192/3511 (diagnostic only)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   update-pork-db:
@@ -38,6 +43,38 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install requests openpyxl pdfplumber
+
+      - name: Debug MARS API (temporary diagnostic)
+        if: ${{ inputs.debug_mars == 'true' }}
+        working-directory: 'Pork/U.S. Tracker'
+        env:
+          USDA_API_KEY: ${{ secrets.USDA_API_KEY }}
+        run: |
+          python3 - <<'EOF'
+          import requests, json, os
+          from datetime import datetime, timedelta
+          key = os.environ.get("USDA_API_KEY", "")
+          auth = (key, "") if key else None
+          end = datetime.now().strftime("%m/%d/%Y")
+          start = (datetime.now() - timedelta(days=60)).strftime("%m/%d/%Y")
+          for report_id, label in [("2680","carcass"),("2675","hog"),("3192","corn"),("3511","sbm")]:
+              url = f"https://marsapi.ams.usda.gov/services/v1.2/reports/{report_id}"
+              params = {"startDate": start, "endDate": end, "allSections":"true","allCommodities":"true"}
+              try:
+                  r = requests.get(url, params=params, auth=auth, timeout=30)
+                  print(f"\n=== {label} (report {report_id}) — status {r.status_code} — url {r.url}")
+                  if r.status_code != 200:
+                      print(r.text[:500])
+                      continue
+                  data = r.json()
+                  items = data.get("results", []) if isinstance(data, dict) else data
+                  print(f"  {len(items)} items")
+                  if items:
+                      print("  keys:", list(items[0].keys()))
+                      print("  sample:", json.dumps(items[0], indent=2)[:1200])
+              except Exception as e:
+                  print(f"  ERROR: {e}")
+          EOF
 
       - name: Run extractor_pork_us.py
         working-directory: 'Pork/U.S. Tracker'
