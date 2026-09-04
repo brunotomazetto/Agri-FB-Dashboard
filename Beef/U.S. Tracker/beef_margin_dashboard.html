@@ -650,7 +650,8 @@ function buildLayout(){
 async function init(){
   try{
     const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
-    const resp=await fetch('./beef.db');
+    const cbv=new Date().toISOString().slice(0,10).replace(/-/g,'');
+    const resp=await fetch(`./beef.db?v=${cbv}`);
     if(!resp.ok) throw new Error(`beef.db not found (HTTP ${resp.status}). Run extractor_beef.py --history first, then commit beef.db.`);
     const db=new SQL.Database(new Uint8Array(await resp.arrayBuffer()));
     const toArr=res=>{
