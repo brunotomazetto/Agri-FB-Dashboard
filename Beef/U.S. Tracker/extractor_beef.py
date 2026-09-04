@@ -185,6 +185,25 @@ def _num(s: str) -> float | None:
         return None
 
 
+def _scope_to_current_period(text: str, start_pat: str) -> str:
+    """
+    Return only the text from `start_pat` up to (not including) the next
+    "SAME PERIOD LAST WEEK/YEAR" heading — these USDA reports always print
+    the current period first, then repeat the identical row shapes for prior
+    comparisons. Without this bound, a regex hunting for e.g. "Live Steer
+    <n> <n> $<price>" will skip straight over a confidential current week
+    (which has no numbers) and silently match a stale comparison table
+    instead. Returns "" if `start_pat` isn't found, so callers see no match
+    rather than searching the whole document unscoped.
+    """
+    m_start = re.search(start_pat, text, re.IGNORECASE)
+    if not m_start:
+        return ""
+    rest = text[m_start.end():]
+    m_end = re.search(r"SAME\s+PERIOD\s+LAST\s+(WEEK|YEAR)", rest, re.IGNORECASE)
+    return rest[:m_end.start()] if m_end else rest
+
+
 # ══ CT150 — ams_2477.pdf (LM_CT150) ══════════════════════════════════════════
 # WEEKLY WEIGHTED AVERAGES section:
 #   Live FOB Steer    22,550   1,571   244.96
@@ -196,14 +215,18 @@ def fetch_ct150() -> dict:
     week = _parse_date(text)
     result = {"week_ending": week, "ct150_steer": None, "ct150_all": None}
 
+    # Scope the search to the CURRENT week's block only. USDA always follows
+    # it with "SAME PERIOD LAST WEEK" / "SAME PERIOD LAST YEAR" tables in the
+    # identical "Live FOB Steer <n> <n> <price>" shape — an unbounded search
+    # that fails to match here (e.g. this week is confidential) will happily
+    # walk forward and silently return a stale, year-old price instead. See
+    # the identical bug fixed 2026-09 in _parse_weekly_accumulated (KS/NE).
+    block = _scope_to_current_period(text, r"WEEKLY\s+WEIGHTED\s+AVERAGES")
+
     m_steer = re.search(
-        r"WEEKLY\s+WEIGHTED\s+AVERAGES.*?Live\s+FOB\s+Steer\s+[\d,]+\s+[\d,]+\s+([\d.]+)",
-        text, re.IGNORECASE | re.DOTALL
-    )
+        r"Live\s+FOB\s+Steer\s+[\d,]+\s+[\d,]+\s+([\d.]+)", block, re.IGNORECASE)
     m_heifer = re.search(
-        r"WEEKLY\s+WEIGHTED\s+AVERAGES.*?Live\s+FOB\s+Heifer\s+[\d,]+\s+[\d,]+\s+([\d.]+)",
-        text, re.IGNORECASE | re.DOTALL
-    )
+        r"Live\s+FOB\s+Heifer\s+[\d,]+\s+[\d,]+\s+([\d.]+)", block, re.IGNORECASE)
     steer  = _num(m_steer.group(1))  if m_steer  else None
     heifer = _num(m_heifer.group(1)) if m_heifer else None
 
@@ -274,15 +297,23 @@ def fetch_cutout() -> dict:
 # ks_avg / ne_avg = (steer + heifer) / 2
 
 def _parse_weekly_accumulated(text: str, label: str) -> tuple[float | None, str]:
+    """
+    KS/NE (LM_CT157 etc.) routinely go **Information not reported due to
+    confidentiality** for the current week — too few reporting plants in the
+    region. When that happens, this must return None, not a number: the old
+    unbounded regex searched past the confidential block and silently landed
+    on "SAME PERIOD LAST WEEK"/"SAME PERIOD LAST YEAR" data instead, which
+    matches the exact same "Live Steer <n> <n> $<price>" shape further down
+    the page. Confirmed live 2026-09: a confidential KS week returned last
+    year's price with no warning. _scope_to_current_period() cuts the search
+    off before those trailing tables so a genuinely missing price comes back
+    as None (and is simply skipped — upsert_weekly leaves the column NULL).
+    """
     week = _parse_date(text)
-    m_s = re.search(
-        r"WEEKLY\s+ACCUMULATED.*?Live\s+Steer\s+[\d,]+\s+[\d,.]+\s+\$?([\d.]+)",
-        text, re.IGNORECASE | re.DOTALL
-    )
-    m_h = re.search(
-        r"WEEKLY\s+ACCUMULATED.*?Live\s+Heifer\s+[\d,]+\s+[\d,.]+\s+\$?([\d.]+)",
-        text, re.IGNORECASE | re.DOTALL
-    )
+    block = _scope_to_current_period(text, r"WEEKLY\s+ACCUMULATED")
+
+    m_s = re.search(r"Live\s+Steer\s+[\d,]+\s+[\d,.]+\s+\$?([\d.]+)", block, re.IGNORECASE)
+    m_h = re.search(r"Live\s+Heifer\s+[\d,]+\s+[\d,.]+\s+\$?([\d.]+)", block, re.IGNORECASE)
     steer  = _num(m_s.group(1)) if m_s else None
     heifer = _num(m_h.group(1)) if m_h else None
 
@@ -295,12 +326,10 @@ def _parse_weekly_accumulated(text: str, label: str) -> tuple[float | None, str]
         log.info("%s: steer not found, using heifer only", label)
         return heifer, week
 
-    m = re.search(r"WEEKLY\s+ACCUMULATED.*?\$\s*([\d.]+)", text, re.IGNORECASE | re.DOTALL)
-    if m:
-        log.info("%s: fallback to first price after WEEKLY ACCUMULATED", label)
-        return _num(m.group(1)), week
-
-    log.warning("%s: WEEKLY ACCUMULATED block not parsed", label)
+    if "confidential" in block.lower():
+        log.warning("%s: current week is confidential (USDA) — no price this week", label)
+    else:
+        log.warning("%s: WEEKLY ACCUMULATED block not parsed", label)
     return None, week
 
 
