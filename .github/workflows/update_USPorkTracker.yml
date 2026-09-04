@@ -73,13 +73,17 @@ jobs:
                       print(f"  Report Detail rows: {len(rows)}")
                       commodities = sorted(set(x.get("commodity") for x in rows if x.get("commodity")))
                       print("  commodities:", commodities)
-                      soy = [x for x in rows if x.get("commodity") and "soy" in x["commodity"].lower()
-                             and "meal" in x["commodity"].lower()]
-                      print(f"  soy-meal rows: {len(soy)}")
+                      soy = [x for x in rows if x.get("commodity") == "Soybean Meal"
+                             and x.get("quote_type") == "Price"]
+                      print(f"  soy-meal Price rows: {len(soy)}")
                       if soy:
-                          locs = sorted(set((x.get("trade_loc"), x.get("quote_type"), x.get("price_unit")) for x in soy))
-                          print("  loc/quote/unit combos:", locs[:20])
-                          print("  sample:", json.dumps(soy[0], indent=2)[:900])
+                          locs = sorted(set((x.get("trade Loc") or x.get("trade_loc"), x.get("protein")) for x in soy))
+                          print("  trade_loc/protein combos:", locs[:25])
+                          il = [x for x in soy if "illinois" in str(x.get("trade Loc") or x.get("trade_loc","")).lower()]
+                          print(f"  Illinois-location rows: {len(il)}")
+                          print("  sample (any):", json.dumps(soy[0], indent=2)[:900])
+                          if il:
+                              print("  sample (Illinois):", json.dumps(il[0], indent=2)[:900])
 
           # Corn (3192): how far back does the Report Header narrative go, 2015->now?
           print("=== corn (3192) narrative history, 2015-01-01 -> now ===")
