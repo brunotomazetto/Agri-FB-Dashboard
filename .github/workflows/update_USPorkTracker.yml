@@ -58,6 +58,29 @@ jobs:
           end = datetime.now().strftime("%m/%d/%Y")
           start90 = (datetime.now() - timedelta(days=90)).strftime("%m/%d/%Y")
 
+          print("=== sbm (3511) Report Detail — every distinct commodity string ===")
+          r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports/3511",
+                            params={"startDate": start90, "endDate": end,
+                                    "allSections":"true","allCommodities":"true"},
+                            auth=auth, timeout=60)
+          print("status", r.status_code)
+          if r.status_code == 200:
+              items = r.json()
+              items = items.get("results", items) if isinstance(items, dict) else items
+              for it in items:
+                  if it.get("reportSection") == "Report Detail":
+                      rows = it.get("results", [])
+                      print(f"  Report Detail rows: {len(rows)}")
+                      commodities = sorted(set(x.get("commodity") for x in rows if x.get("commodity")))
+                      print("  commodities:", commodities)
+                      soy = [x for x in rows if x.get("commodity") and "soy" in x["commodity"].lower()
+                             and "meal" in x["commodity"].lower()]
+                      print(f"  soy-meal rows: {len(soy)}")
+                      if soy:
+                          locs = sorted(set((x.get("trade_loc"), x.get("quote_type"), x.get("price_unit")) for x in soy))
+                          print("  loc/quote/unit combos:", locs[:20])
+                          print("  sample:", json.dumps(soy[0], indent=2)[:900])
+
           # Corn (3192): how far back does the Report Header narrative go, 2015->now?
           print("=== corn (3192) narrative history, 2015-01-01 -> now ===")
           r = requests.get("https://marsapi.ams.usda.gov/services/v1.2/reports/3192",
