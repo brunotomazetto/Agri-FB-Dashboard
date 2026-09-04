@@ -56,8 +56,9 @@ jobs:
               "FROM quarterly ORDER BY year_q DESC LIMIT 1"
           ).fetchone()
           con.close()
+          fmt = lambda v: f"{v:.3f}" if v is not None else "N/A"
           print(f"pork_us.db OK: {nq} quarters, {nw} weekly rows")
-          print(f"Latest: {latest[0]} | spread_int={latest[1]:.3f} | spread_nint={latest[2]:.3f}")
+          print(f"Latest: {latest[0]} | spread_int={fmt(latest[1])} | spread_nint={fmt(latest[2])}")
           if nq < 20:
               raise ValueError(f"Suspiciously few quarterly rows: {nq}")
           EOF
